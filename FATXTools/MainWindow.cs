@@ -177,18 +177,9 @@ namespace FATXTools
 
                 item.SubItems.Add(dirent.FileName);
 
-                DateTime creationTime = new DateTime(dirent.CreationTime.Year,
-                    dirent.CreationTime.Month, dirent.CreationTime.Day,
-                    dirent.CreationTime.Hour, dirent.CreationTime.Minute,
-                    dirent.CreationTime.Second);
-                DateTime lastWriteTime = new DateTime(dirent.LastWriteTime.Year,
-                    dirent.LastWriteTime.Month, dirent.LastWriteTime.Day,
-                    dirent.LastWriteTime.Hour, dirent.LastWriteTime.Minute,
-                    dirent.LastWriteTime.Second);
-                DateTime lastAccessTime = new DateTime(dirent.LastAccessTime.Year,
-                    dirent.LastAccessTime.Month, dirent.LastAccessTime.Day,
-                    dirent.LastAccessTime.Hour, dirent.LastAccessTime.Minute,
-                    dirent.LastAccessTime.Second);
+                DateTime creationTime = dirent.CreationTime.AsDateTime();
+                DateTime lastWriteTime = dirent.LastWriteTime.AsDateTime();
+                DateTime lastAccessTime = dirent.LastAccessTime.AsDateTime();
 
                 string sizeStr = "";
                 if (!dirent.IsDirectory())
@@ -503,8 +494,8 @@ namespace FATXTools
 
             if (volume != null)
             {
-                var clusterMapDialog = new ClusterMapForm((int)volume.MaxClusters);
-                clusterMapDialog.Show();
+                //var clusterMapDialog = new ClusterMapForm((int)volume.MaxClusters);
+                //clusterMapDialog.Show();
             }
         }
     }

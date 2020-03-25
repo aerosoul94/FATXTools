@@ -52,6 +52,10 @@ namespace FATX
             {
                 Dump(child, path);
             }
+
+            Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
         private void DumpFile(DirectoryEntry dirent, string path)
@@ -72,6 +76,10 @@ namespace FATX
                     file.Write(buf, 0, (int)read);
                 }
             }
+
+            File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
         public void Dump(DirectoryEntry dirent, string path)

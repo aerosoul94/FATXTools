@@ -27,6 +27,7 @@ namespace FATX
     public class TimeStamp
     {
         private uint _Time;
+        private DateTime? _DateTime;
 
         public TimeStamp(uint time)
         {
@@ -60,6 +61,22 @@ namespace FATX
         public virtual int Second
         {
             get { return (int)((this._Time & 0x1F) * 2); }
+        }
+
+        public DateTime AsDateTime()
+        {
+            if (this._DateTime.HasValue)
+            {
+                return this._DateTime.Value;
+            }
+            else
+            {
+                _DateTime = new DateTime(
+                    this.Year, this.Month, 
+                    this.Day, this.Hour, 
+                    this.Minute, this.Second);
+                return _DateTime.Value;
+            }
         }
     }
 }

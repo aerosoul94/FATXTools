@@ -272,6 +272,10 @@ namespace FATX
                     bytesLeft -= writeSize;
                 }
             }
+
+            File.SetCreationTime(path, file.CreationTime.AsDateTime());
+            File.SetLastWriteTime(path, file.LastWriteTime.AsDateTime());
+            File.SetLastAccessTime(path, file.LastAccessTime.AsDateTime());
         }
 
         public void DumpDirectory(string path, DirectoryEntry dirent)
@@ -285,6 +289,10 @@ namespace FATX
             {
                 DumpDirent(path, child);
             }
+
+            Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
         public void DumpDirent(string path, DirectoryEntry dirent)
