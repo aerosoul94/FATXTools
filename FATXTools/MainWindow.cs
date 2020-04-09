@@ -289,6 +289,11 @@ namespace FATXTools
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            if (treeView1.Nodes.Count == 0)
+            {
+                return;
+            }
+
             if (taskProgress != null)
             {
                 MessageBox.Show("Must wait for current task to finish!");
@@ -318,6 +323,11 @@ namespace FATXTools
 
         private void toolStripMenuItem2_Click(object sender, EventArgs e)
         {
+            if (treeView1.Nodes.Count == 0)
+            {
+                return;
+            }
+
             if (taskProgress != null)
             {
                 MessageBox.Show("Must wait for current task to finish!");
@@ -389,6 +399,11 @@ namespace FATXTools
 
         private void toolStripMenuItem3_Click(object sender, EventArgs e)
         {
+            if (treeView1.Nodes.Count == 0)
+            {
+                return;
+            }
+
             NodeTag nodeTag = (NodeTag)treeView1.SelectedNode.Tag;
             Volume volume = null;
             switch (nodeTag.Type)
@@ -481,6 +496,11 @@ namespace FATXTools
 
         private void toolStripMenuItem7_Click(object sender, EventArgs e)
         {
+            if (treeView1.Nodes.Count == 0)
+            {
+                return;
+            }
+
             NodeTag nodeTag = (NodeTag)treeView1.SelectedNode.Tag;
             Volume volume = null;
             switch (nodeTag.Type)
