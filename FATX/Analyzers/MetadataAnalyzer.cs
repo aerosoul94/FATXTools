@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace FATX
 {
@@ -10,6 +11,8 @@ namespace FATX
         private Volume _volume;
         private long _interval;
         private long _length;
+
+        private int _currentYear;
 
         private List<DirectoryEntry> _dirents = new List<DirectoryEntry>();
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
@@ -30,16 +33,109 @@ namespace FATX
             this._volume = volume;
             this._interval = interval;
             this._length = length;
+
+            this._currentYear = DateTime.Now.Year;
         }
 
         public List<DirectoryEntry> Analyze(BackgroundWorker worker)
         {
+            var sw = new Stopwatch();
+            sw.Start();
             RecoverMetadata(worker);
+            sw.Stop();
+            Console.WriteLine($"Execution Time: {sw.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {_dirents.Count} dirents.");
             LinkFileSystem(worker);
 
             return _root;
         }
 
+        /// <summary>
+        /// Searches for dirent's.
+        /// </summary>
+        /// <param name="worker"></param>
+        private void RecoverMetadata(BackgroundWorker worker)
+        {
+            var maxClusters = _length / _interval;
+            for (uint cluster = 1; cluster < maxClusters; cluster++)
+            {
+                var data = _volume.ReadCluster(cluster);
+                var clusterOffset = (cluster - 1) * _interval;
+                for (int i = 0; i < 256; i++)
+                {
+                    var direntOffset = (i * 0x40);
+                    try
+                    {
+                        DirectoryEntry dirent = new DirectoryEntry(_volume, data, direntOffset);
+
+                        if (IsValidDirent(dirent))
+                        {
+                            Console.WriteLine(String.Format("0x{0:X8}: {1}", clusterOffset + direntOffset, dirent.FileName));
+                            dirent.SetCluster(cluster);
+                            //dirent.Offset = direntOffset;
+                            _dirents.Add(dirent);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        Console.WriteLine(e.StackTrace);
+                    }
+                }
+
+                if ((cluster % 12) == 0)
+                {
+                    worker.ReportProgress((int)(cluster));
+                }
+            }
+        }
+
+        private void FindChildren(DirectoryEntry parent)
+        {
+            //var chainMap = _volume.GetClusterChain(parent.FirstCluster);
+            var chainMap = new List<uint>() { parent.FirstCluster };
+            foreach (var child in _dirents)
+            {
+                if (chainMap.Contains(child.GetCluster()))
+                {
+                    if (child.HasParent())
+                    {
+                        Console.WriteLine("{0} already has a parent", child.FileName);
+                    }
+                    parent.AddChild(child);
+                    child.SetParent(parent);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Links all dirent's with their child dirent's.
+        /// </summary>
+        /// <param name="worker"></param>
+        private void LinkFileSystem(BackgroundWorker worker)
+        {
+            foreach (var dirent in _dirents)
+            {
+                if (dirent.IsDirectory())
+                {
+                    FindChildren(dirent);
+                }
+            }
+
+            foreach (var dirent in _dirents)
+            {
+                if (!dirent.HasParent())
+                {
+                    _root.Add(dirent);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Dump a directory to path.
+        /// </summary>
+        /// <param name="dirent"></param>
+        /// <param name="path"></param>
         private void DumpDirectory(DirectoryEntry dirent, string path)
         {
             path = path + "/" + dirent.FileName;
@@ -58,6 +154,11 @@ namespace FATX
             Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
+        /// <summary>
+        /// Dump a file to path.
+        /// </summary>
+        /// <param name="dirent"></param>
+        /// <param name="path"></param>
         private void DumpFile(DirectoryEntry dirent, string path)
         {
             path = path + "/" + dirent.FileName;
@@ -82,6 +183,11 @@ namespace FATX
             File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
+        /// <summary>
+        /// Dumps a DirectoryEntry to path.
+        /// </summary>
+        /// <param name="dirent"></param>
+        /// <param name="path"></param>
         public void Dump(DirectoryEntry dirent, string path)
         {
             if (dirent.IsDirectory())
@@ -94,93 +200,25 @@ namespace FATX
             }
         }
 
-        public List<DirectoryEntry> GetRoot()
+        /// <summary>
+        /// Get the recovered root dirent's.
+        /// </summary>
+        /// <returns></returns>
+        public List<DirectoryEntry> GetRootDirectory()
         {
             return _root;
         }
 
-        private void RecoverMetadata(BackgroundWorker worker)
+        /// <summary>
+        /// Validate FileNameBytes.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        private bool IsValidFileNameBytes(byte[] bytes)
         {
-            var maxClusters = _length / _interval;
-            for (long cluster = 0; cluster < maxClusters; cluster++)
+            foreach (byte b in bytes)
             {
-                var clusterOffset = cluster * _interval;
-                for (int i = 0; i < 256; i++)
-                {
-                    var direntOffset = clusterOffset + (i * 0x40);
-                    _volume.SeekFileArea(direntOffset);
-                    try
-                    {
-                        DirectoryEntry dirent = new DirectoryEntry(_volume);
-
-                        if (IsValidDirent(dirent))
-                        {
-                            Console.WriteLine(String.Format("0x{0:X8}: {1}", direntOffset, dirent.FileName));
-                            dirent.SetCluster((uint)cluster + 1);
-                            dirent.Offset = direntOffset;
-                            _dirents.Add(dirent);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                        Console.WriteLine(e.StackTrace);
-                    }
-                }
-
-                if ((cluster % 12) == 0)
-                {
-                    worker.ReportProgress((int)(cluster));
-                }
-            }
-        }
-
-        private void FindChildren(DirectoryEntry parent)
-        {
-            var chainMap = _volume.GetClusterChain(parent);
-            foreach (var child in _dirents)
-            {
-                if (chainMap.Contains(child.GetCluster()))
-                {
-                    if (child.HasParent())
-                    {
-                        Console.WriteLine("{0} already has a parent", child.FileName);
-                    }
-                    parent.AddChild(child);
-                    child.SetParent(parent);
-                }
-            }
-        }
-
-        private void LinkFileSystem(BackgroundWorker worker)
-        {
-            foreach (var dirent in _dirents)
-            {
-                if (dirent.IsDirectory())
-                {
-                    FindChildren(dirent);
-                }
-            }
-
-            foreach (var dirent in _dirents)
-            {
-                if (!dirent.HasParent())
-                {
-                    _root.Add(dirent);
-                }
-            }
-        }
-
-        private bool IsValidFileName(string fileName)
-        {
-            if (fileName == null)
-            {
-                return false;
-            }
-
-            foreach (char c in fileName)
-            {
-                if (VALID_CHARS.IndexOf(c) == -1)
+                if (VALID_CHARS.IndexOf((char)b) == -1)
                 {
                     return false;
                 }
@@ -189,6 +227,13 @@ namespace FATX
             return true;
         }
 
+        private const int ValidAttributes = 55;
+
+        /// <summary>
+        /// Validate FileAttributes.
+        /// </summary>
+        /// <param name="attributes"></param>
+        /// <returns></returns>
         private bool IsValidAttributes(FileAttribute attributes)
         {
             if (attributes == 0)
@@ -204,6 +249,27 @@ namespace FATX
             return true;
         }
 
+        private int[] MaxDays =
+        {
+              31, // Jan
+              29, // Feb
+              31, // Mar
+              30, // Apr
+              31, // May
+              30, // Jun
+              31, // Jul
+              31, // Aug
+              30, // Sep
+              31, // Oct
+              30, // Nov
+              31  // Dec
+        };
+
+        /// <summary>
+        /// Validate a TimeStamp.
+        /// </summary>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
         private bool IsValidDateTime(TimeStamp dateTime)
         {
             if (dateTime == null)
@@ -212,17 +278,32 @@ namespace FATX
             }
 
             // TODO: create settings to customize these specifics
-            if (dateTime.Year > DateTime.Now.Year)
+            if (dateTime.Year > _currentYear)
             {
                 return false;
             }
 
-            try
+            if (dateTime.Month > 12 || dateTime.Month < 1)
             {
-                new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, 
-                             dateTime.Hour, dateTime.Minute, dateTime.Second);
+                return false;
             }
-            catch (Exception e)
+
+            if (dateTime.Day > MaxDays[dateTime.Month - 1])
+            {
+                return false;
+            }
+
+            if (dateTime.Hour > 23 || dateTime.Hour < 0)
+            {
+                return false;
+            }
+
+            if (dateTime.Minute > 59 || dateTime.Minute < 0)
+            {
+                return false;
+            }
+
+            if (dateTime.Second > 59 || dateTime.Second < 0)
             {
                 return false;
             }
@@ -230,6 +311,11 @@ namespace FATX
             return true;
         }
 
+        /// <summary>
+        /// Validate FirstCluster.
+        /// </summary>
+        /// <param name="firstCluster"></param>
+        /// <returns></returns>
         private bool IsValidFirstCluster(uint firstCluster)
         {
             if (firstCluster > _volume.MaxClusters)
@@ -237,17 +323,52 @@ namespace FATX
                 return false;
             }
 
+            if (firstCluster == 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
+        /// <summary>
+        /// Validate FileNameLength.
+        /// </summary>
+        /// <param name="fileNameLength"></param>
+        /// <returns></returns>
+        private bool IsValidFileNameLength(uint fileNameLength)
+        {
+            if (fileNameLength == 0x00 || fileNameLength == 0x01 || fileNameLength == 0xff)
+            {
+                return false;
+            }
+
+            if (fileNameLength > 0x2a && fileNameLength != 0xe5)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Check if dirent is actually a dirent.
+        /// </summary>
+        /// <param name="dirent"></param>
+        /// <returns></returns>
         private bool IsValidDirent(DirectoryEntry dirent)
         {
+            if (!IsValidFileNameLength(dirent.FileNameLength))
+            {
+                return false;
+            }
+
             if (!IsValidFirstCluster(dirent.FirstCluster))
             {
                 return false;
             }
 
-            if (!IsValidFileName(dirent.FileName))
+            if (!IsValidFileNameBytes(dirent.FileNameBytes))
             {
                 return false;
             }

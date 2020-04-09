@@ -16,7 +16,7 @@ namespace FATXTools
             InitializeComponent();
 
             this._analyzer = analyzer;
-            PopulateResults(analyzer.GetRoot());
+            PopulateResults(analyzer.GetRootDirectory());
         }
 
         enum NodeType

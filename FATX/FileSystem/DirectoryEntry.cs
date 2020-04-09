@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace FATX
 {
@@ -35,50 +38,45 @@ namespace FATX
         private uint _cluster;
         private long _offset;
 
-        public DirectoryEntry(Volume volume)
+        public DirectoryEntry(Volume volume, byte[] data, int offset)
         {
-            this._offset = volume.Reader.Position;
-            this._fileNameLength = volume.Reader.ReadByte();
-            this._fileAttributes = volume.Reader.ReadByte();
-            this._fileNameBytes = volume.Reader.ReadBytes(42);
-            this._firstCluster = volume.Reader.ReadUInt32();
-            this._fileSize = volume.Reader.ReadUInt32();
-            this._creationTimeAsInt = volume.Reader.ReadUInt32();
-            this._lastWriteTimeAsInt = volume.Reader.ReadUInt32();
-            this._lastAccessTimeAsInt = volume.Reader.ReadUInt32();
-
             this._volume = volume;
             this._parent = null;
 
-            if (_fileNameLength == Constants.DirentNeverUsed ||
-                _fileNameLength == Constants.DirentNeverUsed2)
-                return;
+            this._offset = volume.Reader.Position;
+            this._fileNameLength = data[offset+0];
+            this._fileAttributes = data[offset+1];
 
-            this._creationTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._creationTimeAsInt);
-            this._lastWriteTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._lastWriteTimeAsInt);
-            this._lastAccessTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._lastAccessTimeAsInt);
+            this._fileNameBytes = new byte[42];
+            Buffer.BlockCopy(data, offset + 2, this._fileNameBytes, 0, 42);
 
-            if (_fileNameLength == Constants.DirentDeleted)
+            if (volume.Platform == VolumePlatform.Xbox)
             {
-                var trueFileNameLength = Array.IndexOf(_fileNameBytes, (byte)0xff);
-                if (trueFileNameLength == -1)
-                {
-                    trueFileNameLength = 42;
-                }
-                _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, trueFileNameLength);
+                this._firstCluster = BitConverter.ToUInt32(data, offset + 0x2C);
+                this._fileSize = BitConverter.ToUInt32(data, offset + 0x30);
+                this._creationTimeAsInt = BitConverter.ToUInt32(data, offset + 0x34);
+                this._lastWriteTimeAsInt = BitConverter.ToUInt32(data, offset + 0x38);
+                this._lastAccessTimeAsInt = BitConverter.ToUInt32(data, offset + 0x3C);
+                this._creationTime = new XTimeStamp(this._creationTimeAsInt);
+                this._lastWriteTime = new XTimeStamp(this._lastWriteTimeAsInt);
+                this._lastAccessTime = new XTimeStamp(this._lastAccessTimeAsInt);
             }
-            else
+            else if (volume.Platform == VolumePlatform.X360)
             {
-                if (_fileNameLength > 42)
-                {
-                    // Warn user!
-                    //Console.WriteLine("Invalid file name length!");
-                    _fileNameLength = 42;
-                }
-
-                _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, _fileNameLength);
+                Array.Reverse(data, offset + 0x2C, 4);
+                this._firstCluster = BitConverter.ToUInt32(data, offset + 0x2C);
+                Array.Reverse(data, offset + 0x30, 4);
+                this._fileSize = BitConverter.ToUInt32(data, offset + 0x30);
+                Array.Reverse(data, offset + 0x34, 4);
+                this._creationTimeAsInt = BitConverter.ToUInt32(data, offset + 0x34);
+                Array.Reverse(data, offset + 0x38, 4);
+                this._lastWriteTimeAsInt = BitConverter.ToUInt32(data, offset + 0x38);
+                Array.Reverse(data, offset + 0x3C, 4);
+                this._lastAccessTimeAsInt = BitConverter.ToUInt32(data, offset + 0x3C);
+                this._creationTime = new X360TimeStamp(this._creationTimeAsInt);
+                this._lastWriteTime = new X360TimeStamp(this._lastWriteTimeAsInt);
+                this._lastAccessTime = new X360TimeStamp(this._lastAccessTimeAsInt);
             }
-
         }
 
         public bool IsDirectory()
@@ -103,7 +101,34 @@ namespace FATX
 
         public string FileName
         {
-            get { return _fileName; }
+            get 
+            { 
+                if (string.IsNullOrEmpty(_fileName))
+                {
+                    if (_fileNameLength == Constants.DirentDeleted)
+                    {
+                        var trueFileNameLength = Array.IndexOf(_fileNameBytes, (byte)0xff);
+                        if (trueFileNameLength == -1)
+                        {
+                            trueFileNameLength = 42;
+                        }
+                        _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, trueFileNameLength);
+                    }
+                    else
+                    {
+                        if (_fileNameLength > 42)
+                        {
+                            // Warn user!
+                            //Console.WriteLine("Invalid file name length!");
+                            _fileNameLength = 42;
+                        }
+
+                        _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, _fileNameLength);
+                    }
+                }
+
+                return _fileName;
+            }
         }
 
         public byte[] FileNameBytes

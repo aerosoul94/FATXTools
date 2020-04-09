@@ -4,6 +4,12 @@ using System.Collections.Generic;
 
 namespace FATX
 {
+    public enum VolumePlatform
+    {
+        Xbox,
+        X360
+    }
+
     public class Volume
     {
         private readonly DriveReader _reader;
@@ -28,7 +34,7 @@ namespace FATX
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
         private uint[] _fileAllocationTable;
         private long _fileAreaLength;
-        public Type _timeStampFormat;
+        private VolumePlatform _platform;
 
         public Volume(DriveReader reader, string name, long offset, long length)
         {
@@ -37,8 +43,8 @@ namespace FATX
             this._partitionLength = length;
             this._partitionOffset = offset;
 
-            this._timeStampFormat = (reader.ByteOrder == ByteOrder.Big) ?
-                typeof(X360TimeStamp) : typeof(XTimeStamp);
+            this._platform = (reader.ByteOrder == ByteOrder.Big) ?
+                VolumePlatform.X360 : VolumePlatform.Xbox;
         }
 
         public string Name
@@ -94,6 +100,11 @@ namespace FATX
         public List<DirectoryEntry> GetRoot()
         {
             return _root;
+        }
+
+        public VolumePlatform Platform
+        {
+            get { return _platform; }
         }
 
         /// <summary>
@@ -198,7 +209,7 @@ namespace FATX
 
             for (int i = 0; i < 256; i++)
             {
-                DirectoryEntry dirent = new DirectoryEntry(this);
+                DirectoryEntry dirent = new DirectoryEntry(this, data, (i * 0x40));
                 if (dirent.FileNameLength == Constants.DirentNeverUsed ||
                     dirent.FileNameLength == Constants.DirentNeverUsed2)
                 {
