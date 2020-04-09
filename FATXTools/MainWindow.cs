@@ -16,6 +16,8 @@ namespace FATXTools
     {
         AnalyzerProgress taskProgress;
 
+        private Controls.ClusterViewer clusterViewer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -472,6 +474,9 @@ namespace FATXTools
             page.Controls.Add(resultsControl);
             tabControl1.TabPages.Add(page);
             tabControl1.SelectedTab = page;
+            // TODO: Handle a situation where clusterViewer does not yet exist.
+            // TODO: Will need to move data map cell info to a new class.
+            //clusterViewer.UpdateClusters(analyzer.GetRoot());
         }
 
         private void toolStripMenuItem7_Click(object sender, EventArgs e)
@@ -494,7 +499,12 @@ namespace FATXTools
 
             if (volume != null)
             {
-                // TODO: Add cluster viewer
+                var page = new TabPage(volume.Name + " Cluster Map");
+                clusterViewer = new Controls.ClusterViewer(volume);
+                clusterViewer.Dock = DockStyle.Fill;
+                page.Controls.Add(clusterViewer);
+                tabControl1.TabPages.Add(page);
+                tabControl1.SelectedTab = page;
             }
         }
     }

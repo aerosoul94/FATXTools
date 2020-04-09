@@ -77,11 +77,15 @@
     <Compile Include="Controls\CarverResults.Designer.cs">
       <DependentUpon>CarverResults.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controls\FileExplorer.cs">
+    <Compile Include="Controls\DataMap.cs" />
+    <Compile Include="Controls\DataMap.Designer.cs">
+      <DependentUpon>DataMap.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\ClusterViewer.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controls\FileExplorer.Designer.cs">
-      <DependentUpon>FileExplorer.cs</DependentUpon>
+    <Compile Include="Controls\ClusterViewer.Designer.cs">
+      <DependentUpon>ClusterViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="DeviceSelector.cs">
       <SubType>Form</SubType>
@@ -92,6 +96,12 @@
     <Compile Include="DiskTypes\CompressedImage.cs" />
     <Compile Include="DiskTypes\PhysicalDisk.cs" />
     <Compile Include="DiskTypes\RawImage.cs" />
+    <Compile Include="Controls\FileExplorer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\FileExplorer.Designer.cs">
+      <DependentUpon>FileExplorer.cs</DependentUpon>
+    </Compile>
     <Compile Include="FileInfo.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -117,6 +127,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\CarverResults.resx">
       <DependentUpon>CarverResults.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\DataMap.resx">
+      <DependentUpon>DataMap.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ClusterViewer.resx">
+      <DependentUpon>ClusterViewer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\FileExplorer.resx">
       <DependentUpon>FileExplorer.cs</DependentUpon>
