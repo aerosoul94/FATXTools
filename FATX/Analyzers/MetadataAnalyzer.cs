@@ -137,7 +137,7 @@ namespace FATX
 
         private void FindChildren(DirectoryEntry parent)
         {
-            var chainMap = _volume.GetClusterChain(parent.FirstCluster);
+            var chainMap = _volume.GetClusterChain(parent);
             foreach (var child in _dirents)
             {
                 if (chainMap.Contains(child.GetCluster()))

@@ -20,30 +20,35 @@ namespace FATX
 
         private uint _bytesPerCluster;
         private uint _maxClusters;
-        private uint BytesPerFat;
-        private bool IsFat16;
-        private uint FatByteOffset;
-        private uint FileAreaByteOffset;
+        private uint _bytesPerFat;
+        private bool _isFat16;
+        private uint _fatByteOffset;
+        private uint _fileAreaByteOffset;
 
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
         private uint[] _fileAllocationTable;
         private long _fileAreaLength;
         public Type _timeStampFormat;
 
-        public Volume(DriveReader drive, string name, long offset, long length)
+        public Volume(DriveReader reader, string name, long offset, long length)
         {
-            this._reader = drive;
+            this._reader = reader;
             this._partitionName = name;
             this._partitionLength = length;
             this._partitionOffset = offset;
 
-            this._timeStampFormat = (drive.ByteOrder == ByteOrder.Big) ?
+            this._timeStampFormat = (reader.ByteOrder == ByteOrder.Big) ?
                 typeof(X360TimeStamp) : typeof(XTimeStamp);
         }
 
         public string Name
         {
             get { return _partitionName; }
+        }
+
+        public uint RootDirFirstCluster
+        {
+            get { return _rootDirFirstCluster; }
         }
 
         public long Length
@@ -71,23 +76,29 @@ namespace FATX
             get { return _reader; }
         }
 
+        public uint[] FileAllocationTable
+        {
+            get { return _fileAllocationTable; }
+        }
+
+        public long FileAreaByteOffset
+        {
+            get { return _fileAreaByteOffset; }
+        }
+
+        public long Offset
+        {
+            get { return _partitionOffset; }
+        }
+
         public List<DirectoryEntry> GetRoot()
         {
             return _root;
         }
 
-        public void SeekFileArea(long offset, SeekOrigin origin = SeekOrigin.Begin)
-        {
-            offset += FileAreaByteOffset + _partitionOffset;
-            _reader.Seek(offset, origin);
-        }
-
-        public void SeekToCluster(uint cluster)
-        {
-            var offset = ClusterToPhysicalOffset(cluster);
-            _reader.Seek(offset);
-        }
-
+        /// <summary>
+        /// Loads the FATX file system.
+        /// </summary>
         public void Mount()
         {
             // Read and verify volume metadata.
@@ -95,11 +106,13 @@ namespace FATX
             CalculateOffsets();
             ReadFileAllocationTable();
 
-            long RootDirentStreamOffset = ClusterToPhysicalOffset(_rootDirFirstCluster);
-            _root = ReadDirectoryStream(RootDirentStreamOffset);
+            _root = ReadDirectoryStream(_rootDirFirstCluster);
             PopulateDirentStream(_root, _rootDirFirstCluster);
         }
 
+        /// <summary>
+        /// Read and verifies the FATX header.
+        /// </summary>
         private void ReadVolumeMetadata()
         {
             _reader.Seek(_partitionOffset);
@@ -115,6 +128,9 @@ namespace FATX
             }
         }
 
+        /// <summary>
+        /// Calculate offsets needed to perform work on this file system.
+        /// </summary>
         private void CalculateOffsets()
         {
             _bytesPerCluster = _sectorsPerCluster * Constants.SectorSize;
@@ -125,29 +141,32 @@ namespace FATX
             if (_maxClusters < 0xfff0)
             {
                 bytesPerFat = _maxClusters * 2;
-                IsFat16 = true;
+                _isFat16 = true;
             }
             else
             {
                 bytesPerFat = _maxClusters * 4;
-                IsFat16 = false;
+                _isFat16 = false;
             }
 
-            BytesPerFat = (bytesPerFat + (Constants.PageSize - 1)) &
+            _bytesPerFat = (bytesPerFat + (Constants.PageSize - 1)) &
                 ~(Constants.PageSize - 1);
 
-            this.FatByteOffset = Constants.ReservedBytes;
-            this.FileAreaByteOffset = this.FatByteOffset + this.BytesPerFat;
+            this._fatByteOffset = Constants.ReservedBytes;
+            this._fileAreaByteOffset = this._fatByteOffset + this._bytesPerFat;
             this._fileAreaLength = this.Length - this.FileAreaByteOffset;
         }
 
+        /// <summary>
+        /// Read either the 16 or 32 bit file allocation table.
+        /// </summary>
         private void ReadFileAllocationTable()
         {
             _fileAllocationTable = new uint[_maxClusters];
 
-            var fatOffset = ByteOffsetToPhysicalOffset(this.FatByteOffset);
+            var fatOffset = ByteOffsetToPhysicalOffset(this._fatByteOffset);
             _reader.Seek(fatOffset);
-            if (this.IsFat16)
+            if (this._isFat16)
             {
                 for (int i = 0; i < _maxClusters; i++)
                 {
@@ -166,11 +185,16 @@ namespace FATX
             }
         }
 
-        private List<DirectoryEntry> ReadDirectoryStream(long offset)
+        /// <summary>
+        /// Read a single directory stream.
+        /// </summary>
+        /// <param name="cluster"></param>
+        /// <returns></returns>
+        private List<DirectoryEntry> ReadDirectoryStream(uint cluster)
         {
             List<DirectoryEntry> stream = new List<DirectoryEntry>();
 
-            _reader.Seek(offset);
+            byte[] data = ReadCluster(cluster);
 
             for (int i = 0; i < 256; i++)
             {
@@ -188,6 +212,12 @@ namespace FATX
             return stream;
         }
 
+        /// <summary>
+        /// Iterates dirent's from stream and populates directories with its child
+        /// dirents. 
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="clusterIndex"></param>
         private void PopulateDirentStream(List<DirectoryEntry> stream, uint clusterIndex)
         {
             foreach (DirectoryEntry dirent in stream)
@@ -197,14 +227,13 @@ namespace FATX
 
                 if (dirent.IsDirectory() && !dirent.IsDeleted())
                 {
-                    List<uint> chainMap = GetClusterChain(dirent.FirstCluster);
+                    List<uint> chainMap = GetClusterChain(dirent);
 
                     foreach (uint cluster in chainMap)
                     {
-                        List<DirectoryEntry> direntStream = ReadDirectoryStream(
-                            ClusterToPhysicalOffset(cluster));
+                        List<DirectoryEntry> direntStream = ReadDirectoryStream(cluster);
 
-                        dirent.AddDirentStreamToThisDirectory(direntStream);
+                        dirent.AddChildren(direntStream);
 
                         PopulateDirentStream(direntStream, cluster);
                     }
@@ -212,12 +241,68 @@ namespace FATX
             }
         }
 
-        public List<uint> GetClusterChain(uint firstCluster)
+        /// <summary>
+        /// Seek to any offset in the file area.
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <param name="origin"></param>
+        public void SeekFileArea(long offset, SeekOrigin origin = SeekOrigin.Begin)
         {
+            // TODO: Check for invalid offset
+            offset += FileAreaByteOffset + _partitionOffset;
+            _reader.Seek(offset, origin);
+        }
+
+        /// <summary>
+        /// Seek to a cluster.
+        /// </summary>
+        /// <param name="cluster"></param>
+        public void SeekToCluster(uint cluster)
+        {
+            var offset = ClusterToPhysicalOffset(cluster);
+            _reader.Seek(offset);
+        }
+
+        /// <summary>
+        /// Reads a cluster and returns the data.
+        /// </summary>
+        /// <param name="cluster"></param>
+        /// <returns></returns>
+        public byte[] ReadCluster(uint cluster)
+        {
+            var clusterOffset = ClusterToPhysicalOffset(cluster);
+            _reader.Seek(clusterOffset);
+            byte[] clusterData = new byte[_bytesPerCluster];
+            _reader.Read(clusterData, (int)_bytesPerCluster);
+            return clusterData;
+        }
+
+        /// <summary>
+        /// Get a cluster chain for a dirent from the file allocation table.
+        /// </summary>
+        /// <param name="dirent">The DirectoryEntry to get the cluster chain for.</param>
+        /// <returns></returns>
+        public List<uint> GetClusterChain(DirectoryEntry dirent)
+        {
+            var firstCluster = dirent.FirstCluster;
             List<uint> clusterChain = new List<uint>();
+
+            if (firstCluster == 0)
+            {
+                // 0 is reserved!
+                Console.WriteLine("Invalid cluster index!");
+                return clusterChain;
+            }
+            
             clusterChain.Add(firstCluster);
+            
+            if (dirent.IsDeleted())
+            {
+                return clusterChain;
+            }
+
             uint fatEntry = firstCluster;
-            uint reservedIndexes = (IsFat16) ? Constants.Cluster16Reserved : Constants.ClusterReserved;
+            uint reservedIndexes = (_isFat16) ? Constants.Cluster16Reserved : Constants.ClusterReserved;
             while (true)
             {
                 fatEntry = _fileAllocationTable[fatEntry];
@@ -242,21 +327,17 @@ namespace FATX
             return clusterChain;
         }
 
-        public byte[] ReadCluster(uint cluster)
-        {
-            var clusterOffset = ClusterToPhysicalOffset(cluster);
-            _reader.Seek(clusterOffset);
-            byte[] clusterData = new byte[_bytesPerCluster];
-            _reader.Read(clusterData, (int)_bytesPerCluster);
-            return clusterData;
-        }
-
-        public void DumpFile(string path, DirectoryEntry file)
+        /// <summary>
+        /// Dump a file to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="file"></param>
+        private void DumpFile(string path, DirectoryEntry file)
         {
             path = path + "/" + file.FileName;
             Console.WriteLine(path);
 
-            List<uint> chainMap = GetClusterChain(file.FirstCluster);
+            List<uint> chainMap = GetClusterChain(file);
 
             using (FileStream outFile = File.OpenWrite(path))
             {
@@ -278,7 +359,12 @@ namespace FATX
             File.SetLastAccessTime(path, file.LastAccessTime.AsDateTime());
         }
 
-        public void DumpDirectory(string path, DirectoryEntry dirent)
+        /// <summary>
+        /// Dump a directory to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="dirent"></param>
+        private void DumpDirectory(string path, DirectoryEntry dirent)
         {
             path = path + "/" + dirent.FileName;
             Console.WriteLine(path);
@@ -295,6 +381,11 @@ namespace FATX
             Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
         }
 
+        /// <summary>
+        /// Dump a dirent to path.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="dirent"></param>
         public void DumpDirent(string path, DirectoryEntry dirent)
         {
             if (dirent.IsDeleted())
@@ -310,16 +401,26 @@ namespace FATX
             }
             else
             {
-                // dump single file
                 DumpFile(path, dirent);
             }
         }
 
+        /// <summary>
+        /// Convert a byte offset (relative to the volume) to an offset into the
+        /// image file it belongs to.
+        /// </summary>
+        /// <param name="offset"></param>
+        /// <returns></returns>
         private long ByteOffsetToPhysicalOffset(long offset)
         {
             return this._partitionOffset + offset;
         }
 
+        /// <summary>
+        /// Convert a cluster index to an offset into the image file it belongs to.
+        /// </summary>
+        /// <param name="cluster"></param>
+        /// <returns></returns>
         public long ClusterToPhysicalOffset(uint cluster)
         {
             var physicalOffset = ByteOffsetToPhysicalOffset(FileAreaByteOffset);

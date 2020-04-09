@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using System.IO;
 
 namespace FATX
 {
@@ -17,7 +16,6 @@ namespace FATX
 
     public class DirectoryEntry
     {
-        private byte[] _rawBytes;
         private byte _fileNameLength;
         private byte _fileAttributes;
         private byte[] _fileNameBytes;
@@ -28,7 +26,7 @@ namespace FATX
         private uint _lastAccessTimeAsInt;
         private TimeStamp _creationTime;
         private TimeStamp _lastWriteTime;
-        private TimeStamp _lastAccesTime;
+        private TimeStamp _lastAccessTime;
         private string _fileName;
 
         private Volume _volume;
@@ -39,9 +37,6 @@ namespace FATX
 
         public DirectoryEntry(Volume volume)
         {
-            //Console.WriteLine(volume.Reader.Position.ToString("x"));
-            //this._rawBytes = volume.Reader.ReadBytes(0x40);
-            //volume.Reader.Seek(-0x40, SeekOrigin.Current);
             this._offset = volume.Reader.Position;
             this._fileNameLength = volume.Reader.ReadByte();
             this._fileAttributes = volume.Reader.ReadByte();
@@ -61,7 +56,7 @@ namespace FATX
 
             this._creationTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._creationTimeAsInt);
             this._lastWriteTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._lastWriteTimeAsInt);
-            this._lastAccesTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._lastAccessTimeAsInt);
+            this._lastAccessTime = (TimeStamp)Activator.CreateInstance(volume._timeStampFormat, this._lastAccessTimeAsInt);
 
             if (_fileNameLength == Constants.DirentDeleted)
             {
@@ -111,6 +106,11 @@ namespace FATX
             get { return _fileName; }
         }
 
+        public byte[] FileNameBytes
+        {
+            get { return _fileNameBytes; }
+        }
+
         public uint FirstCluster
         {
             get { return _firstCluster; }
@@ -133,7 +133,7 @@ namespace FATX
 
         public TimeStamp LastAccessTime
         {
-            get { return _lastAccesTime; }
+            get { return _lastAccessTime; }
         }
 
         public long Offset
@@ -172,42 +172,39 @@ namespace FATX
             return this._parent != null;
         }
 
+        /// <summary>
+        /// Get all dirents from this directory.
+        /// </summary>
+        /// <returns></returns>
         public List<DirectoryEntry> GetChildren()
         {
             if (!this.IsDirectory())
             {
-                Console.WriteLine("UH OH! Trying to get children from non directory.");
+                Console.WriteLine("Trying to get children from non directory.");
             }
 
             return _children;
         }
 
+        /// <summary>
+        /// Add a single dirent to this directory.
+        /// </summary>
+        /// <param name="child"></param>
         public void AddChild(DirectoryEntry child)
         {
             if (!this.IsDirectory())
             {
-                Console.WriteLine("UH OH! Trying to add child to non directory.");
+                Console.WriteLine("Trying to add child to non directory.");
             }
 
             _children.Add(child);
         }
 
-        public string GetFullPath()
-        {
-            DirectoryEntry parent = _parent;
-            List<string> ancestry = new List<string>();
-
-            while (parent != null)
-            {
-                ancestry.Add(parent.FileName);
-                parent = parent.GetParent();
-            }
-
-            ancestry.Reverse();
-            return String.Join("/", ancestry.ToArray());
-        }
-
-        public void AddDirentStreamToThisDirectory(List<DirectoryEntry> stream)
+        /// <summary>
+        /// Add list of dirents to this directory.
+        /// </summary>
+        /// <param name="children">List of dirents</param>
+        public void AddChildren(List<DirectoryEntry> children)
         {
             if (!IsDirectory())
             {
@@ -215,11 +212,37 @@ namespace FATX
                 return;
             }
 
-            foreach (DirectoryEntry dirent in stream)
+            foreach (DirectoryEntry dirent in children)
             {
                 dirent.SetParent(this);
                 _children.Add(dirent);
             }
+        }
+
+        /// <summary>
+        /// Get only the path of this dirent.
+        /// </summary>
+        /// <returns></returns>
+        public string GetPath()
+        {
+            List<string> ancestry = new List<string>();
+
+            for (DirectoryEntry parent = _parent; parent != null; parent = parent._parent)
+            {
+                ancestry.Add(parent.FileName);
+            }
+
+            ancestry.Reverse();
+            return String.Join("/", ancestry.ToArray());
+        }
+
+        /// <summary>
+        /// Get full path including file name.
+        /// </summary>
+        /// <returns></returns>
+        public string GetFullPath()
+        {
+            return GetPath() + "/" + FileName;
         }
     }
 }
