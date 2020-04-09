@@ -1,29 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Security.Principal;
 using System.IO;
-using FATXTools.DiskTypes;
+using System.Windows.Forms;
+using System.Collections.Generic;
 using FATX;
-using Microsoft.Win32.SafeHandles;
-using System.Text;
-using System.Threading.Tasks;
-using System.ComponentModel;
 
 namespace FATXTools
 {
-    public partial class MainWindow : Form
+    public partial class FileExplorer : UserControl
     {
-        AnalyzerProgress taskProgress;
+        //DriveReader _drive;
 
-        public MainWindow()
+        public FileExplorer()
         {
             InitializeComponent();
-            Console.SetOut(new LogWriter(this.textBox1));
-            Console.WriteLine("FATX-Tools v0.1");
-            Console.WriteLine();
         }
-
+        /*
         enum NodeType
         {
             Drive,
@@ -43,86 +34,34 @@ namespace FATXTools
             }
         }
 
-        public class LogWriter : TextWriter
+        public void AddDrive(DriveReader drive, string path)
         {
-            private TextBox textBox;
-            private delegate void SafeCallDelegate(string text);
-            public LogWriter(TextBox textBox)
-            {
-                this.textBox = textBox;
-            }
+            this._drive = drive;
 
-            public override void Write(char value)
-            {
-                textBox.Text += value;
-            }
+            var driveNode = treeView1.Nodes.Add(Path.GetFileName(path));
+            NodeTag driveTag = new NodeTag(null, NodeType.Drive);
+            driveNode.Tag = driveTag;
+            driveNode.ImageIndex = 2;
+            driveNode.SelectedImageIndex = 2;
 
-            public override void Write(string value)
+            foreach (Volume volume in drive.GetPartitions())
             {
-                textBox.AppendText(value);
-            }
+                var volumeNode = driveNode.Nodes.Add(volume.Name);
+                NodeTag nodeTag = new NodeTag(volume, NodeType.Partition);
+                volumeNode.Tag = nodeTag;
 
-            public override void WriteLine()
-            {
-                textBox.AppendText(NewLine);
-            }
-
-            public override void WriteLine(string value)
-            {
-                if (textBox.InvokeRequired)
+                try
                 {
-                    var d = new SafeCallDelegate(WriteLine);
-                    textBox.BeginInvoke(d, new object[] { value });
+                    volume.Mount();
+
+                    Console.WriteLine("Successfully mounted volume: {0}", volume.Name);
+                    PopulateTreeNodeDirectory(volumeNode, volume.GetRoot());
                 }
-                else
+                catch (Exception exception)
                 {
-                    textBox.AppendText(value + NewLine);
+                    Console.WriteLine(String.Format("Failed to mount partition {0}", volume.Name));
+                    Console.WriteLine(exception.Message);
                 }
-            }
-
-            public override Encoding Encoding
-            {
-                get { return Encoding.ASCII; }
-            }
-        }
-
-        private void openImageToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog ofd = new OpenFileDialog();
-            if (ofd.ShowDialog() == DialogResult.OK)
-            {
-                string fileName = ofd.FileName;
-
-                Console.WriteLine("Mounting drive: {0} ({1})", Path.GetFileName(fileName), fileName);
-                RawImage rawImage = new RawImage(fileName);
-
-                var driveNode = treeView1.Nodes.Add(Path.GetFileName(fileName));
-                NodeTag driveTag = new NodeTag(null, NodeType.Drive);
-                driveNode.Tag = driveTag;
-                driveNode.ImageIndex = 2;
-                driveNode.SelectedImageIndex = 2;
-
-                foreach (Volume volume in rawImage.GetPartitions())
-                {
-                    var volumeNode = driveNode.Nodes.Add(volume.Name);
-                    NodeTag nodeTag = new NodeTag(volume, NodeType.Partition);
-                    volumeNode.Tag = nodeTag;
-
-                    try
-                    {
-                        volume.Mount();
-
-                        Console.WriteLine("Successfully mounted volume: {0}", volume.Name);
-                        PopulateTreeNodeDirectory(volumeNode, volume.GetRoot());
-                    }
-                    catch (Exception exception)
-                    {
-                        Console.WriteLine(String.Format("Failed to mount partition {0}", volume.Name));
-                        Console.WriteLine(exception.Message);
-                    }
-                }
-
-                Console.WriteLine();
             }
         }
 
@@ -224,64 +163,6 @@ namespace FATXTools
                     break;
                 case NodeType.Drive:
                     return;
-            }
-        }
-
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show(
-                "Developed by aerosoul94\n" + 
-                "Source code: https://github.com/aerosoul94/FATXTools\n" + 
-                "Please report any bugs\n",
-                "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void openDeviceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var isAdmin = new WindowsPrincipal(WindowsIdentity.GetCurrent())
-                .IsInRole(WindowsBuiltInRole.Administrator);
-
-            if (!isAdmin)
-            {
-                MessageBox.Show("You must re-run this program with Administrator priveleges\n" + 
-                                "in order to read from physical drives.", 
-                                "Cannot perform operation", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            DeviceSelector ds = new DeviceSelector(this);
-            if (ds.ShowDialog() == DialogResult.OK)
-            {
-                SafeFileHandle handle = DeviceSelector.CreateFile(ds.SelectedDevice,
-                    FileAccess.Read,
-                    FileShare.None,
-                    IntPtr.Zero,
-                    FileMode.Open,
-                    0, IntPtr.Zero);
-                long length = DeviceSelector.GetDiskCapactity(handle);
-                PhysicalDisk disk = new PhysicalDisk(handle, length);
-                List<Volume> volumes = disk.GetPartitions();
-
-                var driveNode = treeView1.Nodes.Add(ds.SelectedDevice);
-                driveNode.ImageIndex = 2;
-                driveNode.SelectedImageIndex = 2;
-
-                foreach (Volume volume in disk.GetPartitions())
-                {
-                    var volumeNode = driveNode.Nodes.Add(volume.Name);
-
-                    try
-                    {
-                        volume.Mount();
-
-                        PopulateTreeNodeDirectory(volumeNode, volume.GetRoot());
-                    }
-                    catch (Exception exception)
-                    {
-                        Console.WriteLine(String.Format("Failed to mount partition {0}", volume.Name));
-                        Console.WriteLine(exception.Message);
-                    }
-                }
             }
         }
 
@@ -494,8 +375,9 @@ namespace FATXTools
 
             if (volume != null)
             {
-                // TODO: Add cluster viewer
+                //var clusterMapDialog = new ClusterMapForm((int)volume.MaxClusters);
+                //clusterMapDialog.Show();
             }
-        }
+        }*/
     }
 }

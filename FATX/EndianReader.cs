@@ -11,7 +11,6 @@ namespace FATX
     public class EndianReader : BinaryReader
     {
         private ByteOrder byteOrder;
-        private Stream stream;
         public EndianReader(Stream stream, ByteOrder byteOrder)
             : base(stream)
         {

@@ -71,11 +71,17 @@
     <Compile Include="AnalyzerProgress.Designer.cs">
       <DependentUpon>AnalyzerProgress.cs</DependentUpon>
     </Compile>
-    <Compile Include="CarverResults.cs">
+    <Compile Include="Controls\CarverResults.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="CarverResults.Designer.cs">
+    <Compile Include="Controls\CarverResults.Designer.cs">
       <DependentUpon>CarverResults.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\FileExplorer.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\FileExplorer.Designer.cs">
+      <DependentUpon>FileExplorer.cs</DependentUpon>
     </Compile>
     <Compile Include="DeviceSelector.cs">
       <SubType>Form</SubType>
@@ -100,17 +106,20 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RecoveryResults.cs">
+    <Compile Include="Controls\RecoveryResults.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="RecoveryResults.Designer.cs">
+    <Compile Include="Controls\RecoveryResults.Designer.cs">
       <DependentUpon>RecoveryResults.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="AnalyzerProgress.resx">
       <DependentUpon>AnalyzerProgress.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="CarverResults.resx">
+    <EmbeddedResource Include="Controls\CarverResults.resx">
       <DependentUpon>CarverResults.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\FileExplorer.resx">
+      <DependentUpon>FileExplorer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DeviceSelector.resx">
       <DependentUpon>DeviceSelector.cs</DependentUpon>
@@ -130,7 +139,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="RecoveryResults.resx">
+    <EmbeddedResource Include="Controls\RecoveryResults.resx">
       <DependentUpon>RecoveryResults.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
@@ -164,8 +173,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Controls\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
