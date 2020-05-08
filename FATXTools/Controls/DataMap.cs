@@ -144,7 +144,7 @@ namespace FATXTools
 
         private void VScrollBar_ValueChanged(object sender, EventArgs e)
         {
-            Console.WriteLine(vScrollBar.Value);
+            //Console.WriteLine(vScrollBar.Value);
         }
 
         private void InitializeCells()
