@@ -1,6 +1,6 @@
-﻿namespace FATXTools.Controls
+﻿namespace FATXTools
 {
-    partial class ClusterViewer
+    partial class DriveView
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,29 +28,31 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.driveControl = new System.Windows.Forms.TabControl();
             this.SuspendLayout();
             // 
-            // toolTip1
+            // driveControl
             // 
-            this.toolTip1.AutoPopDelay = 50000;
-            this.toolTip1.InitialDelay = 500;
-            this.toolTip1.ReshowDelay = 100;
-            this.toolTip1.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
-            this.toolTip1.ToolTipTitle = "Cluster Information";
+            this.driveControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.driveControl.Location = new System.Drawing.Point(0, 0);
+            this.driveControl.Name = "driveControl";
+            this.driveControl.SelectedIndex = 0;
+            this.driveControl.Size = new System.Drawing.Size(1913, 1006);
+            this.driveControl.TabIndex = 0;
             // 
-            // ClusterViewer
+            // DriveView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Name = "ClusterViewer";
-            this.Size = new System.Drawing.Size(2306, 1307);
+            this.Controls.Add(this.driveControl);
+            this.Name = "DriveView";
+            this.Size = new System.Drawing.Size(1913, 1006);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.ToolTip toolTip1;
+
+        private System.Windows.Forms.TabControl driveControl;
     }
 }

@@ -19,12 +19,13 @@ namespace FATXTools.Controls
             this.volume = volume;
 
             dataMap = new DataMap((int)volume.BytesPerCluster);
-            splitContainer1.Panel1.Controls.Add(dataMap);
+            //splitContainer1.Panel1.Controls.Add(dataMap);
             dataMap.Location = new System.Drawing.Point(0, 0);
             // We need this to auto resize control to the size of the panel
             dataMap.Dock = DockStyle.Fill;
             dataMap.CellSelected += Control_CellSelected;
             dataMap.CellHovered += Control_CellHovered;
+            this.Controls.Add(dataMap);
 
             //DynamicFileByteProvider dynamicFileByteProvider = new DynamicFileByteProvider(volume.Reader.BaseStream);
             //hexBox1.ByteProvider = dynamicFileByteProvider;

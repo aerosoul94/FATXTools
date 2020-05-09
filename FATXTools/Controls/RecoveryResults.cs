@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 using FATX;
 
@@ -8,27 +9,42 @@ namespace FATXTools
     public partial class RecoveryResults : UserControl
     {
         private MetadataAnalyzer _analyzer;
+
+        /// <summary>
+        /// Mapping of cluster index to it's directory entries.
+        /// </summary>
         private Dictionary<uint, List<DirectoryEntry>> clusterNodes = 
             new Dictionary<uint, List<DirectoryEntry>>();
+
+        /// <summary>
+        /// Leads to the node of the current cluster.
+        /// </summary>
+        private TreeNode currentClusterNode;
 
         public RecoveryResults(MetadataAnalyzer analyzer)
         {
             InitializeComponent();
 
             this._analyzer = analyzer;
-            PopulateResults(analyzer.GetRootDirectory());
+            PopulateTreeView(analyzer.GetRootDirectory());
         }
 
-        enum NodeType
+        private enum NodeType
         {
             Cluster,
             Dirent
         }
 
-        struct NodeTag
+        private struct NodeTag
         {
             public object Tag;
             public NodeType Type;
+
+            public NodeTag(object tag, NodeType type)
+            {
+                this.Tag = tag;
+                this.Type = type;
+            }
         }
 
         private void PopulateFolder(List<DirectoryEntry> children, TreeNode parent)
@@ -38,26 +54,25 @@ namespace FATXTools
                 if (child.IsDirectory())
                 {
                     var childNode = parent.Nodes.Add(child.FileName);
-                    NodeTag nodeTag = new NodeTag();
-                    nodeTag.Tag = child;
-                    nodeTag.Type = NodeType.Dirent;
-                    childNode.Tag = nodeTag;
+                    childNode.Tag = new NodeTag(child, NodeType.Dirent);
                     PopulateFolder(child.GetChildren(), childNode);
                 }
             }
         }
 
-        public void PopulateResults(List<DirectoryEntry> results)
+        public void PopulateTreeView(List<DirectoryEntry> results)
         {
             foreach (var result in results)
             {
                 var cluster = result.GetCluster();
                 if (!clusterNodes.ContainsKey(cluster))
                 {
+                    // Initialize new 
                     List<DirectoryEntry> list = new List<DirectoryEntry>() 
                     { 
                         result
                     };
+
                     clusterNodes.Add(cluster, list);
                 }
                 else
@@ -71,10 +86,7 @@ namespace FATXTools
                 if (!treeView1.Nodes.ContainsKey(clusterNodeText))
                 {
                     clusterNode = treeView1.Nodes.Add(clusterNodeText, clusterNodeText);
-                    NodeTag nodeTag = new NodeTag();
-                    nodeTag.Tag = clusterNodes[cluster];
-                    nodeTag.Type = NodeType.Cluster;
-                    clusterNode.Tag = nodeTag;
+                    clusterNode.Tag = new NodeTag(clusterNodes[cluster], NodeType.Cluster);
                 }
                 else
                 {
@@ -84,10 +96,7 @@ namespace FATXTools
                 if (result.IsDirectory())
                 {
                     var rootNode = clusterNode.Nodes.Add(result.FileName);
-                    NodeTag nodeTag = new NodeTag();
-                    nodeTag.Tag = result;
-                    nodeTag.Type = NodeType.Dirent;
-                    rootNode.Tag = nodeTag;
+                    rootNode.Tag = new NodeTag(result, NodeType.Dirent);
                     PopulateFolder(result.GetChildren(), rootNode);
                 }
             }
@@ -106,15 +115,28 @@ namespace FATXTools
             return String.Format("{0:0.##} {1}", dblSByte, Suffix[i]);
         }
 
-        private void PopulateListView(List<DirectoryEntry> dirents)
+        private void PopulateListView(List<DirectoryEntry> dirents, DirectoryEntry parent)
         {
             listView1.Items.Clear();
+
+            var upDir = listView1.Items.Add("");
+
+            upDir.SubItems.Add("...");
+            if (parent != null)
+            {
+                upDir.Tag = new NodeTag(parent, NodeType.Dirent);
+            }
+            else
+            {
+                NodeTag nodeTag = (NodeTag)currentClusterNode.Tag;
+                upDir.Tag = new NodeTag(nodeTag.Tag as List<DirectoryEntry>, NodeType.Cluster);
+            }
 
             int index = 1;
             foreach (DirectoryEntry dirent in dirents)
             {
                 ListViewItem item = listView1.Items.Add(index.ToString());
-                item.Tag = dirent;
+                item.Tag = new NodeTag(dirent, NodeType.Dirent);
 
                 item.SubItems.Add(dirent.FileName);
 
@@ -155,16 +177,28 @@ namespace FATXTools
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            currentClusterNode = e.Node;
+            while (currentClusterNode.Parent != null)
+            {
+                currentClusterNode = currentClusterNode.Parent;
+            }
+
+            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
+
             NodeTag nodeTag = (NodeTag)e.Node.Tag;
             switch (nodeTag.Type)
             {
                 case NodeType.Cluster:
                     List<DirectoryEntry> dirents = (List<DirectoryEntry>)nodeTag.Tag;
-                    PopulateListView(dirents);
+
+                    PopulateListView(dirents, null);
+
                     break;
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
-                    PopulateListView(dirent.GetChildren());
+
+                    PopulateListView(dirent.GetChildren(), dirent.GetParent());
+
                     break;
             }
         }
@@ -174,27 +208,197 @@ namespace FATXTools
             if (listView1.SelectedItems.Count > 1)
                 return;
 
-            DirectoryEntry dirent = (DirectoryEntry)listView1.SelectedItems[0].Tag;
-            if (dirent.IsDirectory())
+            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
+
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+            
+            switch (nodeTag.Type)
             {
-                PopulateListView(dirent.GetChildren());
+                case NodeType.Dirent:
+                    DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+
+                    if (dirent.IsDirectory())
+                    {
+                        PopulateListView(dirent.GetChildren(), dirent.GetParent());
+                    }
+
+                    break;
+                case NodeType.Cluster:
+                    List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+
+                    PopulateListView(dirents, null);
+
+                    break;
             }
         }
 
-        private void dumpToolStripMenuItem_Click(object sender, EventArgs e)
+        private void listRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedItems = listView1.SelectedItems;
-            using (var fbd = new FolderBrowserDialog())
+            using (var dialog = new FolderBrowserDialog())
             {
-                if (fbd.ShowDialog() == DialogResult.OK)
+                if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     foreach (ListViewItem selectedItem in selectedItems)
                     {
-                        DirectoryEntry dirent = (DirectoryEntry)selectedItem.Tag;
-                        _analyzer.Dump(dirent, fbd.SelectedPath);
+                        NodeTag nodeTag = (NodeTag)selectedItem.Tag;
+
+                        switch (nodeTag.Type)
+                        {
+                            case NodeType.Dirent:
+                                DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+
+                                _analyzer.Dump(dirent, dialog.SelectedPath);
+                                break;
+                        }
                     }
                 }
             }
+
+            Console.WriteLine("Finished recovering files.");
+        }
+
+        private void listRecoverCurrentDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (ListViewItem item in listView1.Items)
+                    {
+                        if (item.Index == 0)
+                        {
+                            continue;
+                        }
+
+                        NodeTag nodeTag = (NodeTag)item.Tag;
+
+                        switch (nodeTag.Type)
+                        {
+                            case NodeType.Dirent:
+                                DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+
+                                _analyzer.Dump(dirent, dialog.SelectedPath);
+                                break;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Finished recovering files.");
+        }
+
+        private void listRecoverAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (var dirent in _analyzer.GetRootDirectory())
+                    {
+                        _analyzer.Dump(dirent, dialog.SelectedPath);
+                    }
+                }
+            }
+
+            Console.WriteLine("Finished recovering files.");
+        }
+
+        private void listRecoverCurrentClusterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    var clusterNode = currentClusterNode;
+
+                    NodeTag nodeTag = (NodeTag)clusterNode.Tag;
+
+                    string clusterDir = dialog.SelectedPath + "/" + clusterNode.Text;
+
+                    Directory.CreateDirectory(clusterDir);
+
+                    switch (nodeTag.Type)
+                    {
+                        case NodeType.Cluster:
+                            List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+
+                            foreach (var dirent in dirents)
+                            {
+                                _analyzer.Dump(dirent, clusterDir);
+                            }
+
+                            break;
+                    }
+
+                    Console.WriteLine($"{clusterNode.Text}");
+                }
+            }
+
+            Console.WriteLine("Finished recovering files.");
+        }
+
+        private void treeRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    var clusterNode = treeView1.SelectedNode;
+
+                    string clusterDir = dialog.SelectedPath + "/" + clusterNode.Text;
+
+                    Directory.CreateDirectory(clusterDir);
+
+                    NodeTag nodeTag = (NodeTag)clusterNode.Tag;
+                    switch (nodeTag.Type)
+                    {
+                        case NodeType.Cluster:
+                            List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+
+                            foreach (var dirent in dirents)
+                            {
+                                _analyzer.Dump(dirent, clusterDir);
+                            }
+
+                            break;
+                    }
+                }
+            }
+
+            Console.WriteLine("Finished recovering files.");
+        }
+
+        private void treeRecoverAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (TreeNode clusterNode in treeView1.Nodes)
+                    {
+                        string clusterDir = dialog.SelectedPath + "/" + clusterNode.Text;
+
+                        Directory.CreateDirectory(clusterDir);
+
+                        NodeTag nodeTag = (NodeTag)clusterNode.Tag;
+                        switch (nodeTag.Type)
+                        {
+                            case NodeType.Cluster:
+                                List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+
+                                foreach (var dirent in dirents)
+                                {
+                                    _analyzer.Dump(dirent, clusterDir);
+                                }
+
+                                break;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Finished recovering files.");
         }
     }
 }

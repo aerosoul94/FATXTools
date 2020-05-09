@@ -25,6 +25,11 @@ namespace FATXTools
             progressBar1.Maximum = 10000;
         }
 
+        public void SetText(string text)
+        {
+            label1.Text = text;
+        }
+
         public void UpdateProgress(long currentValue)
         {
             if (currentValue > _maxValue)

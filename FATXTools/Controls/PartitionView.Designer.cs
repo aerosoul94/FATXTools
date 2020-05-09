@@ -1,6 +1,6 @@
-﻿namespace FATXTools.Controls
+﻿namespace FATXTools
 {
-    partial class ClusterViewer
+    partial class PartitionView
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,29 +28,33 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.SuspendLayout();
             // 
-            // toolTip1
+            // tabControl1
             // 
-            this.toolTip1.AutoPopDelay = 50000;
-            this.toolTip1.InitialDelay = 500;
-            this.toolTip1.ReshowDelay = 100;
-            this.toolTip1.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
-            this.toolTip1.ToolTipTitle = "Cluster Information";
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(2181, 1002);
+            this.tabControl1.TabIndex = 1;
             // 
-            // ClusterViewer
+            // PartitionView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Name = "ClusterViewer";
-            this.Size = new System.Drawing.Size(2306, 1307);
+            this.Controls.Add(this.tabControl1);
+            this.Name = "PartitionView";
+            this.Size = new System.Drawing.Size(2181, 1002);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.ToolTip toolTip1;
+
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
     }
 }

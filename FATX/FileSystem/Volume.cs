@@ -301,7 +301,7 @@ namespace FATX
             if (firstCluster == 0)
             {
                 // 0 is reserved!
-                Console.WriteLine("Invalid cluster index!");
+                Console.WriteLine($"File {dirent.FileName} first cluster is invalid.");
                 return clusterChain;
             }
             
@@ -325,7 +325,7 @@ namespace FATX
                 if (fatEntry == 0 || fatEntry > _fileAllocationTable.Length)
                 {
                     // TODO: Warn user.
-                    Console.WriteLine("Invalid cluster index!");
+                    Console.WriteLine($"File {dirent.FileName} has a corrupt cluster chain!");
                     clusterChain = new List<uint>(1);
                     clusterChain.Add(firstCluster);
                     return clusterChain;

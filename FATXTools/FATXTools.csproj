@@ -87,6 +87,8 @@
     <Compile Include="Controls\ClusterViewer.Designer.cs">
       <DependentUpon>ClusterViewer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\FileCarverResults.cs" />
+    <Compile Include="Controls\MetadataAnalyzerResults.cs" />
     <Compile Include="DeviceSelector.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +104,12 @@
     <Compile Include="Controls\FileExplorer.Designer.cs">
       <DependentUpon>FileExplorer.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\DriveView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\DriveView.Designer.cs">
+      <DependentUpon>DriveView.cs</DependentUpon>
+    </Compile>
     <Compile Include="FileInfo.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,6 +121,12 @@
     </Compile>
     <Compile Include="MainWindow.Designer.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\PartitionView.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\PartitionView.Designer.cs">
+      <DependentUpon>PartitionView.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -134,8 +148,14 @@
     <EmbeddedResource Include="Controls\ClusterViewer.resx">
       <DependentUpon>ClusterViewer.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\DriveView.resx">
+      <DependentUpon>DriveView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\FileExplorer.resx">
       <DependentUpon>FileExplorer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\PartitionView.resx">
+      <DependentUpon>PartitionView.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DeviceSelector.resx">
       <DependentUpon>DeviceSelector.cs</DependentUpon>

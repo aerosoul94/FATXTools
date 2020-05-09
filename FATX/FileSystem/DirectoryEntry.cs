@@ -269,5 +269,22 @@ namespace FATX
         {
             return GetPath() + "/" + FileName;
         }
+
+        public DirectoryEntry GetRootDirectoryEntry()
+        {
+            DirectoryEntry parent = null;
+
+            while (parent.GetParent() != null)
+            {
+                parent = parent.GetParent();
+            }
+
+            return parent;
+        }
+
+        public void Save(string path)
+        {
+            this._volume.DumpDirent(path, this);
+        }
     }
 }
