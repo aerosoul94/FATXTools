@@ -35,28 +35,39 @@ namespace FATXTools
 
         public void AddDrive(string name, DriveReader drive)
         {
+            this.drive = drive;
+
             foreach (var volume in drive.GetPartitions())
             {
-                try
-                {
-                    volume.Mount();
-
-                    Console.WriteLine($"Successfuly mounted {volume.Name}");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Failed to mount {volume.Name}: {e.Message}");
-                }
-
-                partitionList.Add(volume);
-
-                var page = new TabPage(volume.Name);
-                var partitionView = new PartitionView(volume);
-                partitionView.Dock = DockStyle.Fill;
-                page.Controls.Add(partitionView);
-                driveControl.TabPages.Add(page);
+                AddPartition(volume);
             }
-            
+        }
+
+        public void AddPartition(Volume volume)
+        {
+            try
+            {
+                volume.Mount();
+
+                Console.WriteLine($"Successfuly mounted {volume.Name}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to mount {volume.Name}: {e.Message}");
+            }
+
+            partitionList.Add(volume);
+
+            var page = new TabPage(volume.Name);
+            var partitionView = new PartitionView(volume);
+            partitionView.Dock = DockStyle.Fill;
+            page.Controls.Add(partitionView);
+            driveControl.TabPages.Add(page);
+        }
+
+        public DriveReader GetDrive()
+        {
+            return drive;
         }
     }
 }

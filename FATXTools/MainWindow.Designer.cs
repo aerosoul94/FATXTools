@@ -37,6 +37,8 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.saveToDatabaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.settingsToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -46,9 +48,8 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.driveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.searchForPartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.saveToDatabaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.managePartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addPartitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -58,7 +59,7 @@
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 40);
+            this.splitContainer1.Location = new System.Drawing.Point(0, 42);
             this.splitContainer1.Name = "splitContainer1";
             this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -70,8 +71,8 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.label1);
             this.splitContainer1.Panel2.Controls.Add(this.textBox1);
-            this.splitContainer1.Size = new System.Drawing.Size(2308, 1233);
-            this.splitContainer1.SplitterDistance = 808;
+            this.splitContainer1.Size = new System.Drawing.Size(2308, 1231);
+            this.splitContainer1.SplitterDistance = 806;
             this.splitContainer1.TabIndex = 4;
             // 
             // label1
@@ -146,6 +147,18 @@
             this.openDeviceToolStripMenuItem.Text = "Open Device";
             this.openDeviceToolStripMenuItem.Click += new System.EventHandler(this.openDeviceToolStripMenuItem_Click);
             // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(356, 6);
+            // 
+            // saveToDatabaseToolStripMenuItem
+            // 
+            this.saveToDatabaseToolStripMenuItem.Enabled = false;
+            this.saveToDatabaseToolStripMenuItem.Name = "saveToDatabaseToolStripMenuItem";
+            this.saveToDatabaseToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.saveToDatabaseToolStripMenuItem.Text = "Save To Database";
+            // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
@@ -196,7 +209,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(7, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(2308, 40);
+            this.menuStrip1.Size = new System.Drawing.Size(2308, 42);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -204,9 +217,10 @@
             // 
             this.driveToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.searchForPartitionsToolStripMenuItem,
-            this.managePartitionsToolStripMenuItem});
+            this.managePartitionsToolStripMenuItem,
+            this.addPartitionToolStripMenuItem});
             this.driveToolStripMenuItem.Name = "driveToolStripMenuItem";
-            this.driveToolStripMenuItem.Size = new System.Drawing.Size(91, 36);
+            this.driveToolStripMenuItem.Size = new System.Drawing.Size(91, 38);
             this.driveToolStripMenuItem.Text = "Drive";
             // 
             // searchForPartitionsToolStripMenuItem
@@ -216,24 +230,20 @@
             this.searchForPartitionsToolStripMenuItem.Size = new System.Drawing.Size(366, 44);
             this.searchForPartitionsToolStripMenuItem.Text = "Search For Partitions";
             // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(356, 6);
-            // 
-            // saveToDatabaseToolStripMenuItem
-            // 
-            this.saveToDatabaseToolStripMenuItem.Enabled = false;
-            this.saveToDatabaseToolStripMenuItem.Name = "saveToDatabaseToolStripMenuItem";
-            this.saveToDatabaseToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.saveToDatabaseToolStripMenuItem.Text = "Save To Database";
-            // 
             // managePartitionsToolStripMenuItem
             // 
             this.managePartitionsToolStripMenuItem.Enabled = false;
             this.managePartitionsToolStripMenuItem.Name = "managePartitionsToolStripMenuItem";
             this.managePartitionsToolStripMenuItem.Size = new System.Drawing.Size(366, 44);
             this.managePartitionsToolStripMenuItem.Text = "Manage Partitions";
+            this.managePartitionsToolStripMenuItem.Click += new System.EventHandler(this.managePartitionsToolStripMenuItem_Click);
+            // 
+            // addPartitionToolStripMenuItem
+            // 
+            this.addPartitionToolStripMenuItem.Name = "addPartitionToolStripMenuItem";
+            this.addPartitionToolStripMenuItem.Size = new System.Drawing.Size(366, 44);
+            this.addPartitionToolStripMenuItem.Text = "Add Partition";
+            this.addPartitionToolStripMenuItem.Click += new System.EventHandler(this.addPartitionToolStripMenuItem_Click);
             // 
             // MainWindow
             // 
@@ -282,6 +292,7 @@
         private System.Windows.Forms.ToolStripMenuItem driveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem searchForPartitionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem managePartitionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addPartitionToolStripMenuItem;
     }
 }
 

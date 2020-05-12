@@ -4,6 +4,7 @@ using System.Security.Principal;
 using System.IO;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
+using FATX;
 using FATXTools.DiskTypes;
 
 namespace FATXTools
@@ -182,6 +183,28 @@ namespace FATXTools
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void managePartitionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (driveView != null)
+            {
+                //PartitionManagerForm partitionManagerForm = new PartitionManagerForm(driveView.GetDrive(), driveView.GetDrive().GetPartitions());
+                //partitionManagerForm.ShowDialog();
+            }
+        }
+
+        private void addPartitionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NewPartitionDialog partitionDialog = new NewPartitionDialog();
+            var dialogResult = partitionDialog.ShowDialog();
+            if (dialogResult == DialogResult.OK)
+            {
+                driveView.AddPartition(new Volume(driveView.GetDrive(),
+                    partitionDialog.PartitionName, 
+                    partitionDialog.PartitionOffset, 
+                    partitionDialog.PartitionLength));
+            }
         }
     }
 }
