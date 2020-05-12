@@ -209,6 +209,11 @@ namespace FATX
             return _root;
         }
 
+        public Volume GetVolume()
+        {
+            return _volume;
+        }
+
         /// <summary>
         /// Validate FileNameBytes.
         /// </summary>

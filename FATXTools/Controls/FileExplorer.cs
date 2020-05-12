@@ -295,12 +295,172 @@ namespace FATXTools.Controls
             }
         }
 
+        private DialogResult ShowIOErrorDialog(Exception e)
+        {
+            return MessageBox.Show($"{e.Message}\n\n" + 
+                "Retry?",
+                "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+        }
+
+        private void WriteFile(string path, DirectoryEntry dirent, List<uint> chainMap)
+        {
+            using (FileStream outFile = File.OpenWrite(path))
+            {
+                uint bytesLeft = dirent.FileSize;
+
+                foreach (uint cluster in chainMap)
+                {
+                    byte[] clusterData = this.volume.ReadCluster(cluster);
+
+                    var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
+                    outFile.Write(clusterData, 0, (int)writeSize);
+
+                    bytesLeft -= writeSize;
+                }
+            }
+        }
+
+        private void TryFileWrite(string path, DirectoryEntry dirent, List<uint> chainMap)
+        {
+            try
+            {
+                WriteFile(path, dirent, chainMap);
+
+                FileSetTimeStamps(path, dirent);
+            }
+            catch (IOException e)
+            {
+                // TODO: make sure that its actually file access exception.
+                while (true)
+                {
+                    var dialogResult = ShowIOErrorDialog(e);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            WriteFile(path, dirent, chainMap);
+
+                            FileSetTimeStamps(path, dirent);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // On success, or if No is selected, we will exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void FileSetTimeStamps(string path, DirectoryEntry dirent)
+        {
+            File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+        }
+
+        private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
+        {
+            Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+        }
+
+        private void TryDirectorySetTimestamps(string path, DirectoryEntry dirent)
+        {
+            try
+            {
+                DirectorySetTimestamps(path, dirent);
+            }
+            catch (IOException e)
+            {
+                while (true)
+                {
+                    var dialogResult = ShowIOErrorDialog(e);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            DirectorySetTimestamps(path, dirent);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // On success, or if No is selected, we will exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void SaveFile(string path, DirectoryEntry dirent)
+        {
+            path = path + "\\" + dirent.FileName;
+            Console.WriteLine(path);
+
+            List<uint> chainMap = this.volume.GetClusterChain(dirent);
+
+            TryFileWrite(path, dirent, chainMap);
+        }
+
+        private void SaveDirectory(string path, DirectoryEntry dirent)
+        {
+            path = path + "\\" + dirent.FileName;
+            Console.WriteLine(path);
+
+            Directory.CreateDirectory(path);
+
+            foreach (DirectoryEntry child in dirent.GetChildren())
+            {
+                Save(path, child);
+            }
+
+            TryDirectorySetTimestamps(path, dirent);
+        }
+
+        private void Save(string path, DirectoryEntry dirent)
+        {
+            if (dirent.IsDeleted())
+            {
+                path = path + "\\" + dirent.FileName;
+                Console.WriteLine($"{path} failed to dump as it was deleted.");
+                return;
+            }
+
+            //Console.WriteLine($"{path + dirent.GetFullPath()}");
+
+            if (dirent.IsDirectory())
+            {
+                SaveDirectory(path, dirent);
+            }
+            else
+            {
+                SaveFile(path, dirent);
+            }
+        }
+
+        private void Save(string path, List<DirectoryEntry> dirents)
+        {
+            foreach (var dirent in dirents)
+            {
+                Save(path, dirent);
+            }
+        }
+
         private void SaveAll(string path)
         {
-            foreach (var dirent in this.volume.GetRoot())
-            {
-                dirent.Save(path);
-            }
+            Save(path, this.volume.GetRoot());
+
+            //foreach (var dirent in this.volume.GetRoot())
+            //{
+            //    dirent.Save(path);
+            //}
         }
 
         private void saveAllToolStripMenuItem2_Click(object sender, EventArgs e)
@@ -309,6 +469,8 @@ namespace FATXTools.Controls
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 SaveAll(dialog.SelectedPath);
+
+                Console.WriteLine($"Finished saving files.");
             }
         }
 
@@ -325,11 +487,15 @@ namespace FATXTools.Controls
                         case NodeType.Dirent:
                             DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-                            dirent.Save(dialog.SelectedPath);
+                            Save(dialog.SelectedPath, dirent);
+
+                            //dirent.Save(dialog.SelectedPath);
 
                             break;
                     }
                 }
+
+                Console.WriteLine($"Finished saving files.");
             }
         }
 
@@ -339,6 +505,8 @@ namespace FATXTools.Controls
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 SaveAll(dialog.SelectedPath);
+
+                Console.WriteLine($"Finished saving files.");
             }
         }
 

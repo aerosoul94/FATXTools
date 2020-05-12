@@ -9,6 +9,7 @@ namespace FATXTools
     public partial class RecoveryResults : UserControl
     {
         private MetadataAnalyzer _analyzer;
+        private Volume _volume;
 
         /// <summary>
         /// Mapping of cluster index to it's directory entries.
@@ -26,6 +27,7 @@ namespace FATXTools
             InitializeComponent();
 
             this._analyzer = analyzer;
+            this._volume = analyzer.GetVolume();
             PopulateTreeView(analyzer.GetRootDirectory());
         }
 
@@ -232,6 +234,156 @@ namespace FATXTools
             }
         }
 
+        private DialogResult ShowIOErrorDialog(Exception e)
+        {
+            return MessageBox.Show($"{e.Message}\n\n" +
+                "Retry?",
+                "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+        }
+
+        private void WriteFile(string path, DirectoryEntry dirent)
+        {
+            const int bufsize = 0x100000;
+            var remains = dirent.FileSize;
+
+            using (FileStream file = new FileStream(path, FileMode.Create))
+            {
+                while (remains > 0)
+                {
+                    var read = Math.Min(remains, bufsize);
+                    remains -= read;
+                    byte[] buf = new byte[read];
+                    _volume.Reader.Read(buf, (int)read);
+                    file.Write(buf, 0, (int)read);
+                }
+            }
+        }
+
+        private void TryFileWrite(string path, DirectoryEntry dirent)
+        {
+            try
+            {
+                WriteFile(path, dirent);
+
+                FileSetTimeStamps(path, dirent);
+            }
+            catch (IOException e)
+            {
+                // TODO: make sure that its actually file access exception.
+                while (true)
+                {
+                    var dialogResult = ShowIOErrorDialog(e);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            WriteFile(path, dirent);
+
+                            FileSetTimeStamps(path, dirent);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // On success, or if No is selected, we will exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void FileSetTimeStamps(string path, DirectoryEntry dirent)
+        {
+            File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+        }
+
+        private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
+        {
+            Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+            Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+            Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+        }
+
+        private void TryDirectorySetTimestamps(string path, DirectoryEntry dirent)
+        {
+            try
+            {
+                DirectorySetTimestamps(path, dirent);
+            }
+            catch (IOException e)
+            {
+                while (true)
+                {
+                    var dialogResult = ShowIOErrorDialog(e);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            DirectorySetTimestamps(path, dirent);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // On success, or if No is selected, we will exit the loop.
+                    break;
+                }
+            }
+        }
+
+        private void SaveDirectory(DirectoryEntry dirent, string path)
+        {
+            path = path + "\\" + dirent.FileName;
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            foreach (DirectoryEntry child in dirent.GetChildren())
+            {
+                Save(child, path);
+            }
+
+            TryDirectorySetTimestamps(path, dirent);
+        }
+
+        private void SaveFile(DirectoryEntry dirent, string path)
+        {
+            path = path + "\\" + dirent.FileName;
+            _volume.SeekToCluster(dirent.FirstCluster);
+
+            TryFileWrite(path, dirent);
+        }
+
+        private void Save(DirectoryEntry dirent, string path)
+        {
+            Console.WriteLine($"{path + dirent.GetFullPath()}");
+
+            if (dirent.IsDirectory())
+            {
+                SaveDirectory(dirent, path);
+            }
+            else
+            {
+                SaveFile(dirent, path);
+            }
+        }
+
+        private void Save(List<DirectoryEntry> dirents, string path)
+        {
+            foreach (var dirent in dirents)
+            {
+                Save(dirent, path);
+            }
+        }
+
         private void listRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var selectedItems = listView1.SelectedItems;
@@ -248,14 +400,16 @@ namespace FATXTools
                             case NodeType.Dirent:
                                 DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-                                _analyzer.Dump(dirent, dialog.SelectedPath);
+                                Save(dirent, dialog.SelectedPath);
+
+                                //_analyzer.Dump(dirent, dialog.SelectedPath);
                                 break;
                         }
                     }
+
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
 
         private void listRecoverCurrentDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
@@ -278,14 +432,16 @@ namespace FATXTools
                             case NodeType.Dirent:
                                 DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-                                _analyzer.Dump(dirent, dialog.SelectedPath);
+                                Save(dirent, dialog.SelectedPath);
+
+                                //_analyzer.Dump(dirent, dialog.SelectedPath);
                                 break;
                         }
                     }
+
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
 
         private void listRecoverAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -294,14 +450,16 @@ namespace FATXTools
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    foreach (var dirent in _analyzer.GetRootDirectory())
-                    {
-                        _analyzer.Dump(dirent, dialog.SelectedPath);
-                    }
+                    Save(_analyzer.GetRootDirectory(), dialog.SelectedPath);
+
+                    //foreach (var dirent in _analyzer.GetRootDirectory())
+                    //{
+                    //    _analyzer.Dump(dirent, dialog.SelectedPath);
+                    //}
+
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
 
         private void listRecoverCurrentClusterToolStripMenuItem_Click(object sender, EventArgs e)
@@ -323,19 +481,19 @@ namespace FATXTools
                         case NodeType.Cluster:
                             List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
 
-                            foreach (var dirent in dirents)
-                            {
-                                _analyzer.Dump(dirent, clusterDir);
-                            }
+                            Save(dirents, clusterDir);
+
+                            //foreach (var dirent in dirents)
+                            //{
+                            //    _analyzer.Dump(dirent, clusterDir);
+                            //}
 
                             break;
                     }
 
-                    Console.WriteLine($"{clusterNode.Text}");
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
 
         private void treeRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
@@ -356,17 +514,19 @@ namespace FATXTools
                         case NodeType.Cluster:
                             List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
 
-                            foreach (var dirent in dirents)
-                            {
-                                _analyzer.Dump(dirent, clusterDir);
-                            }
+                            Save(dirents, clusterDir);
+
+                            //foreach (var dirent in dirents)
+                            //{
+                            //    _analyzer.Dump(dirent, clusterDir);
+                            //}
 
                             break;
                     }
+
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
 
         private void treeRecoverAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -387,18 +547,20 @@ namespace FATXTools
                             case NodeType.Cluster:
                                 List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
 
-                                foreach (var dirent in dirents)
-                                {
-                                    _analyzer.Dump(dirent, clusterDir);
-                                }
+                                Save(dirents, clusterDir);
+
+                                //foreach (var dirent in dirents)
+                                //{
+                                //    _analyzer.Dump(dirent, clusterDir);
+                                //}
 
                                 break;
                         }
                     }
+
+                    Console.WriteLine("Finished recovering files.");
                 }
             }
-
-            Console.WriteLine("Finished recovering files.");
         }
     }
 }
