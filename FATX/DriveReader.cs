@@ -21,11 +21,11 @@ namespace FATX
             base.Seek(0xABE80000);
             if (base.ReadUInt32() == 0x58544146)
             {
-                AddPartition("Partition5", 0x80000, 0x2ee00000);        // CACHE
-                AddPartition("Partition4", 0x2EE80000, 0x2ee00000);     // CACHE
-                AddPartition("Partition3", 0x5DC80000, 0x2ee00000);     // CACHE
-                AddPartition("Partition2", 0x8CA80000, 0x1f400000);     // SHELL
                 AddPartition("Partition1", 0xABE80000, 0x1312D6000);    // DATA
+                AddPartition("Partition2", 0x8CA80000, 0x1f400000);     // SHELL
+                AddPartition("Partition3", 0x5DC80000, 0x2ee00000);     // CACHE
+                AddPartition("Partition4", 0x2EE80000, 0x2ee00000);     // CACHE
+                AddPartition("Partition5", 0x80000, 0x2ee00000);        // CACHE
             }
             else
             {
@@ -70,8 +70,8 @@ namespace FATX
                     long cache1Offset = (long)base.ReadUInt32() * Constants.SectorSize;
                     long cache1Length = (long)base.ReadUInt32() * Constants.SectorSize;
 
-                    AddPartition("SystemPartition", shellOffset, shellLength);
                     AddPartition("Partition1", dataOffset, dataLength);
+                    AddPartition("SystemPartition", shellOffset, shellLength);
                     // TODO: Add support for these
                     //AddPartition("Cache0", cache0Offset, cache0Length);
                     //AddPartition("Cache1", cache1Offset, cache1Length);
@@ -90,6 +90,9 @@ namespace FATX
                     /// SystemPartition 0x120EB0000, 0x10000000
                     /// Partition1 0x130EB0000, END
 
+                    AddPartition("Partition1", 0x130eb0000, this.Length - 0x130eb0000);
+                    AddPartition("SystemPartition", 0x120eb0000, 0x10000000);
+
                     // 0x118EB0000 - 0x100080000
                     // TODO: Add support for these
                     //AddPartition("Cache0", 0x80000, 0x80000000);
@@ -102,9 +105,6 @@ namespace FATX
                     //AddPartition("TitleURLCachePartition", dumpPartitionOffset + 0x6000000, 0x2000000);
                     //AddPartition("SystemExtPartition", dumpPartitionOffset + 0x0C000000, 0xCE30000);
                     AddPartition("SystemAuxPartition", dumpPartitionOffset + 0x18e30000, 0x8000000);
-
-                    AddPartition("SystemPartition", 0x120eb0000, 0x10000000);
-                    AddPartition("Partition1", 0x130eb0000, this.Length - 0x130eb0000);
                 }
             }
         }
