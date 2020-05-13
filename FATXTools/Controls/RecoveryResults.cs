@@ -237,7 +237,7 @@ namespace FATXTools
         private DialogResult ShowIOErrorDialog(Exception e)
         {
             return MessageBox.Show($"{e.Message}\n\n" +
-                "Retry?",
+                "Try Again?",
                 "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
         }
 
