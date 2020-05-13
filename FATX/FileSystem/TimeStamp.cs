@@ -71,11 +71,25 @@ namespace FATX
             }
             else
             {
-                _DateTime = new DateTime(
-                    this.Year, this.Month, 
-                    this.Day, this.Hour, 
-                    this.Minute, this.Second);
-                return _DateTime.Value;
+                try
+                {
+                    _DateTime = new DateTime(
+                        this.Year, this.Month,
+                        this.Day, this.Hour,
+                        this.Minute, this.Second);
+                    return _DateTime.Value;
+                }
+                catch (Exception e)
+                {
+                    int year = (int)((this._Time & 0xffff) & 0x7f) + 2000;
+                    int month = (int)((this._Time & 0xffff) >> 7) & 0xf;
+                    int day = (int)((this._Time & 0xffff) >> 0xb);
+                    int hour = (int)((this._Time >> 16) & 0x1f);
+                    int minute = (int)((this._Time >> 16) >> 5) & 0x3f;
+                    int second = (int)((this._Time >> 16) >> 10) & 0xfffe;
+                    _DateTime = new DateTime(year, month, day, hour, minute, second);
+                    return _DateTime.Value;
+                }
             }
         }
     }
