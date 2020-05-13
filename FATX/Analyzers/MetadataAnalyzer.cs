@@ -72,7 +72,7 @@ namespace FATX
                         {
                             Console.WriteLine(String.Format("0x{0:X8}: {1}", clusterOffset + direntOffset, dirent.FileName));
                             dirent.SetCluster(cluster);
-                            //dirent.Offset = direntOffset;
+                            dirent.Offset = _volume.ClusterToPhysicalOffset(cluster) + direntOffset;
                             _dirents.Add(dirent);
                         }
                     }
