@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using FATX;
 using System.ComponentModel;
 using System.Drawing;
+using System.Collections;
 
 namespace FATXTools.Controls
 {
@@ -18,6 +19,8 @@ namespace FATXTools.Controls
 
         public event EventHandler OnMetadataAnalyzerCompleted;
         public event EventHandler OnFileCarverCompleted;
+
+        private ListViewItemComparer listViewItemComparer;
 
         private enum NodeType
         {
@@ -43,6 +46,9 @@ namespace FATXTools.Controls
 
             this.parent = parent;
             this.volume = volume;
+
+            this.listViewItemComparer = new ListViewItemComparer();
+            this.listView1.ListViewItemSorter = this.listViewItemComparer;
 
             var rootNode = treeView1.Nodes.Add("Root");
             rootNode.Tag = new NodeTag(null, NodeType.Root);
@@ -523,6 +529,124 @@ namespace FATXTools.Controls
                     dialog.ShowDialog();
 
                     break;
+            }
+        }
+
+        private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            listViewItemComparer.Column = (ColumnIndex)e.Column;
+
+            if (listViewItemComparer.Order == SortOrder.Ascending)
+            {
+                listViewItemComparer.Order = SortOrder.Descending;
+            }
+            else
+            {
+                listViewItemComparer.Order = SortOrder.Ascending;
+            }
+
+            listView1.Sort();
+        }
+
+        public enum ColumnIndex
+        {
+            Index,
+            Name,
+            Size,
+            Created,
+            Modified,
+            Accessed,
+            Offset,
+            Cluster
+        }
+
+        class ListViewItemComparer : IComparer
+        {
+            private ColumnIndex column;
+            private SortOrder order;
+
+            public ColumnIndex Column
+            {
+                get => column;
+                set => column = value;
+            }
+
+            public SortOrder Order
+            {
+                get => order;
+                set => order = value;
+            }
+
+            public ListViewItemComparer()
+            {
+                this.order = SortOrder.Ascending;
+                this.column = 0;
+            }
+
+            public ListViewItemComparer(ColumnIndex column)
+            {
+                this.column = column;
+            }
+
+            public int Compare(object x, object y)
+            {
+                // Default, don't swap order.
+                int result = 0;
+
+                ListViewItem itemX = (ListViewItem)x;
+                ListViewItem itemY = (ListViewItem)y;
+
+                if (itemX.Tag == null ||
+                    itemY.Tag == null)
+                {
+                    return result;
+                }
+
+                if (itemX.Index == 0)
+                {
+                    // Skip "up" item
+                    return result;
+                }
+
+                DirectoryEntry direntX = (DirectoryEntry)((NodeTag)itemX.Tag).Tag;
+                DirectoryEntry direntY = (DirectoryEntry)((NodeTag)itemY.Tag).Tag;
+
+                switch (column)
+                {
+                    case ColumnIndex.Index:
+                        result = UInt32.Parse(itemX.Text).CompareTo(UInt32.Parse(itemY.Text));
+                        break;
+                    case ColumnIndex.Name:
+                        result = String.Compare(direntX.FileName, direntY.FileName);
+                        break;
+                    case ColumnIndex.Size:
+                        result = direntX.FileSize.CompareTo(direntY.FileSize);
+                        break;
+                    case ColumnIndex.Created:
+                        result = direntX.CreationTime.AsDateTime().CompareTo(direntY.CreationTime.AsDateTime());
+                        break;
+                    case ColumnIndex.Modified:
+                        result = direntX.LastWriteTime.AsDateTime().CompareTo(direntY.LastWriteTime.AsDateTime());
+                        break;
+                    case ColumnIndex.Accessed:
+                        result = direntX.LastAccessTime.AsDateTime().CompareTo(direntY.LastAccessTime.AsDateTime());
+                        break;
+                    case ColumnIndex.Offset:
+                        result = direntX.Offset.CompareTo(direntY.Offset);
+                        break;
+                    case ColumnIndex.Cluster:
+                        result = direntX.GetCluster().CompareTo(direntY.GetCluster());
+                        break;
+                }
+
+                if (order == SortOrder.Ascending)
+                {
+                    return result;
+                }
+                else
+                {
+                    return -result;
+                }
             }
         }
     }
