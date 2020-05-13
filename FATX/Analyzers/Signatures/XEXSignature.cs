@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FATX.Signatures
+namespace FATX.Analyzers.Signatures
 {
     class XEXSignature : FileSignature
     {
@@ -28,7 +28,29 @@ namespace FATX.Signatures
 
         public override void Parse()
         {
-            _fileName = "XEXSignature";
+            Seek(0x10);
+            var securityOffset = ReadUInt32();
+            var headerCount = ReadUInt32();
+            uint fileNameOffset = 0;
+            for (int i = 0; i < headerCount; i++)
+            {
+                var xid = ReadUInt32();
+                if (xid == 0x000183ff)
+                {
+                    fileNameOffset = ReadUInt32();
+                }
+                else
+                {
+                    ReadUInt32();
+                }
+            }
+            Seek(securityOffset + 4);
+            this.FileSize = ReadUInt32();
+            if (fileNameOffset != 0)
+            {
+                Seek(fileNameOffset + 4);
+                this.FileName = ReadCString();
+            }
         }
     }
 }

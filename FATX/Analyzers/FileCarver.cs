@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.ComponentModel;
+using FATX.Analyzers.Signatures;
 
 namespace FATX
 {
@@ -63,6 +64,7 @@ namespace FATX
                     {
                         try
                         {
+                            _volume.SeekFileArea(offset);
                             signature.Parse();
                             _carvedFiles.Add(signature);
                             Console.WriteLine(String.Format("Found {0} at 0x{1:X}.", signature.GetType().Name, offset));
@@ -75,7 +77,7 @@ namespace FATX
                     }
                 }
 
-                if (((offset / interval) % 10023) == 0)
+                //if (((offset / interval) % 10023) == 0)
                 {
                     backgroundWorker.ReportProgress((int)(offset / interval));
                 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using FATX;
+using FATX.Analyzers.Signatures;
 
 namespace FATXTools
 {
