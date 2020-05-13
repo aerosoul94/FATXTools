@@ -443,5 +443,27 @@ namespace FATX
             long clusterOffset = (long)_bytesPerCluster * (long)(cluster - 1);
             return (physicalOffset + clusterOffset);
         }
+
+        public long GetFreeSpace()
+        {
+            var FileAreaLength = Length - FileAreaByteOffset;
+            return (FileAreaLength) - GetUsedSpace();
+        }
+
+        public long GetUsedSpace()
+        {
+            // Count number of used clusters
+            uint clustersUsed = 0;
+
+            foreach (var cluster in FileAllocationTable)
+            {
+                if (cluster != Constants.ClusterAvailable)
+                {
+                    clustersUsed++;
+                }
+            }
+
+            return (clustersUsed * BytesPerCluster);
+        }
     }
 }

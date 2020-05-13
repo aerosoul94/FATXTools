@@ -89,6 +89,7 @@
     </Compile>
     <Compile Include="Controls\FileCarverResults.cs" />
     <Compile Include="Controls\MetadataAnalyzerResults.cs" />
+    <Compile Include="Controls\PartitionSelectedEventArgs.cs" />
     <Compile Include="DeviceSelector.cs">
       <SubType>Form</SubType>
     </Compile>

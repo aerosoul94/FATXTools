@@ -28,23 +28,24 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.driveControl = new System.Windows.Forms.TabControl();
+            this.partitionTabControl = new System.Windows.Forms.TabControl();
             this.SuspendLayout();
             // 
-            // driveControl
+            // partitionTabControl
             // 
-            this.driveControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.driveControl.Location = new System.Drawing.Point(0, 0);
-            this.driveControl.Name = "driveControl";
-            this.driveControl.SelectedIndex = 0;
-            this.driveControl.Size = new System.Drawing.Size(1913, 1006);
-            this.driveControl.TabIndex = 0;
+            this.partitionTabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.partitionTabControl.Location = new System.Drawing.Point(0, 0);
+            this.partitionTabControl.Name = "partitionTabControl";
+            this.partitionTabControl.SelectedIndex = 0;
+            this.partitionTabControl.Size = new System.Drawing.Size(1913, 1006);
+            this.partitionTabControl.TabIndex = 0;
+            this.partitionTabControl.SelectedIndexChanged += new System.EventHandler(this.partitionTabControl_SelectedIndexChanged);
             // 
             // DriveView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.driveControl);
+            this.Controls.Add(this.partitionTabControl);
             this.Name = "DriveView";
             this.Size = new System.Drawing.Size(1913, 1006);
             this.ResumeLayout(false);
@@ -53,6 +54,6 @@
 
         #endregion
 
-        private System.Windows.Forms.TabControl driveControl;
+        private System.Windows.Forms.TabControl partitionTabControl;
     }
 }

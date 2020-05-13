@@ -6,6 +6,7 @@ using System.Text;
 using Microsoft.Win32.SafeHandles;
 using FATX;
 using FATXTools.DiskTypes;
+using FATXTools.Controls;
 
 namespace FATXTools
 {
@@ -16,6 +17,7 @@ namespace FATXTools
         public MainWindow()
         {
             InitializeComponent();
+
             Console.SetOut(new LogWriter(this.textBox1));
             Console.WriteLine("--------------------------------");
             Console.WriteLine("FATX-Tools v0.2");
@@ -65,7 +67,7 @@ namespace FATXTools
             }
         }
 
-        private void OpenDiskImage(string path)
+        private void CreateNewDriveView()
         {
             // Destroy the current drive view
             splitContainer1.Panel1.Controls.Remove(driveView);
@@ -73,9 +75,43 @@ namespace FATXTools
             // Create a new view for this drive
             driveView = new DriveView();
             driveView.Dock = DockStyle.Fill;
+            driveView.TabSelectionChanged += DriveView_TabSelectionChanged;
 
             // Add the view to the panel
             splitContainer1.Panel1.Controls.Add(driveView);
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            string[] Suffix = { "B", "KB", "MB", "GB", "TB" };
+            int i;
+            double dblSByte = bytes;
+            for (i = 0; i < Suffix.Length && bytes >= 1024; i++, bytes /= 1024)
+            {
+                dblSByte = bytes / 1024.0;
+            }
+
+            return String.Format("{0:0.##} {1}", dblSByte, Suffix[i]);
+        }
+
+        private void DriveView_TabSelectionChanged(object sender, EventArgs e)
+        {
+            PartitionSelectedEventArgs eventArgs = (PartitionSelectedEventArgs)e;
+            var volume = eventArgs.volume;
+
+            var usedSpace = volume.GetUsedSpace();
+            var freeSpace = volume.GetFreeSpace();
+
+            statusStrip1.Items.Clear();
+            statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
+            statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
+            statusStrip1.Items.Add($"Used Space: {FormatBytes(usedSpace)}");
+            statusStrip1.Items.Add($"Free Space: {FormatBytes(freeSpace)}");
+        }
+
+        private void OpenDiskImage(string path)
+        {
+            CreateNewDriveView();
 
             string fileName = Path.GetFileName(path);
 
@@ -85,15 +121,7 @@ namespace FATXTools
 
         private void OpenDisk(string device)
         {
-            // Destroy the current drive view
-            splitContainer1.Panel1.Controls.Remove(driveView);
-
-            // Create a new view for this drive
-            driveView = new DriveView();
-            driveView.Dock = DockStyle.Fill;
-
-            // Add the view to the panel
-            splitContainer1.Panel1.Controls.Add(driveView);
+            CreateNewDriveView();
 
             SafeFileHandle handle = DeviceSelector.CreateFile(device,
                        FileAccess.Read,
