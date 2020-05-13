@@ -206,15 +206,20 @@ namespace FATX
             List<DirectoryEntry> stream = new List<DirectoryEntry>();
 
             byte[] data = ReadCluster(cluster);
+            long clusterOffset = ClusterToPhysicalOffset(cluster);
 
             for (int i = 0; i < 256; i++)
             {
                 DirectoryEntry dirent = new DirectoryEntry(this, data, (i * 0x40));
+
                 if (dirent.FileNameLength == Constants.DirentNeverUsed ||
                     dirent.FileNameLength == Constants.DirentNeverUsed2)
                 {
+                    // We are at the last dirent.
                     break;
                 }
+
+                dirent.Offset = clusterOffset + (i * 0x40);
 
                 stream.Add(dirent);
 

@@ -43,7 +43,6 @@ namespace FATX
             this._volume = volume;
             this._parent = null;
 
-            this._offset = volume.Reader.Position;
             this._fileNameLength = data[offset+0];
             this._fileAttributes = data[offset+1];
 
