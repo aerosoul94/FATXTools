@@ -51,12 +51,16 @@ namespace FATX
 
             var types = allSignatures.ToList();
 
+            var origByteOrder = _volume.Reader.ByteOrder;
+
             for (long offset = 0; offset < _length; offset += interval)
             {
                 foreach (Type type in types)
                 {
                     // too slow
                     FileSignature signature = (FileSignature)Activator.CreateInstance(type, _volume, offset);
+
+                    _volume.Reader.ByteOrder = origByteOrder;
 
                     _volume.SeekFileArea(offset);
                     bool test = signature.Test();
