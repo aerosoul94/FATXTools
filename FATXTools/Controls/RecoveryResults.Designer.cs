@@ -184,7 +184,7 @@
             this.toolStripSeparator1,
             this.viewInformationToolStripMenuItem});
             this.listContextMenu.Name = "contextMenuStrip1";
-            this.listContextMenu.Size = new System.Drawing.Size(366, 200);
+            this.listContextMenu.Size = new System.Drawing.Size(366, 244);
             // 
             // dumpToolStripMenuItem
             // 
@@ -224,6 +224,7 @@
             this.viewInformationToolStripMenuItem.Name = "viewInformationToolStripMenuItem";
             this.viewInformationToolStripMenuItem.Size = new System.Drawing.Size(365, 38);
             this.viewInformationToolStripMenuItem.Text = "View Information";
+            this.viewInformationToolStripMenuItem.Click += new System.EventHandler(this.viewInformationToolStripMenuItem_Click);
             // 
             // RecoveryResults
             // 

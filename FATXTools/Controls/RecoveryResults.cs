@@ -687,5 +687,21 @@ namespace FATXTools
                 }
             }
         }
+
+        private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+
+                    FileInfo dialog = new FileInfo(dirent);
+                    dialog.ShowDialog();
+
+                    break;
+            }
+        }
     }
 }
