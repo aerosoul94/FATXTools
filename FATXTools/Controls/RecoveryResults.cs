@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using FATX;
+using FATX.Analyzers;
 
 namespace FATXTools
 {
@@ -25,11 +27,23 @@ namespace FATXTools
 
         private ListViewItemComparer listViewItemComparer;
 
-        public RecoveryResults(MetadataAnalyzer analyzer)
+        private IntegrityAnalyzer _integrityAnalyzer;
+
+        private Color[] statusColor = new Color[] 
+        { 
+            Color.FromArgb(150, 250, 150), // Green
+            Color.FromArgb(200, 250, 150), // Yellow-Green
+            Color.FromArgb(250, 250, 150),
+            Color.FromArgb(250, 200, 150),
+            Color.FromArgb(250, 150, 150),
+        };
+
+        public RecoveryResults(MetadataAnalyzer analyzer, IntegrityAnalyzer integrityAnalyzer)
         {
             InitializeComponent();
 
             this._analyzer = analyzer;
+            this._integrityAnalyzer = integrityAnalyzer;
             this._volume = analyzer.GetVolume();
 
             listViewItemComparer = new ListViewItemComparer();
@@ -149,18 +163,9 @@ namespace FATXTools
 
                 item.SubItems.Add(dirent.FileName);
 
-                DateTime creationTime = new DateTime(dirent.CreationTime.Year,
-                    dirent.CreationTime.Month, dirent.CreationTime.Day,
-                    dirent.CreationTime.Hour, dirent.CreationTime.Minute,
-                    dirent.CreationTime.Second);
-                DateTime lastWriteTime = new DateTime(dirent.LastWriteTime.Year,
-                    dirent.LastWriteTime.Month, dirent.LastWriteTime.Day,
-                    dirent.LastWriteTime.Hour, dirent.LastWriteTime.Minute,
-                    dirent.LastWriteTime.Second);
-                DateTime lastAccessTime = new DateTime(dirent.LastAccessTime.Year,
-                    dirent.LastAccessTime.Month, dirent.LastAccessTime.Day,
-                    dirent.LastAccessTime.Hour, dirent.LastAccessTime.Minute,
-                    dirent.LastAccessTime.Second);
+                DateTime creationTime = dirent.CreationTime.AsDateTime();
+                DateTime lastWriteTime = dirent.LastWriteTime.AsDateTime();
+                DateTime lastAccessTime = dirent.LastAccessTime.AsDateTime();
 
                 string sizeStr = "";
                 if (!dirent.IsDirectory())
@@ -179,6 +184,10 @@ namespace FATXTools
                 item.SubItems.Add(lastAccessTime.ToString());
                 item.SubItems.Add("0x" + dirent.Offset.ToString("x"));
                 item.SubItems.Add(dirent.GetCluster().ToString());
+
+                //var statusItem = item.SubItems.Add("");
+                var ranking = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
+                item.BackColor = statusColor[ranking.Ranking];
 
                 index++;
             }
@@ -699,6 +708,33 @@ namespace FATXTools
 
                     FileInfo dialog = new FileInfo(dirent);
                     dialog.ShowDialog();
+
+                    break;
+            }
+        }
+
+        private void viewCollisionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // TODO: Create a new view or dialog for this.
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+
+                    RankedDirectoryEntry rankedDirent = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
+
+                    foreach (var collision in rankedDirent.Collisions)
+                    {
+                        Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterToPhysicalOffset(collision)})");
+                        var occupants = _integrityAnalyzer.GetClusterOccupants(collision);
+                        foreach (var occupant in occupants)
+                        {
+                            var o = occupant.GetDirent();
+                            Console.WriteLine($"{o.GetRootDirectoryEntry().GetCluster()}/{o.GetFullPath()}");
+                        }
+                    }
 
                     break;
             }

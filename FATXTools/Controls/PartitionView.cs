@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using FATX;
+using FATX.Analyzers;
 using FATXTools.Controls;
 
 namespace FATXTools
@@ -12,9 +13,13 @@ namespace FATXTools
         private TabPage carverResultsPage;
         private TabPage recoveryResultsPage;
 
+        private IntegrityAnalyzer integrityAnalyzer;
+
         public PartitionView(Volume volume)
         {
             InitializeComponent();
+
+            integrityAnalyzer = new IntegrityAnalyzer(volume);
 
             explorerPage = new TabPage("File Explorer");
             FileExplorer explorer = new FileExplorer(this, volume);
@@ -55,9 +60,11 @@ namespace FATXTools
                 tabControl1.TabPages.Remove(recoveryResultsPage);
             }
 
+
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
+            integrityAnalyzer.AddFileSystem(results.analyzer.GetDirents());
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");
-            RecoveryResults recoveryResults = new RecoveryResults(results.analyzer);
+            RecoveryResults recoveryResults = new RecoveryResults(results.analyzer, integrityAnalyzer);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);

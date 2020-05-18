@@ -50,6 +50,7 @@
             this.dumpAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.viewInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewCollisionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -182,9 +183,10 @@
             this.recoverCurrentClusterToolStripMenuItem,
             this.dumpAllToolStripMenuItem,
             this.toolStripSeparator1,
-            this.viewInformationToolStripMenuItem});
+            this.viewInformationToolStripMenuItem,
+            this.viewCollisionsToolStripMenuItem});
             this.listContextMenu.Name = "contextMenuStrip1";
-            this.listContextMenu.Size = new System.Drawing.Size(366, 244);
+            this.listContextMenu.Size = new System.Drawing.Size(366, 238);
             // 
             // dumpToolStripMenuItem
             // 
@@ -225,6 +227,13 @@
             this.viewInformationToolStripMenuItem.Size = new System.Drawing.Size(365, 38);
             this.viewInformationToolStripMenuItem.Text = "View Information";
             this.viewInformationToolStripMenuItem.Click += new System.EventHandler(this.viewInformationToolStripMenuItem_Click);
+            // 
+            // viewCollisionsToolStripMenuItem
+            // 
+            this.viewCollisionsToolStripMenuItem.Name = "viewCollisionsToolStripMenuItem";
+            this.viewCollisionsToolStripMenuItem.Size = new System.Drawing.Size(365, 38);
+            this.viewCollisionsToolStripMenuItem.Text = "View Collisions";
+            this.viewCollisionsToolStripMenuItem.Click += new System.EventHandler(this.viewCollisionsToolStripMenuItem_Click);
             // 
             // RecoveryResults
             // 
@@ -267,5 +276,6 @@
         private System.Windows.Forms.ToolStripMenuItem recoverSelectedToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem recoverAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem recoverCurrentClusterToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem viewCollisionsToolStripMenuItem;
     }
 }

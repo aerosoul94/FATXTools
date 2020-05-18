@@ -271,7 +271,12 @@ namespace FATX
 
         public DirectoryEntry GetRootDirectoryEntry()
         {
-            DirectoryEntry parent = null;
+            DirectoryEntry parent = GetParent();
+
+            if (parent == null)
+            {
+                return this;
+            }
 
             while (parent.GetParent() != null)
             {

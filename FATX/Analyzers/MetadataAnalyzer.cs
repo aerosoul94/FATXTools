@@ -209,6 +209,11 @@ namespace FATX
             return _root;
         }
 
+        public List<DirectoryEntry> GetDirents()
+        {
+            return _dirents;
+        }
+
         public Volume GetVolume()
         {
             return _volume;
