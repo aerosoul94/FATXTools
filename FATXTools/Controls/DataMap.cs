@@ -181,12 +181,18 @@ namespace FATXTools
 
         public void SetCellValue(uint index, object value)
         {
-            cellValue[index].Add(value);
+            if (cellValue.ContainsKey(index))
+            {
+                cellValue[index].Add(value);
+            }
         }
 
         public void SetCellStatus(uint index, ClusterStatus status)
         {
-            cellStatus[index] = status;
+            if (cellStatus.ContainsKey(index))
+            {
+                cellStatus[index] = status;
+            }
         }
 
         public List<object> GetCellValue(uint index)
