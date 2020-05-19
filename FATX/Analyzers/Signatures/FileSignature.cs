@@ -12,6 +12,8 @@ namespace FATX.Analyzers.Signatures
         private long _fileSize;
         private string _fileName;
 
+        private static Dictionary<string, int> _counters = new Dictionary<string, int>();
+
         public FileSignature(Volume volume, long offset)
         {
             this._fileName = null;
@@ -26,7 +28,19 @@ namespace FATX.Analyzers.Signatures
 
         public string FileName
         {
-            get => _fileName;
+            get
+            {
+                if (_fileName == null)
+                {
+                    if (!_counters.ContainsKey(this.GetType().Name))
+                    {
+                        _counters[this.GetType().Name] = 1;
+                    }
+                    _fileName = this.GetType().Name + (_counters[this.GetType().Name]++).ToString();
+                }
+
+                return _fileName;
+            }
             set => _fileName = value;
         }
 
