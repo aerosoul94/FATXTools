@@ -79,7 +79,7 @@ namespace FATX
                         this.Minute, this.Second);
                     return _DateTime.Value;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     int year = (int)((this._Time & 0xffff) & 0x7f) + 2000;
                     int month = (int)((this._Time & 0xffff) >> 7) & 0xf;
@@ -87,7 +87,16 @@ namespace FATX
                     int hour = (int)((this._Time >> 16) & 0x1f);
                     int minute = (int)((this._Time >> 16) >> 5) & 0x3f;
                     int second = (int)((this._Time >> 16) >> 10) & 0xfffe;
-                    _DateTime = new DateTime(year, month, day, hour, minute, second);
+
+                    try
+                    {
+                        _DateTime = new DateTime(year, month, day, hour, minute, second);
+                    }
+                    catch (Exception)
+                    {
+                        _DateTime = DateTime.MinValue;
+                    }
+
                     return _DateTime.Value;
                 }
             }
