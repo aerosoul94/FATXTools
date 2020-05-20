@@ -60,7 +60,6 @@ namespace FATXTools
                 tabControl1.TabPages.Remove(recoveryResultsPage);
             }
 
-
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
             integrityAnalyzer.AddFileSystem(results.analyzer.GetDirents());
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");

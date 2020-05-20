@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
 namespace FATX.Analyzers.Signatures
 {
@@ -17,7 +15,7 @@ namespace FATX.Analyzers.Signatures
         public override bool Test()
         {
             byte[] magic = ReadBytes(4);
-            if (System.Text.Encoding.UTF8.GetString(magic) == PEMagic)
+            if (Encoding.UTF8.GetString(magic) == PEMagic)
             {
                 return true;
             }
