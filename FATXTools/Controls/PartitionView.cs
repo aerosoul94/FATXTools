@@ -69,17 +69,5 @@ namespace FATXTools
             tabControl1.TabPages.Add(recoveryResultsPage);
             tabControl1.SelectedTab = recoveryResultsPage;
         }
-
-        public void DoMetadataAnalysis(Volume volume)
-        {
-            if (backgroundWorker1.IsBusy)
-            {
-                MessageBox.Show("Must wait for analyzer to finish!");
-                return;
-            }
-
-            
-            MetadataAnalyzer analyzer = new MetadataAnalyzer(volume, volume.BytesPerCluster, volume.Length);
-        }
     }
 }

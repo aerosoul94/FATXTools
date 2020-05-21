@@ -14,11 +14,12 @@ namespace FATXTools
     {
         private long _maxValue;
         private long _interval;
-        public AnalyzerProgress(Form owner, long maxValue, long interval)
+        public AnalyzerProgress(Form owner, string title, long maxValue, long interval)
         {
             InitializeComponent();
 
             this.Owner = owner;
+            this.Text = title;
             this._interval = interval;
             this._maxValue = maxValue / interval;
             progressBar1.Value = 0;

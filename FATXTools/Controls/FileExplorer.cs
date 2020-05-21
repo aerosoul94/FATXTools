@@ -218,14 +218,14 @@ namespace FATXTools.Controls
 
         private void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            progressBar = new AnalyzerProgress(this.ParentForm, this.volume.FileAreaLength, this.volume.BytesPerCluster);
+            progressBar = new AnalyzerProgress(this.ParentForm, "Metadata Analyzer", this.volume.FileAreaLength, this.volume.BytesPerCluster);
             progressBar.Show();
             backgroundWorker1.RunWorkerAsync();
         }
 
         private void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            progressBar = new AnalyzerProgress(this.ParentForm, this.volume.FileAreaLength, (long)FileCarverInterval.Cluster);
+            progressBar = new AnalyzerProgress(this.ParentForm, "File Carver", this.volume.FileAreaLength, (long)FileCarverInterval.Cluster);
             progressBar.Show();
             backgroundWorker2.RunWorkerAsync();
         }
