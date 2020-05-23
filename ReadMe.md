@@ -1,13 +1,16 @@
+<img align="left" width="80" height="80" src="FATXTools/appicon.ico">
+
 # FATXTools
-This is a C# port of the Python version of [fatx-tools](https://github.com/aerosoul94/fatx-tools).
+FATXTools is a data recovery software tool for FATX file systems. The goal of this project is to automate searching and recovering deleted files as well as provide tools for manual data recovery.
 
-This is still a work in progress and I do not recommend using these over the Python version just yet.
+This is a C# port of the Python version: [fatx-tools](https://github.com/aerosoul94/fatx-tools)
 
-Planned improvements from the Python version should include:
-* better performance
-* nicer GUI
-* compressed image handling
-* physical drive handling
-* more detailed analysis tools
+# Contributors
+* Tdijital - Thanks for the bug reports and the amazing app logo <3
+* The many many testers who provided bug reports <3
 
-However these will only be compatible on Windows.
+# Screenshots
+![](Screenshots/FATXTools_2020-05-23_17-03-34.png)
+![](Screenshots/FATXTools_2020-05-23_17-13-03.png)
+![](Screenshots/FATXTools_2020-05-23_17-06-40.png)
+![](Screenshots/FATXTools_2020-05-23_17-09-13.png)
