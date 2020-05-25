@@ -1,10 +1,10 @@
-﻿using System.Text;
+﻿using System.Linq;
 
 namespace FATX.Analyzers.Signatures
 {
     class PESignature : FileSignature
     {
-        private string PEMagic = "MZ\x90\0";
+        private byte[] PEMagic = new byte[] { 0x4D, 0x5A, 0x90, 0x00 };
 
         public PESignature(Volume volume, long offset)
             : base(volume, offset)
@@ -15,7 +15,7 @@ namespace FATX.Analyzers.Signatures
         public override bool Test()
         {
             byte[] magic = ReadBytes(4);
-            if (Encoding.UTF8.GetString(magic) == PEMagic)
+            if (magic.SequenceEqual(PEMagic))
             {
                 return true;
             }
