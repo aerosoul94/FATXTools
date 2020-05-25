@@ -14,9 +14,13 @@ namespace FATXTools
     {
         private DriveView driveView;
 
+        private const string ApplicationTitle = "FATX-Recover";
+
         public MainWindow()
         {
             InitializeComponent();
+
+            this.Text = ApplicationTitle;
 
             Console.SetOut(new LogWriter(this.textBox1));
             Console.WriteLine("--------------------------------");
@@ -67,8 +71,10 @@ namespace FATXTools
             }
         }
 
-        private void CreateNewDriveView()
+        private void CreateNewDriveView(string path)
         {
+            this.Text = $"{ApplicationTitle} - {Path.GetFileName(path)}";
+
             // Destroy the current drive view
             splitContainer1.Panel1.Controls.Remove(driveView);
 
@@ -111,7 +117,7 @@ namespace FATXTools
 
         private void OpenDiskImage(string path)
         {
-            CreateNewDriveView();
+            CreateNewDriveView(path);
 
             string fileName = Path.GetFileName(path);
 
@@ -121,7 +127,7 @@ namespace FATXTools
 
         private void OpenDisk(string device)
         {
-            CreateNewDriveView();
+            CreateNewDriveView(device);
 
             SafeFileHandle handle = DeviceSelector.CreateFile(device,
                        FileAccess.Read,
