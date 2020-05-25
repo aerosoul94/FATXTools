@@ -20,7 +20,7 @@ namespace FATXTools
 
         public void PopulateResultsList(List<FileSignature> results)
         {
-            var i = 0;
+            var i = 1;
             foreach (var result in results)
             {
                 var item = listView1.Items.Add(i.ToString());
