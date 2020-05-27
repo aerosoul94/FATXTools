@@ -453,7 +453,7 @@ namespace FATX
         public long GetUsedSpace()
         {
             // Count number of used clusters
-            uint clustersUsed = 0;
+            long clustersUsed = 0;
 
             foreach (var cluster in FileAllocationTable)
             {
