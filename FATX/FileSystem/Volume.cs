@@ -444,10 +444,14 @@ namespace FATX
             return (physicalOffset + clusterOffset);
         }
 
+        public long GetTotalSpace()
+        {
+            return _fileAreaLength;
+        }
+
         public long GetFreeSpace()
         {
-            var FileAreaLength = Length - FileAreaByteOffset;
-            return (FileAreaLength) - GetUsedSpace();
+            return (_fileAreaLength) - GetUsedSpace();
         }
 
         public long GetUsedSpace()

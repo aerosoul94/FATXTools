@@ -107,12 +107,14 @@ namespace FATXTools
 
             var usedSpace = volume.GetUsedSpace();
             var freeSpace = volume.GetFreeSpace();
+            var totalSpace = volume.GetTotalSpace();
 
             statusStrip1.Items.Clear();
             statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
             statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
             statusStrip1.Items.Add($"Used Space: {FormatBytes(usedSpace)}");
             statusStrip1.Items.Add($"Free Space: {FormatBytes(freeSpace)}");
+            statusStrip1.Items.Add($"Total Space: {FormatBytes(totalSpace)}");
         }
 
         private void OpenDiskImage(string path)
