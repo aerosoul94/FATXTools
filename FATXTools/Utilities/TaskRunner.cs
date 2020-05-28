@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FATXTools.Utility
+namespace FATXTools.Utilities
 {
     public class TaskRunner
     {

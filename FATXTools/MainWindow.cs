@@ -7,6 +7,7 @@ using Microsoft.Win32.SafeHandles;
 using FATX;
 using FATXTools.DiskTypes;
 using FATXTools.Controls;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {
@@ -87,19 +88,6 @@ namespace FATXTools
             splitContainer1.Panel1.Controls.Add(driveView);
         }
 
-        private static string FormatBytes(long bytes)
-        {
-            string[] Suffix = { "B", "KB", "MB", "GB", "TB" };
-            int i;
-            double dblSByte = bytes;
-            for (i = 0; i < Suffix.Length && bytes >= 1024; i++, bytes /= 1024)
-            {
-                dblSByte = bytes / 1024.0;
-            }
-
-            return String.Format("{0:0.##} {1}", dblSByte, Suffix[i]);
-        }
-
         private void DriveView_TabSelectionChanged(object sender, EventArgs e)
         {
             PartitionSelectedEventArgs eventArgs = (PartitionSelectedEventArgs)e;
@@ -112,9 +100,9 @@ namespace FATXTools
             statusStrip1.Items.Clear();
             statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
             statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
-            statusStrip1.Items.Add($"Used Space: {FormatBytes(usedSpace)}");
-            statusStrip1.Items.Add($"Free Space: {FormatBytes(freeSpace)}");
-            statusStrip1.Items.Add($"Total Space: {FormatBytes(totalSpace)}");
+            statusStrip1.Items.Add($"Used Space: {Utility.FormatBytes(usedSpace)}");
+            statusStrip1.Items.Add($"Free Space: {Utility.FormatBytes(freeSpace)}");
+            statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
         }
 
         private void OpenDiskImage(string path)

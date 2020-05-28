@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows.Forms;
 using FATX;
 using FATX.Analyzers;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {
@@ -125,19 +126,6 @@ namespace FATXTools
             }
         }
 
-        private static string FormatBytes(long bytes)
-        {
-            string[] Suffix = { "B", "KB", "MB", "GB", "TB" };
-            int i;
-            double dblSByte = bytes;
-            for (i = 0; i < Suffix.Length && bytes >= 1024; i++, bytes /= 1024)
-            {
-                dblSByte = bytes / 1024.0;
-            }
-
-            return String.Format("{0:0.##} {1}", dblSByte, Suffix[i]);
-        }
-
         private void PopulateListView(List<DirectoryEntry> dirents, DirectoryEntry parent)
         {
             listView1.Items.Clear();
@@ -171,7 +159,7 @@ namespace FATXTools
                 if (!dirent.IsDirectory())
                 {
                     item.ImageIndex = 1;
-                    sizeStr = FormatBytes(dirent.FileSize);
+                    sizeStr = Utility.FormatBytes(dirent.FileSize);
                 }
                 else
                 {

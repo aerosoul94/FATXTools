@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FATXTools.Utility;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {

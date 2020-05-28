@@ -152,7 +152,8 @@
     <Compile Include="Controls\RecoveryResults.Designer.cs">
       <DependentUpon>RecoveryResults.cs</DependentUpon>
     </Compile>
-    <Compile Include="Utility\TaskRunner.cs" />
+    <Compile Include="Utilities\TaskRunner.cs" />
+    <Compile Include="Utilities\Utility.cs" />
     <EmbeddedResource Include="ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>

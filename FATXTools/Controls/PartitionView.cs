@@ -3,7 +3,7 @@ using System.Windows.Forms;
 using FATX;
 using FATX.Analyzers;
 using FATXTools.Controls;
-using FATXTools.Utility;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {
