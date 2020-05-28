@@ -11,13 +11,13 @@ using FATXTools.Utility;
 
 namespace FATXTools
 {
-    public partial class AnalyzerProgress : Form
+    public partial class ProgressDialog : Form
     {
         private long _maxValue;
         private long _interval;
         private TaskRunner _taskRunner;
 
-        public AnalyzerProgress(TaskRunner taskRunner, Form owner, string title, long maxValue, long interval)
+        public ProgressDialog(TaskRunner taskRunner, Form owner, string title, long maxValue, long interval)
         {
             InitializeComponent();
 
@@ -44,7 +44,6 @@ namespace FATXTools
             var curValue = currentValue;
             var maxValue = _maxValue;
             var percentage = ((float)curValue / (float)maxValue) * 100;
-            //label1.Text = String.Format("Processing cluster {0}/{1} ({2}%)", curValue, maxValue, (int)percentage);
             var progress = ((float)curValue / (float)maxValue) * 10000;
             progressBar1.Value = (int)progress;
         }

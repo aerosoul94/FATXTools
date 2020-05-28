@@ -16,7 +16,7 @@ namespace FATXTools.Controls
 
         private PartitionView parent;
         private Volume volume;
-        private AnalyzerProgress progressBar;
+        private ProgressDialog progressBar;
 
         public event EventHandler OnMetadataAnalyzerCompleted;
         public event EventHandler OnFileCarverCompleted;

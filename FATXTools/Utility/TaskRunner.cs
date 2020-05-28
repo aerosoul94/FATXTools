@@ -13,7 +13,7 @@ namespace FATXTools.Utility
     {
         Form _owner;
         Task _task;
-        AnalyzerProgress _progress;
+        ProgressDialog _progress;
 
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
@@ -45,7 +45,7 @@ namespace FATXTools.Utility
             cancellationTokenSource = new CancellationTokenSource();
             cancellationToken = cancellationTokenSource.Token;
 
-            _progress = new AnalyzerProgress(this, _owner, $"Task - {title}", Maximum, Interval);
+            _progress = new ProgressDialog(this, _owner, $"Task - {title}", Maximum, Interval);
             _progress.Show();
 
             _task = Task.Run(() =>

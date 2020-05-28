@@ -68,11 +68,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnalyzerProgress.cs">
+    <Compile Include="ProgressDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="AnalyzerProgress.Designer.cs">
-      <DependentUpon>AnalyzerProgress.cs</DependentUpon>
+    <Compile Include="ProgressDialog.Designer.cs">
+      <DependentUpon>ProgressDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\CarverResults.cs">
       <SubType>UserControl</SubType>
@@ -153,8 +153,8 @@
       <DependentUpon>RecoveryResults.cs</DependentUpon>
     </Compile>
     <Compile Include="Utility\TaskRunner.cs" />
-    <EmbeddedResource Include="AnalyzerProgress.resx">
-      <DependentUpon>AnalyzerProgress.cs</DependentUpon>
+    <EmbeddedResource Include="ProgressDialog.resx">
+      <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\CarverResults.resx">
       <DependentUpon>CarverResults.cs</DependentUpon>

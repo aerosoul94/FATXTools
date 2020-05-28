@@ -1,6 +1,6 @@
 ﻿namespace FATXTools
 {
-    partial class AnalyzerProgress
+    partial class ProgressDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -48,7 +48,7 @@
             this.label1.Size = new System.Drawing.Size(0, 25);
             this.label1.TabIndex = 1;
             // 
-            // AnalyzerProgress
+            // ProgressDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -57,8 +57,8 @@
             this.Controls.Add(this.progressBar1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            this.Name = "AnalyzerProgress";
-            this.Text = "AnalyzerProgress";
+            this.Name = "ProgressDialog";
+            this.Text = "Progress Bar";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.AnalyzerProgress_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
