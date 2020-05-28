@@ -152,6 +152,7 @@
     <Compile Include="Controls\RecoveryResults.Designer.cs">
       <DependentUpon>RecoveryResults.cs</DependentUpon>
     </Compile>
+    <Compile Include="Utility\TaskRunner.cs" />
     <EmbeddedResource Include="AnalyzerProgress.resx">
       <DependentUpon>AnalyzerProgress.cs</DependentUpon>
     </EmbeddedResource>

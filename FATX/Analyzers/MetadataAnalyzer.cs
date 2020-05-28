@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 
 namespace FATX
 {
@@ -16,6 +17,8 @@ namespace FATX
 
         private List<DirectoryEntry> _dirents = new List<DirectoryEntry>();
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
+
+        private long progress;
 
         private const string VALID_CHARS = "abcdefghijklmnopqrstuvwxyz" +
                                            "ABCDEFGHIJKLMNOPQRSTUVWXUZ" +
@@ -37,24 +40,29 @@ namespace FATX
             this._currentYear = DateTime.Now.Year;
         }
 
-        public List<DirectoryEntry> Analyze(BackgroundWorker worker)
+        public List<DirectoryEntry> Analyze(CancellationToken cancellationToken)
         {
             var sw = new Stopwatch();
             sw.Start();
-            RecoverMetadata(worker);
+            RecoverMetadata(cancellationToken);
             sw.Stop();
             Console.WriteLine($"Execution Time: {sw.ElapsedMilliseconds} ms");
             Console.WriteLine($"Found {_dirents.Count} dirents.");
-            LinkFileSystem(worker);
+            LinkFileSystem(cancellationToken);
 
             return _root;
+        }
+
+        public long GetProgress()
+        {
+            return progress;
         }
 
         /// <summary>
         /// Searches for dirent's.
         /// </summary>
         /// <param name="worker"></param>
-        private void RecoverMetadata(BackgroundWorker worker)
+        private void RecoverMetadata(CancellationToken cancellationToken)
         {
             var maxClusters = _length / _interval;
             for (uint cluster = 1; cluster < maxClusters; cluster++)
@@ -83,9 +91,14 @@ namespace FATX
                     }
                 }
 
-                if ((cluster % 12) == 0)
+                progress = cluster;
+
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    worker.ReportProgress((int)(cluster));
+                    // NOTE: even though this part of the analyzer returns,
+                    //   it will continue on with the linking step to clean
+                    //   up the results.
+                    break;
                 }
             }
         }
@@ -112,7 +125,7 @@ namespace FATX
         /// Links all dirent's with their child dirent's.
         /// </summary>
         /// <param name="worker"></param>
-        private void LinkFileSystem(BackgroundWorker worker)
+        private void LinkFileSystem(CancellationToken cancellationToken)
         {
             foreach (var dirent in _dirents)
             {

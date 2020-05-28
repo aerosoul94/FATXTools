@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using FATX;
 using FATX.Analyzers;
 using FATXTools.Controls;
+using FATXTools.Utility;
 
 namespace FATXTools
 {
@@ -15,14 +16,14 @@ namespace FATXTools
 
         private IntegrityAnalyzer integrityAnalyzer;
 
-        public PartitionView(Volume volume)
+        public PartitionView(TaskRunner taskRunner, Volume volume)
         {
             InitializeComponent();
 
             integrityAnalyzer = new IntegrityAnalyzer(volume);
 
             explorerPage = new TabPage("File Explorer");
-            FileExplorer explorer = new FileExplorer(this, volume);
+            FileExplorer explorer = new FileExplorer(this, taskRunner, volume);
             explorer.Dock = DockStyle.Fill;
             explorer.OnMetadataAnalyzerCompleted += Explorer_OnMetadataAnalyzerCompleted;
             explorer.OnFileCarverCompleted += Explorer_OnFileCarverCompleted;

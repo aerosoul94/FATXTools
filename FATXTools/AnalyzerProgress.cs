@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using FATXTools.Utility;
 
 namespace FATXTools
 {
@@ -14,11 +15,14 @@ namespace FATXTools
     {
         private long _maxValue;
         private long _interval;
-        public AnalyzerProgress(Form owner, string title, long maxValue, long interval)
+        private TaskRunner _taskRunner;
+
+        public AnalyzerProgress(TaskRunner taskRunner, Form owner, string title, long maxValue, long interval)
         {
             InitializeComponent();
 
             this.Owner = owner;
+            this._taskRunner = taskRunner;
             this.Text = title;
             this._interval = interval;
             this._maxValue = maxValue / interval;
@@ -40,9 +44,19 @@ namespace FATXTools
             var curValue = currentValue;
             var maxValue = _maxValue;
             var percentage = ((float)curValue / (float)maxValue) * 100;
-            label1.Text = String.Format("Processing cluster {0}/{1} ({2}%)", curValue, maxValue, (int)percentage);
+            //label1.Text = String.Format("Processing cluster {0}/{1} ({2}%)", curValue, maxValue, (int)percentage);
             var progress = ((float)curValue / (float)maxValue) * 10000;
             progressBar1.Value = (int)progress;
+        }
+
+        public void UpdateLabel(string label)
+        {
+            label1.Text = label;
+        }
+
+        private void AnalyzerProgress_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _taskRunner.CancelTask();
         }
     }
 }

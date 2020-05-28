@@ -4,6 +4,7 @@ using System.Linq;
 using System.IO;
 using System.ComponentModel;
 using FATX.Analyzers.Signatures;
+using System.Threading;
 
 namespace FATX
 {
@@ -21,6 +22,7 @@ namespace FATX
         private readonly FileCarverInterval _interval;
         private readonly long _length;
         private List<FileSignature> _carvedFiles;
+        private long progress;
 
         public FileCarver(Volume volume, FileCarverInterval interval, long length)
         {
@@ -39,7 +41,12 @@ namespace FATX
             return _carvedFiles;
         }
 
-        public List<FileSignature> Analyze(BackgroundWorker backgroundWorker)
+        public long GetProgress()
+        {
+            return progress / (long)_interval;
+        }
+
+        public List<FileSignature> Analyze(CancellationToken ct)
         {
             var allSignatures = from assembly in AppDomain.CurrentDomain.GetAssemblies()
                                 from type in assembly.GetTypes()
@@ -81,9 +88,12 @@ namespace FATX
                     }
                 }
 
-                //if (((offset / interval) % 10023) == 0)
+                progress += interval;
+
+                if (ct.IsCancellationRequested)
                 {
-                    backgroundWorker.ReportProgress((int)(offset / interval));
+                    Console.WriteLine("Task cancelled");
+                    return _carvedFiles;
                 }
             }
 

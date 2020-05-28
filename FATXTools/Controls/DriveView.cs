@@ -3,16 +3,12 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using FATX;
 using FATXTools.Controls;
+using FATXTools.Utility;
 
 namespace FATXTools
 {
     public partial class DriveView : UserControl
     {
-        public DriveView()
-        {
-            InitializeComponent();
-        }
-
         /// <summary>
         /// List of loaded drives.
         /// </summary>
@@ -28,11 +24,22 @@ namespace FATXTools
         /// </summary>
         private List<Volume> partitionList = new List<Volume>();
 
+        private TaskRunner taskRunner;
+
         public event EventHandler TabSelectionChanged;
+
+        public DriveView()
+        {
+            InitializeComponent();
+        }
 
         public void AddDrive(string name, DriveReader drive)
         {
             this.drive = drive;
+
+            // Single task runner for this drive
+            // Currently only one task will be allowed to operate on a drive to avoid race conditions.
+            this.taskRunner = new TaskRunner(this.ParentForm);
 
             foreach (var volume in drive.GetPartitions())
             {
@@ -59,7 +66,7 @@ namespace FATXTools
             partitionList.Add(volume);
 
             var page = new TabPage(volume.Name);
-            var partitionView = new PartitionView(volume);
+            var partitionView = new PartitionView(taskRunner, volume);
             partitionView.Dock = DockStyle.Fill;
             page.Controls.Add(partitionView);
             partitionTabControl.TabPages.Add(page);

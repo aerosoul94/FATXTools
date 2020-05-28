@@ -2,10 +2,11 @@
 using System.IO;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using FATX;
-using System.ComponentModel;
 using System.Drawing;
 using System.Collections;
+using System.Threading;
+using FATX;
+using FATXTools.Utility;
 
 namespace FATXTools.Controls
 {
@@ -21,6 +22,8 @@ namespace FATXTools.Controls
         public event EventHandler OnFileCarverCompleted;
 
         private ListViewItemComparer listViewItemComparer;
+
+        private TaskRunner taskRunner;
 
         private enum NodeType
         {
@@ -40,11 +43,12 @@ namespace FATXTools.Controls
             }
         }
 
-        public FileExplorer(PartitionView parent, Volume volume)
+        public FileExplorer(PartitionView parent, TaskRunner taskRunner, Volume volume)
         {
             InitializeComponent();
 
             this.parent = parent;
+            this.taskRunner = taskRunner;
             this.volume = volume;
 
             this.listViewItemComparer = new ListViewItemComparer();
@@ -216,66 +220,77 @@ namespace FATXTools.Controls
             }
         }
 
-        private void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            progressBar = new AnalyzerProgress(this.ParentForm, "Metadata Analyzer", this.volume.FileAreaLength, this.volume.BytesPerCluster);
-            progressBar.Show();
-            backgroundWorker1.RunWorkerAsync();
-        }
+            taskRunner.Maximum = this.volume.FileAreaLength;
+            taskRunner.Interval = (long)this.volume.BytesPerCluster;
 
-        private void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            progressBar = new AnalyzerProgress(this.ParentForm, "File Carver", this.volume.FileAreaLength, (long)FileCarverInterval.Cluster);
-            progressBar.Show();
-            backgroundWorker2.RunWorkerAsync();
-        }
-
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = sender as BackgroundWorker;
-            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, volume.BytesPerCluster, volume.FileAreaLength);
-            analyzer.Analyze(worker);
-            e.Result = analyzer;
-        }
-
-        private void backgroundWorker2_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = sender as BackgroundWorker;
-            FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Cluster, volume.FileAreaLength);
-            carver.Analyze(worker);
-            e.Result = carver;
-        }
-
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            progressBar.UpdateProgress(e.ProgressPercentage);
-        }
-
-        private void backgroundWorker2_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            progressBar.UpdateProgress(e.ProgressPercentage);
-        }
-
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
+            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, this.volume.BytesPerCluster, this.volume.FileAreaLength);
+            try
             {
-                analyzer = (MetadataAnalyzer)e.Result
-            });
-
-            progressBar.Close();
-            progressBar = null;
+                await taskRunner.RunTaskAsync("Metadata Analyzer",
+                    // Task
+                    (CancellationToken ct) =>
+                    {
+                        analyzer.Analyze(ct);
+                    },
+                    // Progress Update
+                    () =>
+                    {
+                        var progress = analyzer.GetProgress();
+                        taskRunner.UpdateLabel($"Processing cluster {progress}/{taskRunner.Maximum}");
+                        taskRunner.UpdateProgress(progress);
+                    },
+                    // On Task Completion
+                    () =>
+                    {
+                        OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
+                        {
+                            analyzer = analyzer
+                        });
+                    });
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
         }
 
-        private void backgroundWorker2_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private async void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
-            {
-                carver = (FileCarver)e.Result
-            });
+            // TODO: Create settings for these two
+            taskRunner.Maximum = this.volume.FileAreaLength;
+            taskRunner.Interval = (long)FileCarverInterval.Cluster;
 
-            progressBar.Close();
-            progressBar = null;
+            FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Cluster, this.volume.FileAreaLength);
+            try
+            {
+                await taskRunner.RunTaskAsync("File Carver",
+                    // Task
+                    (CancellationToken ct) =>
+                    {
+                        carver.Analyze(ct);
+                    },
+                    // Progress Update
+                    () =>
+                    {
+                        var progress = carver.GetProgress();
+                        taskRunner.UpdateLabel($"Processing block {progress}/{taskRunner.Maximum}");
+                        taskRunner.UpdateProgress(progress);
+                    },
+                    // On Task Completion
+                    () =>
+                    {
+                        OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
+                        {
+                            carver = carver
+                        });
+                    });
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
         }
 
         private void SaveNodeTag(string path, NodeTag nodeTag)
