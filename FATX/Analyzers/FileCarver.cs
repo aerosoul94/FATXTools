@@ -40,6 +40,11 @@ namespace FATX
             return _carvedFiles;
         }
 
+        public Volume GetVolume()
+        {
+            return _volume;
+        }
+
         public List<FileSignature> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
         {
             var allSignatures = from assembly in AppDomain.CurrentDomain.GetAssemblies()

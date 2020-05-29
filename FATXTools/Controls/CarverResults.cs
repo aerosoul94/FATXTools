@@ -21,11 +21,16 @@ namespace FATXTools
         public void PopulateResultsList(List<FileSignature> results)
         {
             var i = 1;
+
+            var volume = _analyzer.GetVolume();
+
+            var baseOffset = volume.Offset + volume.FileAreaByteOffset;
+
             foreach (var result in results)
             {
                 var item = listView1.Items.Add(i.ToString());
                 item.SubItems.Add(result.FileName);
-                item.SubItems.Add(String.Format("0x{0:X}", result.Offset));
+                item.SubItems.Add(String.Format("0x{0:X}", result.Offset + baseOffset));
                 item.SubItems.Add(String.Format("0x{0:X}", result.FileSize));
                 item.Tag = result;
                 i++;
