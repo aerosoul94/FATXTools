@@ -22,7 +22,6 @@ namespace FATX
         private readonly FileCarverInterval _interval;
         private readonly long _length;
         private List<FileSignature> _carvedFiles;
-        private long progress;
 
         public FileCarver(Volume volume, FileCarverInterval interval, long length)
         {
@@ -41,12 +40,7 @@ namespace FATX
             return _carvedFiles;
         }
 
-        public long GetProgress()
-        {
-            return progress / (long)_interval;
-        }
-
-        public List<FileSignature> Analyze(CancellationToken ct)
+        public List<FileSignature> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
         {
             var allSignatures = from assembly in AppDomain.CurrentDomain.GetAssemblies()
                                 from type in assembly.GetTypes()
@@ -59,6 +53,8 @@ namespace FATX
             var types = allSignatures.ToList();
 
             var origByteOrder = _volume.Reader.ByteOrder;
+
+            long progressValue = 0;
 
             for (long offset = 0; offset < _length; offset += interval)
             {
@@ -88,14 +84,20 @@ namespace FATX
                     }
                 }
 
-                progress += interval;
+                progressValue += interval;
 
-                if (ct.IsCancellationRequested)
+                if (progressValue % 0x40000 == 0)
+                    progress?.Report((int)(progressValue / interval));
+
+                if (cancellationToken.IsCancellationRequested)
                 {
                     Console.WriteLine("Task cancelled");
                     return _carvedFiles;
                 }
             }
+
+            // Fill up the progress bar
+            progress?.Report((int)(_length / interval));
 
             Console.WriteLine("Complete!");
 

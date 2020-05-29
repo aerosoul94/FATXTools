@@ -211,21 +211,22 @@ namespace FATXTools.Controls
         {
             taskRunner.Maximum = this.volume.FileAreaLength;
             taskRunner.Interval = (long)this.volume.BytesPerCluster;
+            var numBlocks = this.volume.FileAreaLength / this.volume.BytesPerCluster;
 
             MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, this.volume.BytesPerCluster, this.volume.FileAreaLength);
             try
             {
                 await taskRunner.RunTaskAsync("Metadata Analyzer",
                     // Task
-                    (CancellationToken ct) =>
+                    (CancellationToken cancellationToken, Progress<int> progress) =>
                     {
-                        analyzer.Analyze(ct);
+                        analyzer.Analyze(cancellationToken, progress);
                     },
                     // Progress Update
-                    () =>
+                    (int progress) =>
                     {
-                        var progress = analyzer.GetProgress();
-                        taskRunner.UpdateLabel($"Processing cluster {progress}/{taskRunner.Maximum}");
+                        //var progress = analyzer.GetProgress();
+                        taskRunner.UpdateLabel($"Processing cluster {progress}/{numBlocks}");
                         taskRunner.UpdateProgress(progress);
                     },
                     // On Task Completion
@@ -248,21 +249,22 @@ namespace FATXTools.Controls
             // TODO: Create settings for these two
             taskRunner.Maximum = this.volume.FileAreaLength;
             taskRunner.Interval = (long)FileCarverInterval.Cluster;
+            var numBlocks = volume.FileAreaLength / (long)FileCarverInterval.Cluster;
 
             FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Cluster, this.volume.FileAreaLength);
             try
             {
                 await taskRunner.RunTaskAsync("File Carver",
                     // Task
-                    (CancellationToken ct) =>
+                    (CancellationToken cancellationToken, Progress<int> progress) =>
                     {
-                        carver.Analyze(ct);
+                        carver.Analyze(cancellationToken, progress);
                     },
                     // Progress Update
-                    () =>
+                    (int progress) =>
                     {
-                        var progress = carver.GetProgress();
-                        taskRunner.UpdateLabel($"Processing block {progress}/{taskRunner.Maximum}");
+                        //var progress = carver.GetProgress();
+                        taskRunner.UpdateLabel($"Processing block {progress}/{numBlocks}");
                         taskRunner.UpdateProgress(progress);
                     },
                     // On Task Completion

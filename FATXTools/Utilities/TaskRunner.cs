@@ -13,7 +13,7 @@ namespace FATXTools.Utilities
     {
         Form _owner;
         Task _task;
-        ProgressDialog _progress;
+        ProgressDialog _progressDialog;
 
         CancellationToken cancellationToken;
         CancellationTokenSource cancellationTokenSource;
@@ -35,7 +35,7 @@ namespace FATXTools.Utilities
             set;
         }
 
-        public async Task RunTaskAsync(string title, Action<CancellationToken> task, Action progressUpdate, Action taskCompleted)
+        public async Task RunTaskAsync(string title, Action<CancellationToken, Progress<int>> task, Action<int> progressUpdate, Action taskCompleted)
         {
             if (_task != null)
             {
@@ -45,32 +45,27 @@ namespace FATXTools.Utilities
             cancellationTokenSource = new CancellationTokenSource();
             cancellationToken = cancellationTokenSource.Token;
 
-            _progress = new ProgressDialog(this, _owner, $"Task - {title}", Maximum, Interval);
-            _progress.Show();
+            _progressDialog = new ProgressDialog(this, _owner, $"Task - {title}", Maximum, Interval);
+            _progressDialog.Show();
+
+            var progress = new Progress<int>(percent =>
+            {
+                progressUpdate(percent);
+            });
 
             _task = Task.Run(() =>
             {
-                task(cancellationToken);
+                task(cancellationToken, progress);
             }, cancellationToken);
 
-            var progressTask = Task.Run(() =>
-            {
-                // This should only run as long as the task is running
-                while (_task != null && _task.Status == TaskStatus.Running)
-                {
-                    Thread.Sleep(100);
-                    _owner.BeginInvoke(progressUpdate);
-                }
-            });
-
-            // wait for main task and progress task to finish.
-            await Task.WhenAll(_task, progressTask);
+            // wait for worker task to finish.
+            await Task.WhenAll(_task);
 
             taskCompleted();
 
-            _progress.Close();
+            _progressDialog.Close();
 
-            _progress = null;
+            _progressDialog = null;
             _task = null;
         }
 
@@ -81,12 +76,12 @@ namespace FATXTools.Utilities
 
         public void UpdateProgress(long newValue)
         {
-            _progress.UpdateProgress(newValue);
+            _progressDialog.UpdateProgress(newValue);
         }
 
         public void UpdateLabel(string newLabel)
         {
-            _progress.UpdateLabel(newLabel);
+            _progressDialog.UpdateLabel(newLabel);
         }
     }
 }

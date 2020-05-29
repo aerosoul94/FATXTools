@@ -18,8 +18,6 @@ namespace FATX
         private List<DirectoryEntry> _dirents = new List<DirectoryEntry>();
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
 
-        private long progress;
-
         private const string VALID_CHARS = "abcdefghijklmnopqrstuvwxyz" +
                                            "ABCDEFGHIJKLMNOPQRSTUVWXUZ" +
                                            "0123456789" +
@@ -40,29 +38,24 @@ namespace FATX
             this._currentYear = DateTime.Now.Year;
         }
 
-        public List<DirectoryEntry> Analyze(CancellationToken cancellationToken)
+        public List<DirectoryEntry> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
         {
             var sw = new Stopwatch();
             sw.Start();
-            RecoverMetadata(cancellationToken);
+            RecoverMetadata(cancellationToken, progress);
+            LinkFileSystem(cancellationToken);
             sw.Stop();
             Console.WriteLine($"Execution Time: {sw.ElapsedMilliseconds} ms");
             Console.WriteLine($"Found {_dirents.Count} dirents.");
-            LinkFileSystem(cancellationToken);
 
             return _root;
-        }
-
-        public long GetProgress()
-        {
-            return progress;
         }
 
         /// <summary>
         /// Searches for dirent's.
         /// </summary>
         /// <param name="worker"></param>
-        private void RecoverMetadata(CancellationToken cancellationToken)
+        private void RecoverMetadata(CancellationToken cancellationToken, IProgress<int> progress)
         {
             var maxClusters = _length / _interval;
             for (uint cluster = 1; cluster < maxClusters; cluster++)
@@ -91,7 +84,8 @@ namespace FATX
                     }
                 }
 
-                progress = cluster;
+                if (cluster % 0x100 == 0)
+                    progress?.Report((int)cluster);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -101,6 +95,8 @@ namespace FATX
                     break;
                 }
             }
+
+            progress?.Report((int)maxClusters);
         }
 
         private void FindChildren(DirectoryEntry parent)
