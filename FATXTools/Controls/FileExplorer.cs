@@ -16,7 +16,6 @@ namespace FATXTools.Controls
 
         private PartitionView parent;
         private Volume volume;
-        private ProgressDialog progressBar;
 
         public event EventHandler OnMetadataAnalyzerCompleted;
         public event EventHandler OnFileCarverCompleted;
@@ -119,12 +118,7 @@ namespace FATXTools.Controls
                 string sizeStr = "";
                 if (!dirent.IsDirectory())
                 {
-                    //item.ImageIndex = 1;
                     sizeStr = Utility.FormatBytes(dirent.FileSize);
-                }
-                else
-                {
-                    //item.ImageIndex = 0;
                 }
 
                 item.SubItems.Add(sizeStr);
@@ -209,11 +203,15 @@ namespace FATXTools.Controls
 
         private async void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            taskRunner.Maximum = this.volume.FileAreaLength;
-            taskRunner.Interval = (long)this.volume.BytesPerCluster;
-            var numBlocks = this.volume.FileAreaLength / this.volume.BytesPerCluster;
+            // TODO: Make into a user controlled setting
+            var searchLength = this.volume.FileAreaLength;
+            var searchInterval = this.volume.BytesPerCluster;
 
-            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, this.volume.BytesPerCluster, this.volume.FileAreaLength);
+            taskRunner.Maximum = searchLength;
+            taskRunner.Interval = searchInterval;
+
+            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval, searchLength);
+            var numBlocks = searchLength / searchInterval;
             try
             {
                 await taskRunner.RunTaskAsync("Metadata Analyzer",
@@ -246,12 +244,15 @@ namespace FATXTools.Controls
 
         private async void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // TODO: Create settings for these two
-            taskRunner.Maximum = this.volume.FileAreaLength;
-            taskRunner.Interval = (long)FileCarverInterval.Cluster;
-            var numBlocks = volume.FileAreaLength / (long)FileCarverInterval.Cluster;
+            // TODO: Make into a user controlled setting
+            var searchLength = this.volume.FileAreaLength;
+            var searchInterval = (long)FileCarverInterval.Cluster;
 
-            FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Cluster, this.volume.FileAreaLength);
+            taskRunner.Maximum = searchLength;
+            taskRunner.Interval = searchInterval;
+
+            FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Align, this.volume.FileAreaLength);
+            var numBlocks = searchLength / searchInterval;
             try
             {
                 await taskRunner.RunTaskAsync("File Carver",
@@ -288,10 +289,12 @@ namespace FATXTools.Controls
             {
                 case NodeType.Dirent:
                     DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
-                    dirent.Save(path);
+
+                    RunSaveDirectoryEntryTaskAsync(path, dirent);
+
                     break;
                 case NodeType.Root:
-                    SaveAll(path);
+                    RunSaveAllTaskAsync(path, volume.GetRoot());
                     break;
             }
         }
@@ -305,190 +308,13 @@ namespace FATXTools.Controls
             }
         }
 
-        private DialogResult ShowIOErrorDialog(Exception e)
-        {
-            return MessageBox.Show($"{e.Message}\n\n" + 
-                "Try Again?",
-                "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
-        }
-
-        private void WriteFile(string path, DirectoryEntry dirent, List<uint> chainMap)
-        {
-            using (FileStream outFile = File.OpenWrite(path))
-            {
-                uint bytesLeft = dirent.FileSize;
-
-                foreach (uint cluster in chainMap)
-                {
-                    byte[] clusterData = this.volume.ReadCluster(cluster);
-
-                    var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
-                    outFile.Write(clusterData, 0, (int)writeSize);
-
-                    bytesLeft -= writeSize;
-                }
-            }
-        }
-
-        private void TryFileWrite(string path, DirectoryEntry dirent, List<uint> chainMap)
-        {
-            try
-            {
-                WriteFile(path, dirent, chainMap);
-
-                FileSetTimeStamps(path, dirent);
-            }
-            catch (IOException e)
-            {
-                // TODO: make sure that its actually file access exception.
-                while (true)
-                {
-                    var dialogResult = ShowIOErrorDialog(e);
-
-                    if (dialogResult == DialogResult.Yes)
-                    {
-                        try
-                        {
-                            WriteFile(path, dirent, chainMap);
-
-                            FileSetTimeStamps(path, dirent);
-                        }
-                        catch (Exception)
-                        {
-                            continue;
-                        }
-                    }
-
-                    // On success, or if No is selected, we will exit the loop.
-                    break;
-                }
-            }
-        }
-
-        private void FileSetTimeStamps(string path, DirectoryEntry dirent)
-        {
-            File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-            File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-            File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
-        }
-
-        private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
-        {
-            Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-            Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-            Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
-        }
-
-        private void TryDirectorySetTimestamps(string path, DirectoryEntry dirent)
-        {
-            try
-            {
-                DirectorySetTimestamps(path, dirent);
-            }
-            catch (IOException e)
-            {
-                while (true)
-                {
-                    var dialogResult = ShowIOErrorDialog(e);
-
-                    if (dialogResult == DialogResult.Yes)
-                    {
-                        try
-                        {
-                            DirectorySetTimestamps(path, dirent);
-                        }
-                        catch (Exception)
-                        {
-                            continue;
-                        }
-                    }
-
-                    // On success, or if No is selected, we will exit the loop.
-                    break;
-                }
-            }
-        }
-
-        private void SaveFile(string path, DirectoryEntry dirent)
-        {
-            path = path + "\\" + dirent.FileName;
-            Console.WriteLine(path);
-
-            List<uint> chainMap = this.volume.GetClusterChain(dirent);
-
-            TryFileWrite(path, dirent, chainMap);
-        }
-
-        private void SaveDirectory(string path, DirectoryEntry dirent)
-        {
-            path = path + "\\" + dirent.FileName;
-            Console.WriteLine(path);
-
-            Directory.CreateDirectory(path);
-
-            foreach (DirectoryEntry child in dirent.GetChildren())
-            {
-                Save(path, child);
-            }
-
-            TryDirectorySetTimestamps(path, dirent);
-        }
-
-        private void Save(string path, DirectoryEntry dirent)
-        {
-            if (dirent.IsDeleted())
-            {
-                path = path + "\\" + dirent.FileName;
-                Console.WriteLine($"{path} failed to dump as it was deleted.");
-                return;
-            }
-
-            //Console.WriteLine($"{path + dirent.GetFullPath()}");
-
-            if (dirent.IsDirectory())
-            {
-                SaveDirectory(path, dirent);
-            }
-            else
-            {
-                SaveFile(path, dirent);
-            }
-        }
-
-        private void Save(string path, List<DirectoryEntry> dirents)
-        {
-            foreach (var dirent in dirents)
-            {
-                Save(path, dirent);
-            }
-        }
-
-        private void SaveAll(string path)
-        {
-            Save(path, this.volume.GetRoot());
-
-            //foreach (var dirent in this.volume.GetRoot())
-            //{
-            //    dirent.Save(path);
-            //}
-        }
-
-        private void saveAllToolStripMenuItem2_Click(object sender, EventArgs e)
-        {
-            FolderBrowserDialog dialog = new FolderBrowserDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                SaveAll(dialog.SelectedPath);
-
-                Console.WriteLine($"Finished saving files.");
-            }
-        }
-
         private void listSaveSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
+                List<DirectoryEntry> selectedFiles = new List<DirectoryEntry>();
+
                 foreach (ListViewItem selected in listView1.SelectedItems)
                 {
                     NodeTag nodeTag = (NodeTag)selected.Tag;
@@ -497,16 +323,72 @@ namespace FATXTools.Controls
                         case NodeType.Dirent:
                             DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-                            Save(dialog.SelectedPath, dirent);
-
-                            //dirent.Save(dialog.SelectedPath);
+                            selectedFiles.Add(dirent);
 
                             break;
                     }
                 }
 
-                Console.WriteLine($"Finished saving files.");
+                RunSaveAllTaskAsync(dialog.SelectedPath, selectedFiles);
             }
+        }
+
+        private async void RunSaveDirectoryEntryTaskAsync(string path, DirectoryEntry dirent)
+        {
+            SaveContentTask saveContentTask = null;
+
+            var numFiles = dirent.CountFiles();
+            taskRunner.Maximum = numFiles;
+            taskRunner.Interval = 1;
+
+            await taskRunner.RunTaskAsync("Save File",
+                (CancellationToken cancellationToken, Progress<int> progress) =>
+                {
+                    saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
+                    saveContentTask.Save(path, dirent);
+                },
+                (int progress) =>
+                {
+                    string currentFile = saveContentTask.GetCurrentFile();
+                    taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
+                    taskRunner.UpdateProgress(progress);
+                },
+                () =>
+                {
+                    Console.WriteLine("Finished saving files.");
+                });
+        }
+
+        private async void RunSaveAllTaskAsync(string path, List<DirectoryEntry> dirents)
+        {
+            SaveContentTask saveContentTask = null;
+            var numFiles = volume.CountFiles();
+            taskRunner.Maximum = numFiles;
+            taskRunner.Interval = 1;
+
+            await taskRunner.RunTaskAsync("Save All",
+                (CancellationToken cancellationToken, Progress<int> progress) =>
+                {
+                    try
+                    {
+                        saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
+                        saveContentTask.SaveAll(path, dirents);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Console.WriteLine("Save all cancelled");
+                    }
+                },
+                (int progress) =>
+                {
+                    string currentFile = saveContentTask.GetCurrentFile();
+                    taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
+                    taskRunner.UpdateProgress(progress);
+                },
+                () =>
+                {
+                    Console.WriteLine("Finished saving files.");
+                });
         }
 
         private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -514,9 +396,16 @@ namespace FATXTools.Controls
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                SaveAll(dialog.SelectedPath);
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.GetRoot());
+            }
+        }
 
-                Console.WriteLine($"Finished saving files.");
+        private void saveAllToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog dialog = new FolderBrowserDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.GetRoot());
             }
         }
 
@@ -533,6 +422,195 @@ namespace FATXTools.Controls
                     dialog.ShowDialog();
 
                     break;
+            }
+        }
+
+        public class SaveContentTask
+        {
+            private CancellationToken cancellationToken;
+
+            private IProgress<int> progress;
+
+            private Volume volume;
+
+            private string currentFile;
+
+            private int numSaved;
+
+            public SaveContentTask(Volume volume, CancellationToken cancellationToken, IProgress<int> progress)
+            {
+                currentFile = String.Empty;
+
+                this.cancellationToken = cancellationToken;
+                this.progress = progress;
+                this.volume = volume;
+
+                this.numSaved = 0;
+            }
+
+            public string GetCurrentFile()
+            {
+                // I am considering returning a DirectoryEntry instead to show
+                // more information about the current file.
+                return currentFile;
+            }
+
+            private DialogResult ShowIOErrorDialog(Exception e)
+            {
+                return MessageBox.Show($"{e.Message}\n\n" +
+                    "Try Again?",
+                    "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+            }
+
+            private void WriteFile(string path, DirectoryEntry dirent, List<uint> chainMap)
+            {
+                using (FileStream outFile = File.OpenWrite(path))
+                {
+                    uint bytesLeft = dirent.FileSize;
+
+                    foreach (uint cluster in chainMap)
+                    {
+                        byte[] clusterData = this.volume.ReadCluster(cluster);
+
+                        var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
+                        outFile.Write(clusterData, 0, (int)writeSize);
+
+                        bytesLeft -= writeSize;
+                    }
+                }
+            }
+            private void FileSetTimeStamps(string path, DirectoryEntry dirent)
+            {
+                File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+                File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+                File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+            }
+
+            private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
+            {
+                Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
+                Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
+                Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+            }
+
+            private void TryIOOperation(Action action)
+            {
+                try
+                {
+                    action();
+                }
+                catch (IOException e)
+                {
+                    while (true)
+                    {
+                        var dialogResult = ShowIOErrorDialog(e);
+
+                        if (dialogResult == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                action();
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            private void SaveFile(string path, DirectoryEntry dirent)
+            {
+                path = path + "\\" + dirent.FileName;
+                Console.WriteLine(path);
+
+                // Report where we are at
+                currentFile = dirent.FileName;
+                progress.Report(numSaved++);
+
+                List<uint> chainMap = this.volume.GetClusterChain(dirent);
+
+                TryIOOperation(() =>
+                {
+                    WriteFile(path, dirent, chainMap);
+
+                    FileSetTimeStamps(path, dirent);
+                });
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            }
+
+            private void SaveDirectory(string path, DirectoryEntry dirent)
+            {
+                path = path + "\\" + dirent.FileName;
+                Console.WriteLine(path);
+
+                // Report where we are at
+                currentFile = dirent.FileName;
+                progress.Report(numSaved++);
+
+                Directory.CreateDirectory(path);
+
+                foreach (DirectoryEntry child in dirent.GetChildren())
+                {
+                    SaveDirectoryEntry(path, child);
+                }
+
+                TryIOOperation(() =>
+                {
+                    DirectorySetTimestamps(path, dirent);
+                });
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            }
+
+            private void SaveDeleted(string path, DirectoryEntry dirent)
+            {
+                path = path + "\\" + dirent.FileName;
+
+                currentFile = dirent.GetFullPath();
+
+                Console.WriteLine($"{path}: Cannot save deleted files.");
+            }
+
+            private void SaveDirectoryEntry(string path, DirectoryEntry dirent)
+            {
+                if (dirent.IsDeleted())
+                {
+                    SaveDeleted(path, dirent);
+                    return;
+                }
+
+                if (dirent.IsDirectory())
+                {
+                    SaveDirectory(path, dirent);
+                }
+                else
+                {
+                    SaveFile(path, dirent);
+                }
+            }
+
+            public void Save(string path, DirectoryEntry dirent)
+            {
+                SaveDirectoryEntry(path, dirent);
+            }
+
+            public void SaveAll(string path, List<DirectoryEntry> dirents)
+            {
+                foreach (var dirent in dirents)
+                {
+                    SaveDirectoryEntry(path, dirent);
+                }
             }
         }
 

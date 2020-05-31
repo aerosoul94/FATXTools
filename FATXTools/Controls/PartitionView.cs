@@ -15,12 +15,14 @@ namespace FATXTools
         private TabPage recoveryResultsPage;
 
         private IntegrityAnalyzer integrityAnalyzer;
+        private TaskRunner taskRunner;
 
         public PartitionView(TaskRunner taskRunner, Volume volume)
         {
             InitializeComponent();
 
             integrityAnalyzer = new IntegrityAnalyzer(volume);
+            this.taskRunner = taskRunner;
 
             explorerPage = new TabPage("File Explorer");
             FileExplorer explorer = new FileExplorer(this, taskRunner, volume);
@@ -64,7 +66,7 @@ namespace FATXTools
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
             integrityAnalyzer.AddFileSystem(results.analyzer.GetDirents());
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");
-            RecoveryResults recoveryResults = new RecoveryResults(results.analyzer, integrityAnalyzer);
+            RecoveryResults recoveryResults = new RecoveryResults(results.analyzer, integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);

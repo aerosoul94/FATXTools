@@ -91,7 +91,8 @@ namespace FATX
                 {
                     // NOTE: even though this part of the analyzer returns,
                     //   it will continue on with the linking step to clean
-                    //   up the results.
+                    //   up the results while keeping the progress bar
+                    //   running to show that we are still working.
                     break;
                 }
             }
@@ -342,10 +343,12 @@ namespace FATX
                 return false;
             }
 
-            if (firstCluster == 0)
-            {
-                return false;
-            }
+            // NOTE: deleted files have been found with firstCluster set to 0
+            //  To be as thourough as we can, let's include those.
+            //if (firstCluster == 0)
+            //{
+            //    return false;
+            //}
 
             return true;
         }

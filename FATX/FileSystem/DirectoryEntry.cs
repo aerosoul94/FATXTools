@@ -287,5 +287,29 @@ namespace FATX
         {
             this._volume.DumpDirent(path, this);
         }
+
+        public long CountFiles()
+        {
+            if (IsDeleted())
+            {
+                return 0;
+            }
+
+            if (IsDirectory())
+            {
+                long numFiles = 1;
+
+                foreach (var dirent in GetChildren())
+                {
+                    numFiles += dirent.CountFiles();
+                }
+
+                return numFiles;
+            }
+            else
+            {
+                return 1;
+            }
+        }
     }
 }

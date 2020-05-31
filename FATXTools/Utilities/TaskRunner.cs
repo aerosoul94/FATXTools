@@ -69,9 +69,11 @@ namespace FATXTools.Utilities
             _task = null;
         }
 
-        public void CancelTask()
+        public bool CancelTask()
         {
             cancellationTokenSource.Cancel();
+
+            return (_task == null) || _task.IsCompleted;
         }
 
         public void UpdateProgress(long newValue)

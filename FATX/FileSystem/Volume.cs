@@ -444,6 +444,23 @@ namespace FATX
             return (physicalOffset + clusterOffset);
         }
 
+        private long CountFiles(List<DirectoryEntry> dirents)
+        {
+            long numFiles = 0;
+
+            foreach (var dirent in dirents)
+            {
+                numFiles += dirent.CountFiles();
+            }
+
+            return numFiles;
+        }
+
+        public long CountFiles()
+        {
+            return CountFiles(_root);
+        }
+
         public long GetTotalSpace()
         {
             return _fileAreaLength;

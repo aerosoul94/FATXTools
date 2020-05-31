@@ -17,13 +17,14 @@ namespace FATXTools
         private long _interval;
         private TaskRunner _taskRunner;
 
-        public ProgressDialog(TaskRunner taskRunner, Form owner, string title, long maxValue, long interval)
+        public ProgressDialog(TaskRunner taskRunner, Form owner, 
+            string title, long maxValue, long interval)
         {
             InitializeComponent();
 
             this.Owner = owner;
-            this._taskRunner = taskRunner;
             this.Text = title;
+            this._taskRunner = taskRunner;
             this._interval = interval;
             this._maxValue = maxValue / interval;
             progressBar1.Value = 0;
@@ -55,7 +56,13 @@ namespace FATXTools
 
         private void AnalyzerProgress_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _taskRunner.CancelTask();
+            e.Cancel = !_taskRunner.CancelTask();
+
+            if (e.Cancel)
+            {
+                // Let the user know we're cancelling
+                label1.Text = "Cancelling. Please wait.";
+            }
         }
     }
 }
