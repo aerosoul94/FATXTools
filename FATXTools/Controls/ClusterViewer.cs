@@ -1,9 +1,14 @@
 ﻿using System;
-using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
 using FATX;
+using FATX.Analyzers;
 //using Be.Windows.Forms;
+
+using ClusterColorMap = System.Collections.Generic.Dictionary<uint, System.Drawing.Color>;
 
 namespace FATXTools.Controls
 {
@@ -11,197 +16,190 @@ namespace FATXTools.Controls
     {
         private DataMap dataMap;
         private Volume volume;
+        private IntegrityAnalyzer integrityAnalyzer;
 
-        public ClusterViewer(Volume volume)
+        private ClusterColorMap clusterColorMap;
+
+        private Color activeColor = Color.Green;
+        private Color recoveredColor = Color.Yellow;
+        private Color collisionColor = Color.Red;
+        private Color rootColor = Color.Purple;
+
+        public ClusterViewer(Volume volume, IntegrityAnalyzer integrityAnalyzer)
         {
             InitializeComponent();
 
             this.volume = volume;
+            this.integrityAnalyzer = integrityAnalyzer;
 
-            dataMap = new DataMap((int)volume.BytesPerCluster);
-            //splitContainer1.Panel1.Controls.Add(dataMap);
-            dataMap.Location = new System.Drawing.Point(0, 0);
-            // We need this to auto resize control to the size of the panel
+            dataMap = new DataMap((int)volume.MaxClusters);
+            dataMap.Location = new Point(0, 0);
             dataMap.Dock = DockStyle.Fill;
-            dataMap.CellSelected += Control_CellSelected;
-            dataMap.CellHovered += Control_CellHovered;
+            dataMap.CellSelected += DataMap_CellSelected;
+            dataMap.CellHovered += DataMap_CellHovered;
+            dataMap.Increment = (int)volume.BytesPerCluster;
+
+            clusterColorMap = new ClusterColorMap();
+
             this.Controls.Add(dataMap);
-
-            //DynamicFileByteProvider dynamicFileByteProvider = new DynamicFileByteProvider(volume.Reader.BaseStream);
-            //hexBox1.ByteProvider = dynamicFileByteProvider;
-
-            InitializeCells();
+            InitializeActiveFileSystem();
+            UpdateDataMap();
         }
 
-        private void InitializeCells()
+        public void UpdateClusters()
         {
-            dataMap.NumCells = this.volume.MaxClusters;
-
-            dataMap.SetCellStatus(this.volume.RootDirFirstCluster, ClusterStatus.PURPLE);
-            InitializeRootDirectory(this.volume.GetRoot());
-        }
-
-        public void InitializeRootDirectory(List<DirectoryEntry> dirents)
-        {
-            foreach (DirectoryEntry dirent in dirents)
+            for (uint i = 1; i < volume.MaxClusters; i++)
             {
-                if (dirent.IsDeleted())
+                var occupants = integrityAnalyzer.GetClusterOccupants(i);
+
+                if (occupants == null || occupants.Count == 0)
                 {
-                    dataMap.SetCellValue(dirent.FirstCluster, dirent);
-                    dataMap.SetCellStatus(dirent.FirstCluster, ClusterStatus.YELLOW);
+                    // No occupants
                     continue;
                 }
 
-                var firstCluster = dirent.FirstCluster;
-                //cellStatus[firstCluster] = ClusterStatus.GREEN;
-
-                var chain = volume.GetClusterChain(dirent);
-                //Console.WriteLine("Dirent: {0}", dirent.FileName);
-                //Console.Write("Clusters: [");
-                foreach (uint cluster in chain)
+                if (occupants.Count > 1)
                 {
-                    //Console.Write("{0},", cluster);
-                    if (dataMap.GetCellStatus(cluster) == ClusterStatus.GREEN)
+                    if (occupants.Any(dirent => dirent.IsActive))
                     {
-                        dataMap.SetCellValue(cluster, dirent);
-                        dataMap.SetCellStatus(cluster, ClusterStatus.RED);
+                        clusterColorMap[i] = activeColor;
                     }
                     else
                     {
-                        dataMap.SetCellValue(cluster, dirent);
-                        dataMap.SetCellStatus(cluster, ClusterStatus.GREEN);
+                        clusterColorMap[i] = collisionColor;
                     }
-                }
-                //Console.WriteLine("]");
-
-                if (dirent.IsDirectory())
-                {
-                    InitializeRootDirectory(dirent.GetChildren());
-                }
-            }
-        }
-
-        public void UpdateClusters(List<DirectoryEntry> dirents)
-        {
-            foreach (DirectoryEntry dirent in dirents)
-            {
-                var firstCluster = dirent.FirstCluster;
-                //cellStatus[firstCluster] = ClusterStatus.GREEN;
-
-                //Console.WriteLine("Dirent: {0}", dirent.FileName);
-                //Console.Write("Clusters: [");
-                //Console.Write("{0},", cluster);
-                var numClusters = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                    ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
-                List<int> chain;
-                //if (numClusters > 0x100)
-                {
-                    chain = new List<int>() { (int)dirent.FirstCluster };
-                }
-                //else
-                //{
-                //    chain = Enumerable.Range((int)dirent.FirstCluster, numClusters).ToList();
-                //}
-                foreach (var c in chain)
-                {
-                    uint cluster = (uint)c;
-                    var currentStatus = dataMap.GetCellStatus(cluster);
-                    if (currentStatus != ClusterStatus.WHITE)
-                    {
-                        var value = (DirectoryEntry)dataMap.GetCellValue(cluster)[0];
-                        if (value.Offset != dirent.Offset)
-                        {
-                            dataMap.SetCellValue(cluster, dirent);
-                            dataMap.SetCellStatus(cluster, ClusterStatus.RED);
-                        }
-                    }
-                    else
-                    {
-                        dataMap.SetCellValue(cluster, dirent);
-                        dataMap.SetCellStatus(cluster, ClusterStatus.ORANGE);
-                    }
-                }
-                //Console.WriteLine("]");
-
-                if (dirent.IsDirectory())
-                {
-                    UpdateClusters(dirent.GetChildren());
-                }
-            }
-        }
-
-        private void Control_CellHovered(object sender, EventArgs e)
-        {
-            CellDataEventArgs c = (CellDataEventArgs)e;
-            if (c != null)
-            {
-                var dirents = c.Value;
-                if (dirents != null)
-                {
-                    string toolTipMessage = "Index: " + c.ClusterIndex.ToString() + Environment.NewLine +
-                        "Offset: " + this.volume.ClusterToPhysicalOffset(c.ClusterIndex).ToString("X16") + Environment.NewLine;
-
-                    var i = 1;
-                    foreach (var obj in dirents)
-                    {
-                        var dirent = (DirectoryEntry)obj;
-                        string dataType;
-                        if (dirent.IsDirectory())
-                        {
-                            dataType = "Dirent Stream";
-                        }
-                        else
-                        {
-                            dataType = "File Data";
-                        }
-
-                        toolTipMessage += Environment.NewLine + 
-                            i.ToString() + "." +
-                            " Type: " + dataType + Environment.NewLine +
-                            " Owner: " + dirent.FileName + Environment.NewLine +
-                            " File Size: " + dirent.FileSize.ToString("X8") + Environment.NewLine + 
-                            " Date Written: " + dirent.LastWriteTime.AsDateTime() + Environment.NewLine;
-
-                        i++;
-                    }
-
-                    //toolTip1.Active = true;
-                    toolTip1.SetToolTip(this.dataMap, toolTipMessage);
                 }
                 else
                 {
-                    //toolTip1.Active = false;
-                    toolTip1.SetToolTip(this.dataMap, 
-                        "Index: " + c.ClusterIndex.ToString());
+                    var occupant = occupants[0];
+                    if (occupant.IsActive)
+                    {
+                        // Sole occupant
+                        clusterColorMap[i] = activeColor;
+                    }
+                    else
+                    {
+                        // Only recovered occupant
+                        clusterColorMap[i] = recoveredColor;
+                    }
                 }
+            }
+
+            UpdateDataMap();
+        }
+
+        private void InitializeActiveFileSystem()
+        {
+            clusterColorMap[volume.RootDirFirstCluster] = rootColor;
+
+            UpdateClusters();
+        }
+
+        private int ClusterToCellIndex(uint clusterIndex)
+        {
+            return (int)clusterIndex - 1;
+        }
+
+        private uint CellToClusterIndex(int cellIndex)
+        {
+            return (uint)cellIndex + 1;
+        }
+
+        public void UpdateDataMap()
+        {
+            foreach (var pair in clusterColorMap)
+            {
+                dataMap.Cells[ClusterToCellIndex(pair.Key)].Color = pair.Value;
+            }
+        }
+
+        private string BuildToolTipMessage(int index, DirectoryEntry dirent, bool deleted)
+        {
+            // What kind of data is stored in this cluster?
+            string dataType;
+            if (dirent.IsDirectory())
+            {
+                dataType = "Dirent Stream";
             }
             else
             {
-                //toolTip1.Active = false;
+                dataType = "File Data";
+            }
+
+            string message = Environment.NewLine +
+                index.ToString() + "." +
+                " Type: " + dataType + Environment.NewLine +
+                " Occupant: " + dirent.FileName + Environment.NewLine +
+                " File Size: " + dirent.FileSize.ToString("X8") + Environment.NewLine +
+                " Date Written: " + dirent.LastWriteTime.AsDateTime() + Environment.NewLine +
+                " Deleted: " + (!deleted).ToString() + Environment.NewLine;
+
+            return message;
+        }
+
+        private void DataMap_CellHovered(object sender, EventArgs e)
+        {
+            var cellHoveredEventArgs = e as CellHoveredEventArgs;
+
+            if (cellHoveredEventArgs != null)
+            {
+                var clusterIndex = CellToClusterIndex(cellHoveredEventArgs.Index);
+
+                Debug.WriteLine($"Cluster Index: {clusterIndex}");
+
+                var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
+
+                string toolTipMessage = "Cluster Index: " + clusterIndex.ToString() + Environment.NewLine;
+                toolTipMessage += "Cluster Address: 0x" + volume.ClusterToPhysicalOffset(clusterIndex).ToString("X");
+
+                if (clusterIndex == volume.RootDirFirstCluster)
+                {
+                    toolTipMessage += Environment.NewLine + Environment.NewLine;
+                    toolTipMessage += " Type: Root Directory";
+                }
+                else if (occupants.Count > 0)
+                {
+                    toolTipMessage += Environment.NewLine;
+
+                    int index = 1;
+                    foreach (var occupant in occupants)
+                    {
+                        toolTipMessage += BuildToolTipMessage(index, occupant.GetDirent(), occupant.IsActive);
+                        index++;
+                    }
+                }
+
+                toolTip1.SetToolTip(this.dataMap, toolTipMessage);
+            }
+            else
+            {
                 toolTip1.SetToolTip(this.dataMap, "");
             }
         }
 
-        private void Control_CellSelected(object sender, EventArgs e)
+        private void DataMap_CellSelected(object sender, EventArgs e)
         {
-            CellDataEventArgs c = (CellDataEventArgs)e;
-            var dirents = c.Value;
-            foreach (var obj in dirents)
+            var clusterIndex = CellToClusterIndex(dataMap.SelectedIndex);
+
+            Debug.WriteLine($"Cluster Index: {clusterIndex}");
+
+            var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
+
+            if (occupants.Count > 0)
             {
-                var dirent = (DirectoryEntry)obj;
-                var chain = this.volume.GetClusterChain(dirent);
-                foreach (var cluster in chain)
+                // Just use the first one for now.
+                // IDEAS: 
+                //   1. Maybe toggle between each occupant after each click
+                //   2. Only highlight the largest file
+                //   3. Only highlight the smallest file
+                var clusterChain = occupants[0].ClusterChain;
+                foreach (var cluster in clusterChain)
                 {
-                    dataMap.SelectCell(cluster);
+                    dataMap.Cells[ClusterToCellIndex(cluster)].Selected = true;
                 }
-                //Console.WriteLine(c.ClusterIndex);
-                //Console.WriteLine(dirent.FileName);
+
+                //Console.WriteLine($"Occupants: {occupants.Count}");
             }
-            //hexBox1.SelectionStart = this.volume.ClusterToPhysicalOffset(c.ClusterIndex);
-            //hexBox1.SelectionLength = 1;
-            //hexBox1.ScrollByteIntoView(hexBox1.SelectionStart);
-            //hexBox1.Focus();
-            //throw new NotImplementedException();
         }
     }
 }

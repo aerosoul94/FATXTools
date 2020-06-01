@@ -15,6 +15,7 @@ namespace FATXTools
         private TabPage recoveryResultsPage;
 
         private IntegrityAnalyzer integrityAnalyzer;
+        private ClusterViewer clusterViewer;
         private TaskRunner taskRunner;
 
         public PartitionView(TaskRunner taskRunner, Volume volume)
@@ -33,7 +34,7 @@ namespace FATXTools
             this.tabControl1.TabPages.Add(explorerPage);
 
             clusterViewerPage = new TabPage("Cluster Viewer");
-            ClusterViewer clusterViewer = new ClusterViewer(volume);
+            clusterViewer = new ClusterViewer(volume, integrityAnalyzer);
             clusterViewer.Dock = DockStyle.Fill;
             clusterViewerPage.Controls.Add(clusterViewer);
             this.tabControl1.TabPages.Add(clusterViewerPage);
@@ -64,13 +65,15 @@ namespace FATXTools
             }
 
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
-            integrityAnalyzer.AddFileSystem(results.analyzer.GetDirents());
+            integrityAnalyzer.MergeMetadataAnalysis(results.analyzer.GetDirents());
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");
             RecoveryResults recoveryResults = new RecoveryResults(results.analyzer, integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);
             tabControl1.SelectedTab = recoveryResultsPage;
+
+            clusterViewer.UpdateClusters();
         }
     }
 }

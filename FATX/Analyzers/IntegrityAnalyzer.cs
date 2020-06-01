@@ -3,17 +3,23 @@ using System.Linq;
 
 namespace FATX.Analyzers
 {
+    /// <summary>
+    /// This may be used in the future for applying modifications at run-time
+    /// for DirectoryEntries
+    /// </summary>
     public class RankedDirectoryEntry
     {
         private bool isActive;
         private int ranking;
         private DirectoryEntry dirent;
         private List<uint> collisions;
+        private List<uint> clusterChain;
 
         public RankedDirectoryEntry(DirectoryEntry dirent, bool isOriginal)
         {
             this.isActive = isOriginal;
             this.dirent = dirent;
+            this.clusterChain = null;
         }
 
         public void GiveRanking(int rank)
@@ -42,6 +48,12 @@ namespace FATX.Analyzers
             get => collisions;
             set => collisions = value;
         }
+
+        public List<uint> ClusterChain
+        {
+            get => clusterChain;
+            set => clusterChain = value;
+        }
     }
 
     public class IntegrityAnalyzer
@@ -51,15 +63,7 @@ namespace FATX.Analyzers
         /// </summary>
         private Volume volume;
 
-        /// <summary>
-        /// Directory entries that are part of the active (were not deleted) file system.
-        /// </summary>
-        private List<DirectoryEntry> activeDirents;
-
-        /// <summary>
-        /// List of all directory entries with assigned ranks;
-        /// </summary>
-        private List<RankedDirectoryEntry> rankedDirents;
+        private Dictionary<long, RankedDirectoryEntry> direntList;
 
         /// <summary>
         /// Mapping of cluster indexes to a list of entities that occupy it.
@@ -69,8 +73,7 @@ namespace FATX.Analyzers
         public IntegrityAnalyzer(Volume volume)
         {
             this.volume = volume;
-            activeDirents = new List<DirectoryEntry>();
-            rankedDirents = new List<RankedDirectoryEntry>();
+            direntList = new Dictionary<long, RankedDirectoryEntry>();
 
             clusterMap = new Dictionary<uint, List<RankedDirectoryEntry>>((int)volume.MaxClusters);
             for (uint i = 0; i < volume.MaxClusters; i++)
@@ -78,114 +81,159 @@ namespace FATX.Analyzers
                 clusterMap[i] = new List<RankedDirectoryEntry>();
             }
 
-            RegisterDirents(volume.GetRoot());
+            RegisterActiveDirectoryEntries(volume.GetRoot());
+
+            // Now that we have registered them, let's update the cluster map
+            UpdateClusterMap();
         }
 
-        private void RegisterDirents(List<DirectoryEntry> dirents)
+        private void RegisterDirectoryEntry(DirectoryEntry dirent, bool active)
         {
+            long key = dirent.Offset;
+            // If the dirent is already registered, then we don't need to register it again
+            if (!direntList.ContainsKey(key))
+            {
+                direntList[key] = new RankedDirectoryEntry(dirent, active);
+            }
+        }
+
+        private void RegisterActiveDirectoryEntries(List<DirectoryEntry> dirents)
+        {
+            // Here we will first create RankedDirectoryEntry objects
             foreach (var dirent in dirents)
             {
-                activeDirents.Add(dirent);
                 if (dirent.IsDeleted())
                 {
-                    rankedDirents.Add(new RankedDirectoryEntry(dirent, false));
+                    // If it's deleted, then its not active
+                    RegisterDirectoryEntry(dirent, false);
                 }
                 else
                 {
-                    rankedDirents.Add(new RankedDirectoryEntry(dirent, true));
+                    RegisterDirectoryEntry(dirent, true);
                 }
 
                 if (dirent.IsDirectory())
                 {
-                    RegisterDirents(dirent.GetChildren());
+                    RegisterActiveDirectoryEntries(dirent.GetChildren());
                 }
             }
         }
 
-        private bool IsInOriginalFileSystem(DirectoryEntry dirent)
+        private List<uint> GenerateArtificialClusterChain(DirectoryEntry dirent)
         {
-            foreach (var originalDirent in activeDirents)
+            if (dirent.IsDirectory())
             {
-                if (originalDirent.Offset == dirent.Offset)
-                {
-                    return true;
-                }
+                // NOTE: Directories with more than one 256 files would have multiple clusters
+                return new List<uint>() { dirent.FirstCluster };
             }
-
-            return false;
-        }
-
-        public void AddFileSystem(List<DirectoryEntry> newfs)
-        {
-            // Find new dirents
-            foreach (var dirent in newfs)
+            else
             {
-                // Should only add those that aren't already registered
-                if (!IsInOriginalFileSystem(dirent))
-                {
-                    rankedDirents.Add(new RankedDirectoryEntry(dirent, false));
-                }
-            }
+                var clusterCount = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
+                         ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
 
-            InitializeClusterMap();
-            InitializeRankedDirents();
-            PerformRanking();
-        }
-
-        private void InitializeRankedDirents()
-        {
-            foreach (var rankedDirent in rankedDirents)
-            {
-                rankedDirent.Collisions = FindCollidingClusters(rankedDirent);
+                return Enumerable.Range((int)dirent.FirstCluster, clusterCount).Select(i => (uint)i).ToList();
             }
         }
 
-        private void InitializeClusterMap()
+        private void UpdateClusters(RankedDirectoryEntry rankedDirent)
         {
-            foreach (var rankedDirent in rankedDirents)
+            foreach (var cluster in rankedDirent.ClusterChain)
             {
+                var occupants = clusterMap[(uint)cluster];
+                if (!occupants.Contains(rankedDirent))
+                    occupants.Add(rankedDirent);
+            }
+        }
+
+        private void UpdateClusterMap()
+        {
+            // For each dirent in dirent list
+            foreach (var pair in direntList)
+            {
+                var rankedDirent = pair.Value;
+
+                // We handle active cluster chains conventionally
                 if (rankedDirent.IsActive)
                 {
-                    foreach (var cluster in volume.GetClusterChain(rankedDirent.GetDirent()))
+                    if (rankedDirent.ClusterChain == null)
                     {
-                        clusterMap[cluster].Add(rankedDirent);
+                        rankedDirent.ClusterChain = volume.GetClusterChain(rankedDirent.GetDirent());
                     }
+
+                    UpdateClusters(rankedDirent);
                 }
+                // Otherwise, we generate an artificial cluster chain
                 else
                 {
                     var dirent = rankedDirent.GetDirent();
 
-                    if (dirent.FileName.StartsWith("xdk_data"))
+                    if (dirent.FileName.StartsWith("xdk_data") ||
+                        dirent.FileName.StartsWith("xdk_file") ||
+                        dirent.FileName.StartsWith("tempcda"))
                     {
+                        // These are usually always large and/or corrupted
+                        // TODO: still don't really know what these files are
+                        rankedDirent.ClusterChain = new List<uint>();
                         continue;
                     }
 
-                    var firstCluster = rankedDirent.GetDirent().FirstCluster;
-                    var numClusters = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                             ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
-                    var clusterChain = Enumerable.Range((int)dirent.FirstCluster, (int)numClusters).ToList();
-                    foreach (var cluster in clusterChain)
+                    if (rankedDirent.ClusterChain == null)
                     {
-                        clusterMap[(uint)cluster].Add(rankedDirent);
+                        // Generate an artificial cluster chain
+                        rankedDirent.ClusterChain = GenerateArtificialClusterChain(dirent);
                     }
+
+                    UpdateClusters(rankedDirent);
                 }
+            }
+        }
+
+        private void RegisterInactiveDirectoryEntries(List<DirectoryEntry> dirents)
+        {
+            foreach (var dirent in dirents)
+            {
+                RegisterDirectoryEntry(dirent, false);
+
+                if (dirent.IsDirectory())
+                {
+                    RegisterInactiveDirectoryEntries(dirent.GetChildren());
+                }
+            }
+        }
+
+        public void MergeMetadataAnalysis(List<DirectoryEntry> recovered)
+        {
+            // Find new dirents
+            RegisterInactiveDirectoryEntries(recovered);
+            UpdateClusterMap();
+            UpdateCollisions();
+            PerformRanking();
+        }
+
+        private void UpdateCollisions()
+        {
+            foreach (var pair in direntList)
+            {
+                var rankedDirent = pair.Value;
+                rankedDirent.Collisions = FindCollidingClusters(rankedDirent);
             }
         }
 
         private List<uint> FindCollidingClusters(RankedDirectoryEntry rankedDirent)
         {
+            // Get a list of cluster who are possibly corrupted
             List<uint> collidingClusters = new List<uint>();
-            var dirent = rankedDirent.GetDirent();
-            var numClusters = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                     ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
-            var clusterChain = Enumerable.Range((int)dirent.FirstCluster, (int)numClusters).ToList();
-            foreach (var cluster in clusterChain)
+
+            // for each cluster used by this dirent, check if other dirents are
+            // also claiming it.
+            foreach (var cluster in rankedDirent.ClusterChain)
             {
                 if (clusterMap[(uint)cluster].Count > 1)
                 {
                     collidingClusters.Add((uint)cluster);
                 }
             }
+
             return collidingClusters;
         }
 
@@ -282,19 +330,19 @@ namespace FATX.Analyzers
 
         private void PerformRanking()
         {
-            foreach (var rankedDirent in rankedDirents)
+            foreach (var pair in direntList)
             {
-                DoRanking(rankedDirent);
+                DoRanking(pair.Value);
             }
         }
 
         public RankedDirectoryEntry GetRankedDirectoryEntry(DirectoryEntry dirent)
         {
-            foreach (var rankedDirent in rankedDirents)
+            foreach (var pair in direntList)
             {
-                if (dirent.Offset == rankedDirent.GetDirent().Offset)
+                if (dirent.Offset == pair.Value.GetDirent().Offset)
                 {
-                    return rankedDirent;
+                    return pair.Value;
                 }
             }
 
@@ -304,7 +352,18 @@ namespace FATX.Analyzers
 
         public List<RankedDirectoryEntry> GetClusterOccupants(uint cluster)
         {
-            return clusterMap[cluster];
+            List<RankedDirectoryEntry> occupants;
+
+            if (clusterMap.ContainsKey(cluster))
+            {
+                occupants = clusterMap[cluster];
+            }
+            else
+            {
+                occupants = null;
+            }
+
+            return occupants;
         }
     }
 }
