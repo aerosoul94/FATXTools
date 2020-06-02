@@ -553,9 +553,8 @@ namespace FATXTools
 
             private DialogResult ShowIOErrorDialog(Exception e)
             {
-                return MessageBox.Show($"{e.Message}\n\n" +
-                    "Try Again?",
-                    "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                return MessageBox.Show($"{e.Message}",
+                    "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
             }
 
             private void WriteFile(string path, DirectoryEntry dirent)
@@ -602,7 +601,7 @@ namespace FATXTools
                     {
                         var dialogResult = ShowIOErrorDialog(e);
 
-                        if (dialogResult == DialogResult.Yes)
+                        if (dialogResult == DialogResult.Retry)
                         {
                             try
                             {
