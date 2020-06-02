@@ -81,9 +81,7 @@
     <Compile Include="Controls\CarverResults.Designer.cs">
       <DependentUpon>CarverResults.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controls\DataMap\DataMap.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Controls\DataMap\DataMap.cs" />
     <Compile Include="Controls\ClusterViewer.cs">
       <SubType>UserControl</SubType>
     </Compile>

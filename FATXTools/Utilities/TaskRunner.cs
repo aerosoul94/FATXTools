@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Media;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,6 +61,8 @@ namespace FATXTools.Utilities
 
             // wait for worker task to finish.
             await Task.WhenAll(_task);
+
+            SystemSounds.Beep.Play();
 
             taskCompleted();
 

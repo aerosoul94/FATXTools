@@ -131,7 +131,9 @@ namespace FATXTools.Controls
                 " Type: " + dataType + Environment.NewLine +
                 " Occupant: " + dirent.FileName + Environment.NewLine +
                 " File Size: " + dirent.FileSize.ToString("X8") + Environment.NewLine +
+                " Date Created: " + dirent.CreationTime.AsDateTime() + Environment.NewLine + 
                 " Date Written: " + dirent.LastWriteTime.AsDateTime() + Environment.NewLine +
+                " Date Accessed: " + dirent.LastAccessTime.AsDateTime() + Environment.NewLine + 
                 " Deleted: " + (!deleted).ToString() + Environment.NewLine;
 
             return message;

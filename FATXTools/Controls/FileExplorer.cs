@@ -246,13 +246,13 @@ namespace FATXTools.Controls
         {
             // TODO: Make into a user controlled setting
             var searchLength = this.volume.FileAreaLength;
-            var searchInterval = (long)FileCarverInterval.Cluster;
+            var searchInterval = FileCarverInterval.Cluster;
 
             taskRunner.Maximum = searchLength;
-            taskRunner.Interval = searchInterval;
+            taskRunner.Interval = (long)searchInterval;
 
-            FileCarver carver = new FileCarver(this.volume, FileCarverInterval.Align, this.volume.FileAreaLength);
-            var numBlocks = searchLength / searchInterval;
+            FileCarver carver = new FileCarver(this.volume, searchInterval, searchLength);
+            var numBlocks = searchLength / (long)searchInterval;
             try
             {
                 await taskRunner.RunTaskAsync("File Carver",

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Diagnostics;
-using System.Data;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace FATXTools.Controls
