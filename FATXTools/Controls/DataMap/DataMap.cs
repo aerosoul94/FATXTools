@@ -263,12 +263,12 @@ namespace FATXTools.Controls
 
         private DataMapCell HitTest(Point p)
         {
-            foreach (var pair in Cells
-                .Where(pair => pair.Value.Index >= _startCell && pair.Value.Index <= _endCell)
-                //.Where(cell => cell.Rect.Contains(p)))
-                .Where(pair => pair.Value.Rect.Contains(p)))
+            for (int i = (int)_startCell; i < _endCell; i++)
             {
-                return pair.Value;
+                if (Cells[i].Rect.Contains(p))
+                {
+                    return Cells[i];
+                }
             }
 
             return null;

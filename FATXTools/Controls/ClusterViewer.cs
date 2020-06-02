@@ -157,6 +157,11 @@ namespace FATXTools.Controls
                     toolTipMessage += Environment.NewLine + Environment.NewLine;
                     toolTipMessage += " Type: Root Directory";
                 }
+                else if (occupants == null)
+                {
+                    // TODO: something is off
+                    Debug.WriteLine("Something is wrong.");
+                }
                 else if (occupants.Count > 0)
                 {
                     toolTipMessage += Environment.NewLine;
