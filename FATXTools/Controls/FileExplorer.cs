@@ -253,7 +253,7 @@ namespace FATXTools.Controls
         {
             // TODO: Make into a user controlled setting
             var searchLength = this.volume.FileAreaLength;
-            var searchInterval = FileCarverInterval.Cluster;
+            var searchInterval = Properties.Settings.Default.FileCarverInterval;
 
             taskRunner.Maximum = searchLength;
             taskRunner.Interval = (long)searchInterval;

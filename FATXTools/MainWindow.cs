@@ -230,5 +230,17 @@ namespace FATXTools
                     partitionDialog.PartitionLength));
             }
         }
+
+        private void settingsToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            SettingsForm settings = new SettingsForm();
+            if (settings.ShowDialog() == DialogResult.OK)
+            {
+                Properties.Settings.Default.FileCarverInterval = settings.FileCarverInterval;
+                Properties.Settings.Default.LogFile = settings.LogFile;
+
+                Properties.Settings.Default.Save();
+            }
+        }
     }
 }
