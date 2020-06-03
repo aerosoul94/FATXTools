@@ -61,6 +61,7 @@ namespace FATX
             var origByteOrder = _volume.Reader.ByteOrder;
 
             long progressValue = 0;
+            long progressUpdate = interval * 0x200;
 
             for (long offset = 0; offset < _length; offset += interval)
             {
@@ -92,7 +93,7 @@ namespace FATX
 
                 progressValue += interval;
 
-                if (progressValue % 0x40000 == 0)
+                if (progressValue % progressUpdate == 0)
                     progress?.Report((int)(progressValue / interval));
 
                 if (cancellationToken.IsCancellationRequested)
