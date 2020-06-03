@@ -131,6 +131,7 @@ namespace FATXTools
 
         private void PopulateListView(List<DirectoryEntry> dirents, DirectoryEntry parent)
         {
+            listView1.BeginUpdate();
             listView1.Items.Clear();
 
             var upDir = listView1.Items.Add("");
@@ -146,10 +147,11 @@ namespace FATXTools
                 upDir.Tag = new NodeTag(nodeTag.Tag as List<DirectoryEntry>, NodeType.Cluster);
             }
 
+            List<ListViewItem> items = new List<ListViewItem>();
             int index = 1;
             foreach (DirectoryEntry dirent in dirents)
             {
-                ListViewItem item = listView1.Items.Add(index.ToString());
+                ListViewItem item = new ListViewItem(index.ToString());
                 item.Tag = new NodeTag(dirent, NodeType.Dirent);
 
                 item.SubItems.Add(dirent.FileName);
@@ -181,7 +183,12 @@ namespace FATXTools
                 item.BackColor = statusColor[ranking.Ranking];
 
                 index++;
+
+                items.Add(item);
             }
+
+            listView1.Items.AddRange(items.ToArray());
+            listView1.EndUpdate();
         }
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)

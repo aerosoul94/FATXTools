@@ -192,7 +192,11 @@ namespace FATXTools.Controls
 
             var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
 
-            if (occupants.Count > 0)
+            if (occupants == null)
+            {
+                // Something is wrong
+            }
+            else if (occupants.Count > 0)
             {
                 // Just use the first one for now.
                 // IDEAS: 
