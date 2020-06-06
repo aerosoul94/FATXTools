@@ -7,6 +7,7 @@ namespace FATX.Analyzers.Signatures
     public abstract class FileSignature
     {
         private Volume _volume;
+        private DriveReader _reader;
         private long _offset;
         private long _fileSize;
         private string _fileName;
@@ -19,6 +20,7 @@ namespace FATX.Analyzers.Signatures
             this._fileSize = 0;
             this._offset = offset;
             this._volume = volume;
+            this._reader = volume.GetReader();
         }
 
         public abstract bool Test();
@@ -63,46 +65,56 @@ namespace FATX.Analyzers.Signatures
 
         protected void SetByteOrder(ByteOrder byteOrder)
         {
-            _volume.Reader.ByteOrder = byteOrder;
+            _reader.ByteOrder = byteOrder;
         }
 
         protected byte[] ReadBytes(int count)
         {
-            return _volume.Reader.ReadBytes(count);
+            return _reader.ReadBytes(count);
         }
 
         protected char ReadChar()
         {
-            return _volume.Reader.ReadChar();
+            return _reader.ReadChar();
+        }
+
+        protected byte ReadByte()
+        {
+            return _reader.ReadByte();
         }
 
         protected char[] ReadChars(int count)
         {
-            return _volume.Reader.ReadChars(4);
+            return _reader.ReadChars(4);
         }
 
         protected ushort ReadUInt16()
         {
-            return _volume.Reader.ReadUInt16();
+            return _reader.ReadUInt16();
         }
 
         protected uint ReadUInt32()
         {
-            return _volume.Reader.ReadUInt32();
+            return _reader.ReadUInt32();
         }
 
-        protected string ReadCString()
+        protected String ReadCString(int terminant = 0)
         {
-            String s = String.Empty;
-            while (true)
+            String tempString = String.Empty;
+            Int32 tempChar = -1;
+            bool eof;
+
+            while (!(eof = (_reader.Position == _reader.Length)) && (tempChar = ReadByte()) != terminant)
             {
-                char c = ReadChar();
-                if (c == '\0')
+                tempString += Convert.ToChar(tempChar);
+                if (eof)
                 {
-                    return s;
+                    tempString += '\0';
+                    break;
                 }
-                s += c;
             }
+
+            return tempString;
         }
     }
 }

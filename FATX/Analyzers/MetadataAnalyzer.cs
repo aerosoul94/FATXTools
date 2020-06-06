@@ -4,6 +4,7 @@ using System.IO;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
+using System.Text.Json;
 
 namespace FATX
 {
@@ -43,12 +44,83 @@ namespace FATX
             var sw = new Stopwatch();
             sw.Start();
             RecoverMetadata(cancellationToken, progress);
-            LinkFileSystem(cancellationToken);
+            LinkFileSystem();
             sw.Stop();
             Console.WriteLine($"Execution Time: {sw.ElapsedMilliseconds} ms");
             Console.WriteLine($"Found {_dirents.Count} dirents.");
 
             return _root;
+        }
+
+        public DirectoryEntry LoadDirectoryEntryFromDatabase(JsonElement directoryEntryObject)
+        {
+            JsonElement offsetElement;
+            if (!directoryEntryObject.TryGetProperty("Offset", out offsetElement))
+            {
+                Console.WriteLine("Failed to load metadata object from database: Missing offset field");
+                return null;
+            }
+
+            JsonElement clusterElement;
+            if (!directoryEntryObject.TryGetProperty("Cluster", out clusterElement))
+            {
+                Console.WriteLine("Failed to load metadata object from database: Missing cluster field");
+                return null;
+            }
+
+            long offset = offsetElement.GetInt64();
+            uint cluster = clusterElement.GetUInt32();
+
+            if (offset < this._volume.Offset || offset > this._volume.Offset + this._volume.Length)
+            {
+                Console.WriteLine($"Failed to load metadata object from database: Invalid offset {offset}");
+                return null;
+            }
+
+            if (cluster < 0 || cluster > this._volume.MaxClusters)
+            {
+                Console.WriteLine($"Failed to load metadata object from database: Invalid cluster {cluster}");
+                return null;
+            }
+
+            byte[] data = new byte[0x40];
+            this._volume.GetReader().Seek(offset);
+            this._volume.GetReader().Read(data, 0x40);
+
+            var directoryEntry = new DirectoryEntry(this._volume, data, 0);
+            directoryEntry.Offset = offset;
+            directoryEntry.Cluster = cluster;
+
+            _dirents.Add(directoryEntry);
+
+            if (directoryEntryObject.TryGetProperty("Children", out var childrenElement))
+            {
+                foreach (var childElement in childrenElement.EnumerateArray())
+                {
+                    var child = LoadDirectoryEntryFromDatabase(childElement);
+                    directoryEntry.AddChild(child);
+                }
+            }
+
+            if (directoryEntryObject.TryGetProperty("Clusters", out var clustersElement))
+            {
+                // TODO: load cluster chain from file
+                // Currently we always generate or load from the fat
+                //var clusterList = directoryEntryObject["Clusters"] as List<uint>;
+                //directoryEntry.ClusterChain = clusterList;
+            }
+
+            return directoryEntry;
+        }
+
+        public void LoadFromDatabase(JsonElement metadataAnalysisObject)
+        {
+            foreach (var directoryEntryObject in metadataAnalysisObject.EnumerateArray())
+            {
+                var directoryEntry = LoadDirectoryEntryFromDatabase(directoryEntryObject);
+
+                _root.Add(directoryEntry);
+            }
         }
 
         /// <summary>
@@ -72,7 +144,7 @@ namespace FATX
                         if (IsValidDirent(dirent))
                         {
                             Console.WriteLine(String.Format("0x{0:X8}: {1}", clusterOffset + direntOffset, dirent.FileName));
-                            dirent.SetCluster(cluster);
+                            dirent.Cluster = cluster;
                             dirent.Offset = _volume.ClusterToPhysicalOffset(cluster) + direntOffset;
                             _dirents.Add(dirent);
                         }
@@ -106,7 +178,7 @@ namespace FATX
             var chainMap = new List<uint>() { parent.FirstCluster };
             foreach (var child in _dirents)
             {
-                if (chainMap.Contains(child.GetCluster()))
+                if (chainMap.Contains(child.Cluster))
                 {
                     if (child.HasParent())
                     {
@@ -122,7 +194,7 @@ namespace FATX
         /// Links all dirent's with their child dirent's.
         /// </summary>
         /// <param name="worker"></param>
-        private void LinkFileSystem(CancellationToken cancellationToken)
+        private void LinkFileSystem()
         {
             foreach (var dirent in _dirents)
             {
@@ -154,7 +226,7 @@ namespace FATX
                 Directory.CreateDirectory(path);
             }
 
-            foreach (DirectoryEntry child in dirent.GetChildren())
+            foreach (DirectoryEntry child in dirent.Children)
             {
                 Dump(child, path);
             }
@@ -183,7 +255,7 @@ namespace FATX
                     var read = Math.Min(remains, bufsize);
                     remains -= read;
                     byte[] buf = new byte[read];
-                    _volume.Reader.Read(buf, (int)read);
+                    _volume.GetReader().Read(buf, (int)read);
                     file.Write(buf, 0, (int)read);
                 }
             }

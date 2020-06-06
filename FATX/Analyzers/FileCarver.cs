@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.ComponentModel;
 using FATX.Analyzers.Signatures;
+using FATX.Analyzers.Signatures.Generic;
 using System.Threading;
+using System.Text.Json;
 
 namespace FATX
 {
@@ -24,6 +25,13 @@ namespace FATX
         private readonly long _length;
         private List<FileSignature> _carvedFiles;
 
+        public FileCarver(Volume volume)
+        {
+            this._volume = volume;
+            this._interval = FileCarverInterval.Cluster;
+            this._length = volume.Length;
+        }
+
         public FileCarver(Volume volume, FileCarverInterval interval, long length)
         {
             if (length == 0 || length > volume.FileAreaLength)
@@ -34,6 +42,35 @@ namespace FATX
             this._volume = volume;
             this._interval = interval;
             this._length = length;
+        }
+
+        public void LoadFromDatabase(JsonElement fileCarverList)
+        {
+            _carvedFiles = new List<FileSignature>();
+
+            foreach (var file in fileCarverList.EnumerateArray())
+            {
+                JsonElement offsetElement;
+                if (!file.TryGetProperty("Offset", out offsetElement))
+                {
+                    Console.WriteLine("Failed to load signature from database: Missing offset field");
+                    continue;
+                }
+
+                var fileSignature = new GenericSignature(this._volume, offsetElement.GetInt64());
+
+                if (file.TryGetProperty("Name", out var nameElement))
+                {
+                    fileSignature.FileName = nameElement.GetString();
+                }
+
+                if (file.TryGetProperty("Size", out var sizeElement))
+                {
+                    fileSignature.FileSize = sizeElement.GetInt64();
+                }
+
+                this._carvedFiles.Add(fileSignature);
+            }
         }
 
         public List<FileSignature> GetCarvedFiles()
@@ -50,6 +87,7 @@ namespace FATX
         {
             var allSignatures = from assembly in AppDomain.CurrentDomain.GetAssemblies()
                                 from type in assembly.GetTypes()
+                                where type.Namespace == "FATX.Analyzers.Signatures"
                                 where type.IsSubclassOf(typeof(FileSignature))
                                 select type;
 
@@ -58,7 +96,7 @@ namespace FATX
 
             var types = allSignatures.ToList();
 
-            var origByteOrder = _volume.Reader.ByteOrder;
+            var origByteOrder = _volume.GetReader().ByteOrder;
 
             long progressValue = 0;
             long progressUpdate = interval * 0x200;
@@ -70,7 +108,7 @@ namespace FATX
                     // too slow
                     FileSignature signature = (FileSignature)Activator.CreateInstance(type, _volume, offset);
 
-                    _volume.Reader.ByteOrder = origByteOrder;
+                    _volume.GetReader().ByteOrder = origByteOrder;
 
                     _volume.SeekFileArea(offset);
                     bool test = signature.Test();
@@ -125,7 +163,7 @@ namespace FATX
                     var read = Math.Min(remains, bufsize);
                     remains -= read;
                     byte[] buf = new byte[read];
-                    _volume.Reader.Read(buf, (int)read);
+                    _volume.GetReader().Read(buf, (int)read);
                     file.Write(buf, 0, (int)read);
                 }
             }

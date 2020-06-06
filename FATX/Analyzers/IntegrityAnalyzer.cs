@@ -114,7 +114,7 @@ namespace FATX.Analyzers
 
                 if (dirent.IsDirectory())
                 {
-                    RegisterActiveDirectoryEntries(dirent.GetChildren());
+                    RegisterActiveDirectoryEntries(dirent.Children);
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace FATX.Analyzers
 
                 if (dirent.IsDirectory())
                 {
-                    RegisterInactiveDirectoryEntries(dirent.GetChildren());
+                    RegisterInactiveDirectoryEntries(dirent.Children);
                 }
             }
         }

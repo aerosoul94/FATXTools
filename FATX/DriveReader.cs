@@ -119,9 +119,6 @@ namespace FATX
             return _partitions[index];
         }
 
-        public List<Volume> GetPartitions()
-        {
-            return _partitions;
-        }
+        public List<Volume> Partitions => _partitions;
     }
 }

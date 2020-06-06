@@ -74,7 +74,7 @@ namespace FATXTools.Controls
                         node.ForeColor = Color.FromArgb(100, 100, 100);
                     }
 
-                    PopulateTreeNodeDirectory(node, dirent.GetChildren());
+                    PopulateTreeNodeDirectory(node, dirent.Children);
                 }
             }
         }
@@ -128,7 +128,7 @@ namespace FATXTools.Controls
                 item.SubItems.Add(lastWriteTime.ToString());
                 item.SubItems.Add(lastAccessTime.ToString());
                 item.SubItems.Add("0x" + dirent.Offset.ToString("x"));
-                item.SubItems.Add(dirent.GetCluster().ToString());
+                item.SubItems.Add(dirent.Cluster.ToString());
 
                 if (dirent.IsDeleted())
                 {
@@ -159,7 +159,7 @@ namespace FATXTools.Controls
                     }
                     else
                     {
-                        PopulateListView(dirent.GetChildren(), dirent);
+                        PopulateListView(dirent.Children, dirent);
                     }
 
                     break;
@@ -197,7 +197,7 @@ namespace FATXTools.Controls
                     }
                     else
                     {
-                        PopulateListView(dirent.GetChildren(), dirent);
+                        PopulateListView(dirent.Children, dirent);
                     }
 
                     break;
@@ -563,7 +563,7 @@ namespace FATXTools.Controls
 
                 Directory.CreateDirectory(path);
 
-                foreach (DirectoryEntry child in dirent.GetChildren())
+                foreach (DirectoryEntry child in dirent.Children)
                 {
                     SaveDirectoryEntry(path, child);
                 }
@@ -723,7 +723,7 @@ namespace FATXTools.Controls
                         result = direntX.Offset.CompareTo(direntY.Offset);
                         break;
                     case ColumnIndex.Cluster:
-                        result = direntX.GetCluster().CompareTo(direntY.GetCluster());
+                        result = direntX.Cluster.CompareTo(direntY.Cluster);
                         break;
                 }
 

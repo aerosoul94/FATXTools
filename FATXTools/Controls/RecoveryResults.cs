@@ -82,7 +82,7 @@ namespace FATXTools
                 {
                     var childNode = parent.Nodes.Add(child.FileName);
                     childNode.Tag = new NodeTag(child, NodeType.Dirent);
-                    PopulateFolder(child.GetChildren(), childNode);
+                    PopulateFolder(child.Children, childNode);
                 }
             }
         }
@@ -91,7 +91,7 @@ namespace FATXTools
         {
             foreach (var result in results)
             {
-                var cluster = result.GetCluster();
+                var cluster = result.Cluster;
                 if (!clusterNodes.ContainsKey(cluster))
                 {
                     // Initialize new 
@@ -108,7 +108,7 @@ namespace FATXTools
                     list.Add(result);
                 }
 
-                var clusterNodeText = "Cluster " + result.GetCluster();
+                var clusterNodeText = "Cluster " + result.Cluster;
                 TreeNode clusterNode;
                 if (!treeView1.Nodes.ContainsKey(clusterNodeText))
                 {
@@ -124,7 +124,7 @@ namespace FATXTools
                 {
                     var rootNode = clusterNode.Nodes.Add(result.FileName);
                     rootNode.Tag = new NodeTag(result, NodeType.Dirent);
-                    PopulateFolder(result.GetChildren(), rootNode);
+                    PopulateFolder(result.Children, rootNode);
                 }
             }
         }
@@ -176,7 +176,7 @@ namespace FATXTools
                 item.SubItems.Add(lastWriteTime.ToString());
                 item.SubItems.Add(lastAccessTime.ToString());
                 item.SubItems.Add("0x" + dirent.Offset.ToString("x"));
-                item.SubItems.Add(dirent.GetCluster().ToString());
+                item.SubItems.Add(dirent.Cluster.ToString());
 
                 //var statusItem = item.SubItems.Add("");
                 var ranking = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
@@ -213,7 +213,7 @@ namespace FATXTools
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    PopulateListView(dirent.GetChildren(), dirent.GetParent());
+                    PopulateListView(dirent.Children, dirent.GetParent());
 
                     break;
             }
@@ -235,7 +235,7 @@ namespace FATXTools
 
                     if (dirent.IsDirectory())
                     {
-                        PopulateListView(dirent.GetChildren(), dirent.GetParent());
+                        PopulateListView(dirent.Children, dirent.GetParent());
                     }
 
                     break;
@@ -256,7 +256,7 @@ namespace FATXTools
             {
                 if (dirent.IsDirectory())
                 {
-                    numFiles += CountFiles(dirent.GetChildren()) + 1;
+                    numFiles += CountFiles(dirent.Children) + 1;
                 }
                 else
                 {
@@ -576,7 +576,7 @@ namespace FATXTools
                         var read = Math.Min(remains, bufsize);
                         remains -= read;
                         byte[] buf = new byte[read];
-                        volume.Reader.Read(buf, (int)read);
+                        volume.GetReader().Read(buf, (int)read);
                         file.Write(buf, 0, (int)read);
                     }
                 }
@@ -638,7 +638,7 @@ namespace FATXTools
                     Directory.CreateDirectory(path);
                 }
 
-                foreach (DirectoryEntry child in dirent.GetChildren())
+                foreach (DirectoryEntry child in dirent.Children)
                 {
                     Save(path, child);
                 }
@@ -791,7 +791,7 @@ namespace FATXTools
                         result = direntX.Offset.CompareTo(direntY.Offset);
                         break;
                     case ColumnIndex.Cluster:
-                        result = direntX.GetCluster().CompareTo(direntY.GetCluster());
+                        result = direntX.Cluster.CompareTo(direntY.Cluster);
                         break;
                 }
 
@@ -841,7 +841,7 @@ namespace FATXTools
                         foreach (var occupant in occupants)
                         {
                             var o = occupant.GetDirent();
-                            Console.WriteLine($"{o.GetRootDirectoryEntry().GetCluster()}/{o.GetFullPath()}");
+                            Console.WriteLine($"{o.GetRootDirectoryEntry().Cluster}/{o.GetFullPath()}");
                         }
                     }
 

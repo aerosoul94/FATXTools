@@ -51,6 +51,10 @@
             this.searchForPartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.managePartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPartitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveToJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadFromJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -73,7 +77,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.label1);
             this.splitContainer1.Panel2.Controls.Add(this.textBox1);
             this.splitContainer1.Size = new System.Drawing.Size(2308, 1231);
-            this.splitContainer1.SplitterDistance = 804;
+            this.splitContainer1.SplitterDistance = 803;
             this.splitContainer1.TabIndex = 4;
             // 
             // label1
@@ -96,7 +100,7 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBox1.Size = new System.Drawing.Size(2289, 327);
+            this.textBox1.Size = new System.Drawing.Size(2289, 328);
             this.textBox1.TabIndex = 2;
             this.textBox1.WordWrap = false;
             // 
@@ -125,6 +129,8 @@
             this.openImageToolStripMenuItem,
             this.openDeviceToolStripMenuItem,
             this.toolStripSeparator3,
+            this.saveToolStripMenuItem,
+            this.loadToolStripMenuItem,
             this.saveToDatabaseToolStripMenuItem,
             this.toolStripSeparator2,
             this.settingsToolStripMenuItem1,
@@ -246,6 +252,36 @@
             this.addPartitionToolStripMenuItem.Text = "Add Partition";
             this.addPartitionToolStripMenuItem.Click += new System.EventHandler(this.addPartitionToolStripMenuItem_Click);
             // 
+            // loadToolStripMenuItem
+            // 
+            this.loadToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.loadFromJSONToolStripMenuItem});
+            this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.loadToolStripMenuItem.Text = "Load";
+            // 
+            // saveToolStripMenuItem
+            // 
+            this.saveToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveToJSONToolStripMenuItem});
+            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.saveToolStripMenuItem.Text = "Save";
+            // 
+            // saveToJSONToolStripMenuItem
+            // 
+            this.saveToJSONToolStripMenuItem.Name = "saveToJSONToolStripMenuItem";
+            this.saveToJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.saveToJSONToolStripMenuItem.Text = "Save To JSON";
+            this.saveToJSONToolStripMenuItem.Click += new System.EventHandler(this.saveToJSONToolStripMenuItem_Click);
+            // 
+            // loadFromJSONToolStripMenuItem
+            // 
+            this.loadFromJSONToolStripMenuItem.Name = "loadFromJSONToolStripMenuItem";
+            this.loadFromJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.loadFromJSONToolStripMenuItem.Text = "Load From JSON";
+            this.loadFromJSONToolStripMenuItem.Click += new System.EventHandler(this.loadFromJSONToolStripMenuItem_Click);
+            // 
             // MainWindow
             // 
             this.AllowDrop = true;
@@ -295,6 +331,10 @@
         private System.Windows.Forms.ToolStripMenuItem searchForPartitionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem managePartitionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPartitionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem saveToJSONToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem loadFromJSONToolStripMenuItem;
     }
 }
 

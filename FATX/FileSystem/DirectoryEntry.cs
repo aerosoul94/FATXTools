@@ -75,20 +75,11 @@ namespace FATX
             }
         }
 
-        public bool IsDirectory()
-        {
-            return FileAttributes.HasFlag(FileAttribute.Directory);
-        }
+        public uint Cluster { get => _cluster; set => _cluster = value; }
 
-        public bool IsDeleted()
-        {
-            return _fileNameLength == Constants.DirentDeleted;
-        }
+        public long Offset { get => _offset; set => _offset = value; }
 
-        public uint FileNameLength
-        {
-            get { return _fileNameLength; }
-        }
+        public uint FileNameLength => _fileNameLength;
 
         public FileAttribute FileAttributes
         {
@@ -127,84 +118,33 @@ namespace FATX
             }
         }
 
-        public byte[] FileNameBytes
-        {
-            get { return _fileNameBytes; }
-        }
+        public byte[] FileNameBytes => _fileNameBytes;
 
-        public uint FirstCluster
-        {
-            get { return _firstCluster; }
-        }
+        public uint FirstCluster => _firstCluster;
 
-        public uint FileSize
-        {
-            get { return _fileSize; }
-        }
+        public uint FileSize => _fileSize;
 
-        public TimeStamp CreationTime
-        {
-            get { return _creationTime; }
-        }
+        public TimeStamp CreationTime => _creationTime;
 
-        public TimeStamp LastWriteTime
-        {
-            get { return _lastWriteTime; }
-        }
+        public TimeStamp LastWriteTime => _lastWriteTime;
 
-        public TimeStamp LastAccessTime
-        {
-            get { return _lastAccessTime; }
-        }
-
-        public long Offset
-        {
-            get { return _offset; }
-            set { _offset = value; }
-        }
-
-        public void SetParent(DirectoryEntry parent)
-        {
-            this._parent = parent;
-        }
-
-        public void SetCluster(uint cluster)
-        {
-            this._cluster = cluster;
-        }
-
-        public uint GetCluster()
-        {
-            return this._cluster;
-        }
-
-        public Volume GetVolume()
-        {
-            return this._volume;
-        }
-
-        public DirectoryEntry GetParent()
-        {
-            return this._parent;
-        }
-
-        public bool HasParent()
-        {
-            return this._parent != null;
-        }
+        public TimeStamp LastAccessTime => _lastAccessTime;
 
         /// <summary>
         /// Get all dirents from this directory.
         /// </summary>
         /// <returns></returns>
-        public List<DirectoryEntry> GetChildren()
+        public List<DirectoryEntry> Children
         {
-            if (!this.IsDirectory())
+            get
             {
-                Console.WriteLine("Trying to get children from non directory.");
-            }
+                if (!this.IsDirectory())
+                {
+                    Console.WriteLine("Trying to get children from non directory.");
+                }
 
-            return _children;
+                return _children;
+            }
         }
 
         /// <summary>
@@ -238,6 +178,36 @@ namespace FATX
                 dirent.SetParent(this);
                 _children.Add(dirent);
             }
+        }
+
+        public Volume GetVolume()
+        {
+            return this._volume;
+        }
+
+        public void SetParent(DirectoryEntry parent)
+        {
+            this._parent = parent;
+        }
+
+        public DirectoryEntry GetParent()
+        {
+            return this._parent;
+        }
+
+        public bool HasParent()
+        {
+            return this._parent != null;
+        }
+
+        public bool IsDirectory()
+        {
+            return FileAttributes.HasFlag(FileAttribute.Directory);
+        }
+
+        public bool IsDeleted()
+        {
+            return _fileNameLength == Constants.DirentDeleted;
         }
 
         /// <summary>
@@ -299,7 +269,7 @@ namespace FATX
             {
                 long numFiles = 1;
 
-                foreach (var dirent in GetChildren())
+                foreach (var dirent in Children)
                 {
                     numFiles += dirent.CountFiles();
                 }

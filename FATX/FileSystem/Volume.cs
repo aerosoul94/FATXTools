@@ -77,10 +77,8 @@ namespace FATX
             get { return _bytesPerCluster; }
         }
 
-        public DriveReader Reader
-        {
-            get { return _reader; }
-        }
+        public DriveReader GetReader()
+        { return _reader; }
 
         public uint[] FileAllocationTable
         {
@@ -191,7 +189,7 @@ namespace FATX
                 //Buffer.BlockCopy(buffer, 0, _fileAllocationTable, 0, (int)this.MaxClusters * 4);
                 for (int i = 0; i < _maxClusters; i++)
                 {
-                    _fileAllocationTable[i] = Reader.ReadUInt32();
+                    _fileAllocationTable[i] = GetReader().ReadUInt32();
                 }
             }
         }
@@ -238,7 +236,7 @@ namespace FATX
         {
             foreach (DirectoryEntry dirent in stream)
             {
-                dirent.SetCluster(clusterIndex);
+                dirent.Cluster = clusterIndex;
                 //Console.WriteLine(String.Format("{0}", dirent.FileName));
 
                 if (dirent.IsDirectory() && !dirent.IsDeleted())
@@ -387,7 +385,7 @@ namespace FATX
 
             Directory.CreateDirectory(path);
 
-            foreach (DirectoryEntry child in dirent.GetChildren())
+            foreach (DirectoryEntry child in dirent.Children)
             {
                 DumpDirent(path, child);
             }

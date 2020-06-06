@@ -61,6 +61,11 @@ namespace FATX
             get { return (int)((this._Time & 0x1F) * 2); }
         }
 
+        public uint AsInteger()
+        {
+            return _Time;
+        }
+
         public DateTime AsDateTime()
         {
             if (this._DateTime.HasValue)

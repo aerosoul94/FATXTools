@@ -25,7 +25,7 @@ namespace FATXTools
 
             Console.SetOut(new LogWriter(this.textBox1));
             Console.WriteLine("--------------------------------");
-            Console.WriteLine("FATX-Tools v0.2");
+            Console.WriteLine("FATX-Tools v0.3");
             Console.WriteLine("--------------------------------");
         }
 
@@ -240,6 +240,36 @@ namespace FATXTools
                 Properties.Settings.Default.LogFile = settings.LogFile;
 
                 Properties.Settings.Default.Save();
+            }
+        }
+
+        private void saveToJSONToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog() 
+            {
+                Filter = "JSON File (*.json)|*.json"
+            };
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                driveView.Save(saveFileDialog.FileName);
+
+                Console.WriteLine($"Finished saving database: {saveFileDialog.FileName}");
+            }
+        }
+
+        private void loadFromJSONToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog()
+            {
+                Filter = "JSON File (*.json)|*.json"
+            };
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                driveView.LoadFromJson(openFileDialog.FileName);
+
+                Console.WriteLine($"Finished loading database: {openFileDialog.FileName}");
             }
         }
     }
