@@ -23,6 +23,8 @@ namespace FATXTools
 
             this.Text = ApplicationTitle;
 
+            DisableDatabaseOptions();
+
             Console.SetOut(new LogWriter(this.textBox1));
             Console.WriteLine("--------------------------------");
             Console.WriteLine("FATX-Tools v0.3");
@@ -105,6 +107,18 @@ namespace FATXTools
             statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
         }
 
+        private void EnableDatabaseOptions()
+        {
+            loadToolStripMenuItem.Enabled = true;
+            saveToolStripMenuItem.Enabled = true;
+        }
+
+        private void DisableDatabaseOptions()
+        {
+            loadToolStripMenuItem.Enabled = false;
+            saveToolStripMenuItem.Enabled = false;
+        }
+
         private void OpenDiskImage(string path)
         {
             CreateNewDriveView(path);
@@ -113,6 +127,8 @@ namespace FATXTools
 
             RawImage rawImage = new RawImage(path);
             driveView.AddDrive(fileName, rawImage);
+
+            EnableDatabaseOptions();
         }
 
         private void OpenDisk(string device)
@@ -128,6 +144,8 @@ namespace FATXTools
             long length = DeviceSelector.GetDiskCapactity(handle);
             PhysicalDisk drive = new PhysicalDisk(handle, length);
             driveView.AddDrive(device, drive);
+
+            EnableDatabaseOptions();
         }
 
         private void openImageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -267,9 +285,15 @@ namespace FATXTools
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                driveView.LoadFromJson(openFileDialog.FileName);
+                var dialogResult = MessageBox.Show($"Loading a database will overwrite current analysis progress.\n"
+                    + $"Are you sure you want to load \'{Path.GetFileName(openFileDialog.FileName)}\'?", 
+                    "Load File", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    driveView.LoadFromJson(openFileDialog.FileName);
 
-                Console.WriteLine($"Finished loading database: {openFileDialog.FileName}");
+                    Console.WriteLine($"Finished loading database: {openFileDialog.FileName}");
+                }
             }
         }
     }

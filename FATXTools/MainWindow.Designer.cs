@@ -39,7 +39,10 @@
             this.openImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.saveToDatabaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveToJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadFromJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.settingsToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -51,10 +54,6 @@
             this.searchForPartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.managePartitionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addPartitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveToJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.loadFromJSONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -131,7 +130,6 @@
             this.toolStripSeparator3,
             this.saveToolStripMenuItem,
             this.loadToolStripMenuItem,
-            this.saveToDatabaseToolStripMenuItem,
             this.toolStripSeparator2,
             this.settingsToolStripMenuItem1,
             this.toolStripSeparator1,
@@ -159,12 +157,35 @@
             this.toolStripSeparator3.Name = "toolStripSeparator3";
             this.toolStripSeparator3.Size = new System.Drawing.Size(356, 6);
             // 
-            // saveToDatabaseToolStripMenuItem
+            // saveToolStripMenuItem
             // 
-            this.saveToDatabaseToolStripMenuItem.Enabled = false;
-            this.saveToDatabaseToolStripMenuItem.Name = "saveToDatabaseToolStripMenuItem";
-            this.saveToDatabaseToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.saveToDatabaseToolStripMenuItem.Text = "Save To Database";
+            this.saveToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.saveToJSONToolStripMenuItem});
+            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.saveToolStripMenuItem.Text = "Save";
+            // 
+            // saveToJSONToolStripMenuItem
+            // 
+            this.saveToJSONToolStripMenuItem.Name = "saveToJSONToolStripMenuItem";
+            this.saveToJSONToolStripMenuItem.Size = new System.Drawing.Size(296, 44);
+            this.saveToJSONToolStripMenuItem.Text = "Save To JSON";
+            this.saveToJSONToolStripMenuItem.Click += new System.EventHandler(this.saveToJSONToolStripMenuItem_Click);
+            // 
+            // loadToolStripMenuItem
+            // 
+            this.loadToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.loadFromJSONToolStripMenuItem});
+            this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.loadToolStripMenuItem.Text = "Load";
+            // 
+            // loadFromJSONToolStripMenuItem
+            // 
+            this.loadFromJSONToolStripMenuItem.Name = "loadFromJSONToolStripMenuItem";
+            this.loadFromJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.loadFromJSONToolStripMenuItem.Text = "Load From JSON";
+            this.loadFromJSONToolStripMenuItem.Click += new System.EventHandler(this.loadFromJSONToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
@@ -252,36 +273,6 @@
             this.addPartitionToolStripMenuItem.Text = "Add Partition";
             this.addPartitionToolStripMenuItem.Click += new System.EventHandler(this.addPartitionToolStripMenuItem_Click);
             // 
-            // loadToolStripMenuItem
-            // 
-            this.loadToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.loadFromJSONToolStripMenuItem});
-            this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.loadToolStripMenuItem.Text = "Load";
-            // 
-            // saveToolStripMenuItem
-            // 
-            this.saveToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.saveToJSONToolStripMenuItem});
-            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.saveToolStripMenuItem.Text = "Save";
-            // 
-            // saveToJSONToolStripMenuItem
-            // 
-            this.saveToJSONToolStripMenuItem.Name = "saveToJSONToolStripMenuItem";
-            this.saveToJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.saveToJSONToolStripMenuItem.Text = "Save To JSON";
-            this.saveToJSONToolStripMenuItem.Click += new System.EventHandler(this.saveToJSONToolStripMenuItem_Click);
-            // 
-            // loadFromJSONToolStripMenuItem
-            // 
-            this.loadFromJSONToolStripMenuItem.Name = "loadFromJSONToolStripMenuItem";
-            this.loadFromJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.loadFromJSONToolStripMenuItem.Text = "Load From JSON";
-            this.loadFromJSONToolStripMenuItem.Click += new System.EventHandler(this.loadFromJSONToolStripMenuItem_Click);
-            // 
             // MainWindow
             // 
             this.AllowDrop = true;
@@ -326,7 +317,6 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-        private System.Windows.Forms.ToolStripMenuItem saveToDatabaseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem driveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem searchForPartitionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem managePartitionsToolStripMenuItem;
