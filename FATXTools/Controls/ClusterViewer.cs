@@ -25,6 +25,11 @@ namespace FATXTools.Controls
         private Color collisionColor = Color.Red;
         private Color rootColor = Color.Purple;
 
+        private int previousSelectedIndex;
+        private int currentSelectedIndex;
+
+        private int currentClusterChainIndex;
+
         public ClusterViewer(Volume volume, IntegrityAnalyzer integrityAnalyzer)
         {
             InitializeComponent();
@@ -186,7 +191,9 @@ namespace FATXTools.Controls
 
         private void DataMap_CellSelected(object sender, EventArgs e)
         {
-            var clusterIndex = CellToClusterIndex(dataMap.SelectedIndex);
+            currentSelectedIndex = dataMap.SelectedIndex;
+
+            var clusterIndex = CellToClusterIndex(currentSelectedIndex);
 
             Debug.WriteLine($"Cluster Index: {clusterIndex}");
 
@@ -198,18 +205,27 @@ namespace FATXTools.Controls
             }
             else if (occupants.Count > 0)
             {
-                // Just use the first one for now.
-                // IDEAS: 
-                //   1. Maybe toggle between each occupant after each click
-                //   2. Only highlight the largest file
-                //   3. Only highlight the smallest file
-                var clusterChain = occupants[0].ClusterChain;
+                if (currentSelectedIndex != previousSelectedIndex)
+                {
+                    previousSelectedIndex = currentSelectedIndex;
+                    currentClusterChainIndex = 0;
+                }
+
+                if (currentClusterChainIndex >= occupants.Count)
+                {
+                    currentClusterChainIndex = 0;
+                }
+
+                var clusterChain = occupants[currentClusterChainIndex].ClusterChain;
+
+                // TODO: Change highlight color for colliding clusters
                 foreach (var cluster in clusterChain)
                 {
                     dataMap.Cells[ClusterToCellIndex(cluster)].Selected = true;
                 }
 
-                //Console.WriteLine($"Occupants: {occupants.Count}");
+                // Toggle between each occupant after each click
+                currentClusterChainIndex++;
             }
         }
     }
