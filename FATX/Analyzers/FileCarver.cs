@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using FATX.Analyzers.Signatures;
-using FATX.Analyzers.Signatures.Generic;
+using FATX.Analyzers.Signatures.Blank;
 using System.Threading;
 using System.Text.Json;
 
@@ -57,7 +57,7 @@ namespace FATX
                     continue;
                 }
 
-                var fileSignature = new GenericSignature(this._volume, offsetElement.GetInt64());
+                var fileSignature = new BlankSignature(this._volume, offsetElement.GetInt64());
 
                 if (file.TryGetProperty("Name", out var nameElement))
                 {

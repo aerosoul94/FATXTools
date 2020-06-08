@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace FATX.Analyzers.Signatures.Generic
+namespace FATX.Analyzers.Signatures.Blank
 {
-    class GenericSignature : Signatures.FileSignature
+    class BlankSignature : Signatures.FileSignature
     {
-        public GenericSignature(Volume volume, long offset)
+        public BlankSignature(Volume volume, long offset)
             : base(volume, offset)
         {
 
