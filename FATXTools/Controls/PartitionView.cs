@@ -179,9 +179,12 @@ namespace FATXTools
                 
                 analyzer.LoadFromDatabase(metadataAnalysisList);
 
-                AddMetadataAnalyzerPage(analyzer);
+                if (analyzer.GetDirents().Count > 0)
+                {
+                    AddMetadataAnalyzerPage(analyzer);
 
-                this.metadataAnalyzer = analyzer;
+                    this.metadataAnalyzer = analyzer;
+                }
             }
 
             if (analysisElement.TryGetProperty("FileCarver", out var fileCarverList))
@@ -190,7 +193,7 @@ namespace FATXTools
 
                 analyzer.LoadFromDatabase(fileCarverList);
 
-                if (analyzer.GetCarvedFiles() != null)
+                if (analyzer.GetCarvedFiles().Count > 0)
                 {
                     AddFileCarverPage(analyzer);
                     this.fileCarver = analyzer;
