@@ -116,9 +116,12 @@ namespace FATX
                     {
                         try
                         {
+                            // Make sure that we record the file first
+                            _carvedFiles.Add(signature);
+
+                            // Attempt to parse the file
                             _volume.SeekFileArea(offset);
                             signature.Parse();
-                            _carvedFiles.Add(signature);
                             Console.WriteLine(String.Format("Found {0} at 0x{1:X}.", signature.GetType().Name, offset));
                         }
                         catch (Exception e)
