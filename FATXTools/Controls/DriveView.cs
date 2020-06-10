@@ -32,6 +32,10 @@ namespace FATXTools
 
         private TaskRunner taskRunner;
 
+        public event EventHandler TaskStarted;
+
+        public event EventHandler TaskCompleted;
+
         public event EventHandler TabSelectionChanged;
 
         public DriveView()
@@ -47,6 +51,8 @@ namespace FATXTools
             // Single task runner for this drive
             // Currently only one task will be allowed to operate on a drive to avoid race conditions.
             this.taskRunner = new TaskRunner(this.ParentForm);
+            this.taskRunner.TaskStarted += TaskRunner_TaskStarted;
+            this.taskRunner.TaskCompleted += TaskRunner_TaskCompleted;
 
             foreach (var volume in drive.Partitions)
             {
@@ -55,6 +61,16 @@ namespace FATXTools
 
             // Fire SelectedIndexChanged event.
             SelectedIndexChanged();
+        }
+
+        private void TaskRunner_TaskCompleted(object sender, EventArgs e)
+        {
+            TaskCompleted?.Invoke(sender, e);
+        }
+
+        private void TaskRunner_TaskStarted(object sender, EventArgs e)
+        {
+            TaskStarted?.Invoke(sender, e);
         }
 
         public void AddPartition(Volume volume)

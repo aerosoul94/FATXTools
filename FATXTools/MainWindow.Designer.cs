@@ -183,7 +183,7 @@
             // loadFromJSONToolStripMenuItem
             // 
             this.loadFromJSONToolStripMenuItem.Name = "loadFromJSONToolStripMenuItem";
-            this.loadFromJSONToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.loadFromJSONToolStripMenuItem.Size = new System.Drawing.Size(327, 44);
             this.loadFromJSONToolStripMenuItem.Text = "Load From JSON";
             this.loadFromJSONToolStripMenuItem.Click += new System.EventHandler(this.loadFromJSONToolStripMenuItem_Click);
             // 

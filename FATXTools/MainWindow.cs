@@ -85,9 +85,23 @@ namespace FATXTools
             driveView = new DriveView();
             driveView.Dock = DockStyle.Fill;
             driveView.TabSelectionChanged += DriveView_TabSelectionChanged;
+            driveView.TaskStarted += DriveView_TaskStarted;
+            driveView.TaskCompleted += DriveView_TaskCompleted;
 
             // Add the view to the panel
             splitContainer1.Panel1.Controls.Add(driveView);
+        }
+
+        private void DriveView_TaskCompleted(object sender, EventArgs e)
+        {
+            EnableOpenOptions();
+            EnableDatabaseOptions();
+        }
+
+        private void DriveView_TaskStarted(object sender, EventArgs e)
+        {
+            DisableOpenOptions();
+            DisableDatabaseOptions();
         }
 
         private void DriveView_TabSelectionChanged(object sender, EventArgs e)
@@ -111,12 +125,32 @@ namespace FATXTools
         {
             loadToolStripMenuItem.Enabled = true;
             saveToolStripMenuItem.Enabled = true;
+
+            addPartitionToolStripMenuItem.Enabled = true;
+            //searchForPartitionsToolStripMenuItem.Enabled = true;
+            //managePartitionsToolStripMenuItem.Enabled = true;
         }
 
         private void DisableDatabaseOptions()
         {
             loadToolStripMenuItem.Enabled = false;
             saveToolStripMenuItem.Enabled = false;
+
+            addPartitionToolStripMenuItem.Enabled = false;
+            //searchForPartitionsToolStripMenuItem.Enabled = false;
+            //managePartitionsToolStripMenuItem.Enabled = false;
+        }
+
+        private void EnableOpenOptions()
+        {
+            openImageToolStripMenuItem.Enabled = true;
+            openDeviceToolStripMenuItem.Enabled = true;
+        }
+
+        private void DisableOpenOptions()
+        {
+            openImageToolStripMenuItem.Enabled = false;
+            openDeviceToolStripMenuItem.Enabled = false;
         }
 
         private void OpenDiskImage(string path)

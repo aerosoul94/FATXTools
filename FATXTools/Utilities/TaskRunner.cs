@@ -36,6 +36,10 @@ namespace FATXTools.Utilities
             set;
         }
 
+        public event EventHandler TaskStarted;
+
+        public event EventHandler TaskCompleted;
+
         public async Task RunTaskAsync(string title, Action<CancellationToken, Progress<int>> task, Action<int> progressUpdate, Action taskCompleted)
         {
             if (_task != null)
@@ -45,6 +49,8 @@ namespace FATXTools.Utilities
 
             cancellationTokenSource = new CancellationTokenSource();
             cancellationToken = cancellationTokenSource.Token;
+
+            TaskStarted?.Invoke(this, null);
 
             _progressDialog = new ProgressDialog(this, _owner, $"Task - {title}", Maximum, Interval);
             _progressDialog.Show();
@@ -67,6 +73,8 @@ namespace FATXTools.Utilities
             taskCompleted();
 
             _progressDialog.Close();
+
+            TaskCompleted?.Invoke(this, null);
 
             _progressDialog = null;
             _task = null;
