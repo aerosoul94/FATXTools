@@ -330,5 +330,36 @@ namespace FATXTools
                 }
             }
         }
+
+        private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // TODO: For any partition, if any analysis was made, then we should ask.
+            // TODO: Add setting for auto-saving (maybe at run-time or while closing)
+            if (driveView != null)
+            {
+                var dialogResult = MessageBox.Show("Would you like to save progress before closing?", "Save Progress", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    SaveFileDialog saveFileDialog = new SaveFileDialog()
+                    {
+                        Filter = "JSON File (*.json)|*.json"
+                    };
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        driveView.Save(saveFileDialog.FileName);
+
+                        Console.WriteLine($"Finished saving database: {saveFileDialog.FileName}");
+                    }
+                    else
+                    {
+                        // User may have accidentally cancelled? Maybe try again?
+                    }
+                }
+            }
+
+            // TODO: handle closing dialogs
+            e.Cancel = false;
+        }
     }
 }
