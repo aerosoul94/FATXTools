@@ -125,6 +125,8 @@ namespace FATX
         private void ReadVolumeMetadata()
         {
             _reader.Seek(_partitionOffset);
+            Console.WriteLine("Attempting to load FATX volume at {0:X16}", _reader.Position);
+
             _signature = _reader.ReadUInt32();
             _serialNumber = _reader.ReadUInt32();
             _sectorsPerCluster = _reader.ReadUInt32();
@@ -133,7 +135,7 @@ namespace FATX
             if (_signature != VolumeSignature)
             {
                 throw new FormatException(
-                    String.Format("Invalid FATX Signature for {0}", _partitionName));
+                    String.Format("Invalid FATX Signature for {0}: {1:X8}",  _partitionName,  _signature.ToString("X8")));
             }
         }
 
@@ -177,19 +179,38 @@ namespace FATX
             _reader.Seek(fatOffset);
             if (this._isFat16)
             {
+                byte[] _tempFat = new byte[_maxClusters * 2];
+                _reader.Read(_tempFat, (int)(_maxClusters * 2));
+
+                if (_reader.ByteOrder == ByteOrder.Big)
+                {
+                    for (int i = 0; i < _maxClusters; i++)
+                    {
+                        Array.Reverse(_tempFat, i * 2, 2);
+                    }
+                }
+
                 for (int i = 0; i < _maxClusters; i++)
                 {
-                    _fileAllocationTable[i] = _reader.ReadUInt16();
+                    _fileAllocationTable[i] = BitConverter.ToUInt16(_tempFat, i * 2);
                 }
             }
             else
             {
-                //byte[] buffer = new byte[this.BytesPerFat];
-                //_reader.Read(buffer, (int)this.BytesPerFat);
-                //Buffer.BlockCopy(buffer, 0, _fileAllocationTable, 0, (int)this.MaxClusters * 4);
+                byte[] _tempFat = new byte[_maxClusters * 4];
+                _reader.Read(_tempFat, (int)(_maxClusters * 4));
+
+                if (_reader.ByteOrder == ByteOrder.Big)
+                {
+                    for (int i = 0; i < _maxClusters; i++)
+                    {
+                        Array.Reverse(_tempFat, i * 4, 4);
+                    }
+                }
+
                 for (int i = 0; i < _maxClusters; i++)
                 {
-                    _fileAllocationTable[i] = GetReader().ReadUInt32();
+                    _fileAllocationTable[i] = BitConverter.ToUInt32(_tempFat, i * 4);
                 }
             }
         }

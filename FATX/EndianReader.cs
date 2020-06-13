@@ -34,62 +34,58 @@ namespace FATX
         {
             get { return BaseStream.Position; }
         }
-        public long Seek(long offset)
+        public virtual long Seek(long offset)
         {
             BaseStream.Position = offset;
             return BaseStream.Position;
         }
-        public long Seek(long offset, SeekOrigin origin)
+        public virtual long Seek(long offset, SeekOrigin origin)
         {
             return BaseStream.Seek(offset, origin);
         }
-        public void Read(byte[] buffer, int count)
+        public virtual void Read(byte[] buffer, int count)
         {
             BaseStream.Read(buffer, 0, count);
         }
         public override short ReadInt16()
         {
-            var value = base.ReadInt16();
+            var temp = new byte[2];
+            Read(temp, 2);
             if (byteOrder == ByteOrder.Big)
             {
-                var bytes = BitConverter.GetBytes(value);
-                Array.Reverse(bytes);
-                value = BitConverter.ToInt16(bytes, 0);
+                Array.Reverse(temp);
             }
-            return value;
+            return BitConverter.ToInt16(temp, 0);
         }
         public override ushort ReadUInt16()
         {
-            var value = base.ReadUInt16();
+            var temp = new byte[2];
+            Read(temp, 2);
             if (byteOrder == ByteOrder.Big)
             {
-                var bytes = BitConverter.GetBytes(value);
-                Array.Reverse(bytes);
-                value = BitConverter.ToUInt16(bytes, 0);
+                Array.Reverse(temp);
             }
-            return value;
+            return BitConverter.ToUInt16(temp, 0);
         }
         public override int ReadInt32()
         {
-            var value = base.ReadInt32();
+            var temp = new byte[4];
+            Read(temp, 4);
             if (byteOrder == ByteOrder.Big)
             {
-                var bytes = BitConverter.GetBytes(value);
-                Array.Reverse(bytes);
-                value = BitConverter.ToInt32(bytes, 0);
+                Array.Reverse(temp);
             }
-            return value;
+            return BitConverter.ToInt32(temp, 0);
         }
         public override uint ReadUInt32()
         {
-            var value = base.ReadUInt32();
+            var temp = new byte[4];
+            Read(temp, 4);
             if (byteOrder == ByteOrder.Big)
             {
-                var bytes = BitConverter.GetBytes(value);
-                Array.Reverse(bytes);
-                value = BitConverter.ToUInt32(bytes, 0);
+                Array.Reverse(temp);
             }
-            return value;
+            return BitConverter.ToUInt32(temp, 0);
         }
     }
 }

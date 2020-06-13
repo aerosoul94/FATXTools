@@ -9,38 +9,14 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Management;
 using System.IO;
-using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {
     public partial class DeviceSelector : Form
     {
         private string selectedDevice;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeFileHandle CreateFile(
-            string FileName,
-            FileAccess DesiredAccess,
-            FileShare ShareMode,
-            IntPtr SecurityAttributes,
-            FileMode CreationDisposition,
-            int FlagsAndAttributes,
-            IntPtr Template);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool DeviceIoControl(
-            SafeFileHandle hDevice,
-            uint dwIoControlCode,
-            [MarshalAs(UnmanagedType.AsAny)]
-            [Out] object lpInBuffer,
-            int nInBufferSize,
-            [MarshalAs(UnmanagedType.AsAny)]
-            [Out] object lpOutBuffer,
-            int nOutBufferSize,
-            ref int pBytesReturned,
-            IntPtr lpOverlapped
-            );
 
         public DeviceSelector(MainWindow main)
         {
@@ -49,7 +25,7 @@ namespace FATXTools
             for (int i = 0; i < 24; i++)
             {
                 string deviceName = String.Format(@"\\.\PhysicalDrive{0}", i);
-                SafeFileHandle handle = CreateFile(
+                SafeFileHandle handle = WinApi.CreateFile(
                     deviceName,
                     FileAccess.Read,
                     FileShare.None,
@@ -65,7 +41,7 @@ namespace FATXTools
                 }
 
                 var deviceItem = listView1.Items.Add(deviceName);
-                deviceItem.SubItems.Add(FormatSize(GetDiskCapactity(handle)));
+                deviceItem.SubItems.Add(FormatSize(WinApi.GetDiskCapactity(handle)));
                 deviceItem.ImageIndex = 0;
                 deviceItem.StateImageIndex = 0;
 
@@ -84,17 +60,6 @@ namespace FATXTools
                 counter++;
             }
             return string.Format("{0:n1}{1}", number, suffixes[counter]);
-        }
-
-        public static long GetDiskCapactity(SafeFileHandle diskHandle)
-        {
-            byte[] sizeBytes = new byte[8];
-            int bytesRet = sizeBytes.Length;
-            if (!DeviceIoControl(diskHandle, 0x00000007405C, null, 0, sizeBytes, bytesRet, ref bytesRet, IntPtr.Zero))
-            {
-                throw new Exception("Failed to get disk size!");
-            }
-            return BitConverter.ToInt64(sizeBytes, 0);
         }
 
         public string SelectedDevice

@@ -159,6 +159,7 @@
     </Compile>
     <Compile Include="Utilities\TaskRunner.cs" />
     <Compile Include="Utilities\Utility.cs" />
+    <Compile Include="Utilities\WinApi.cs" />
     <EmbeddedResource Include="ProgressDialog.resx">
       <DependentUpon>ProgressDialog.cs</DependentUpon>
     </EmbeddedResource>

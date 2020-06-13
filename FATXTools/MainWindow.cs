@@ -169,14 +169,16 @@ namespace FATXTools
         {
             CreateNewDriveView(device);
 
-            SafeFileHandle handle = DeviceSelector.CreateFile(device,
+            SafeFileHandle handle = WinApi.CreateFile(device,
                        FileAccess.Read,
                        FileShare.None,
                        IntPtr.Zero,
                        FileMode.Open,
-                       0, IntPtr.Zero);
-            long length = DeviceSelector.GetDiskCapactity(handle);
-            PhysicalDisk drive = new PhysicalDisk(handle, length);
+                       0, 
+                       IntPtr.Zero);
+            long length = WinApi.GetDiskCapactity(handle);
+            long sectorLength = WinApi.GetSectorSize(handle);
+            PhysicalDisk drive = new PhysicalDisk(handle, length, sectorLength);
             driveView.AddDrive(device, drive);
 
             EnableDatabaseOptions();

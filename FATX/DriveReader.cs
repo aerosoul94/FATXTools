@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Collections.Generic;
+using System;
 
 namespace FATX
 {
@@ -13,13 +14,15 @@ namespace FATX
 
         public void Initialize()
         {
-            base.Seek(0);
+            Seek(0);
 
             // Might move to a new class
             // Check for Original XBOX partition.
-            base.Seek(0xABE80000);
-            if (base.ReadUInt32() == 0x58544146)
+            Seek(0xABE80000);
+            if (ReadUInt32() == 0x58544146)
             {
+                Console.WriteLine("Mounting Xbox Original HDD..");
+
                 AddPartition("Partition1", 0xABE80000, 0x1312D6000);    // DATA
                 AddPartition("Partition2", 0x8CA80000, 0x1f400000);     // SHELL
                 AddPartition("Partition3", 0x5DC80000, 0x2ee00000);     // CACHE
@@ -29,45 +32,48 @@ namespace FATX
             else
             {
                 // Check for XBOX 360 partitions.
-                base.Seek(0);
-                base.ByteOrder = ByteOrder.Big;
-                if (base.ReadUInt32() == 0x20000)
+                Seek(0);
+                ByteOrder = ByteOrder.Big;
+                if (ReadUInt32() == 0x20000)
                 {
-                    // This is a dev formatted HDD.
-                    base.ReadUInt16();  // Kernel version
-                    base.ReadUInt16();
+                    Console.WriteLine("Mounting Xbox 360 Dev HDD..");
 
-                    base.Seek(8);
+                    // This is a dev formatted HDD.
+                    ReadUInt16();  // Kernel version
+                    ReadUInt16();
+
+                    // TODO: reading from raw devices requires sector aligned reads.
+                    Seek(8);
                     // Partition1
-                    long dataOffset = (long)base.ReadUInt32() * Constants.SectorSize;
-                    long dataLength = (long)base.ReadUInt32() * Constants.SectorSize;
+                    long dataOffset = (long)ReadUInt32() * Constants.SectorSize;
+                    long dataLength = (long)ReadUInt32() * Constants.SectorSize;
                     // SystemPartition
-                    long shellOffset = (long)base.ReadUInt32() * Constants.SectorSize;
-                    long shellLength = (long)base.ReadUInt32() * Constants.SectorSize;
+                    long shellOffset = (long)ReadUInt32() * Constants.SectorSize;
+                    long shellLength = (long)ReadUInt32() * Constants.SectorSize;
                     // Unused?
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // DumpPartition
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // PixDump
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // Unused?
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // Unused?
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // AltFlash
-                    base.ReadUInt32();
-                    base.ReadUInt32();
+                    ReadUInt32();
+                    ReadUInt32();
                     // Cache0
-                    long cache0Offset = (long)base.ReadUInt32() * Constants.SectorSize;
-                    long cache0Length = (long)base.ReadUInt32() * Constants.SectorSize;
+                    long cache0Offset = (long)ReadUInt32() * Constants.SectorSize;
+                    long cache0Length = (long)ReadUInt32() * Constants.SectorSize;
                     // Cache1
-                    long cache1Offset = (long)base.ReadUInt32() * Constants.SectorSize;
-                    long cache1Length = (long)base.ReadUInt32() * Constants.SectorSize;
+                    long cache1Offset = (long)ReadUInt32() * Constants.SectorSize;
+                    long cache1Length = (long)ReadUInt32() * Constants.SectorSize;
 
                     AddPartition("Partition1", dataOffset, dataLength);
                     AddPartition("SystemPartition", shellOffset, shellLength);
@@ -77,6 +83,11 @@ namespace FATX
                 }
                 else
                 {
+                    Console.WriteLine("Mounting Xbox 360 Retail HDD..");
+
+                    //Seek(8);
+                    //var test = ReadUInt32();
+
                     // This is a retail formatted HDD.
                     /// Partition0 0, END
                     /// Cache0 0x80000, 0x80000000
