@@ -73,19 +73,9 @@ namespace FATX.Analyzers.Signatures
             return _reader.ReadBytes(count);
         }
 
-        protected char ReadChar()
-        {
-            return _reader.ReadChar();
-        }
-
         protected byte ReadByte()
         {
             return _reader.ReadByte();
-        }
-
-        protected char[] ReadChars(int count)
-        {
-            return _reader.ReadChars(4);
         }
 
         protected ushort ReadUInt16()

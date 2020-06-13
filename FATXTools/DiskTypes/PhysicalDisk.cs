@@ -69,5 +69,19 @@ namespace FATXTools.DiskTypes
             // Increment the position by how much we took
             _position += count;
         }
+
+        public override byte[] ReadBytes(int count)
+        {
+            byte[] buf = new byte[count];
+            Read(buf, count);
+            return buf;
+        }
+
+        public override byte ReadByte()
+        {
+            byte[] buf = new byte[1];
+            Read(buf, 1);
+            return buf[0];
+        }
     }
 }
