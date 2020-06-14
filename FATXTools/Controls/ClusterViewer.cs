@@ -65,7 +65,7 @@ namespace FATXTools.Controls
 
                 if (occupants.Count > 1)
                 {
-                    if (occupants.Any(dirent => dirent.IsActive))
+                    if (occupants.Any(file => !file.IsDeleted))
                     {
                         clusterColorMap[i] = activeColor;
                     }
@@ -77,7 +77,7 @@ namespace FATXTools.Controls
                 else
                 {
                     var occupant = occupants[0];
-                    if (occupant.IsActive)
+                    if (!occupant.IsDeleted)
                     {
                         // Sole occupant
                         clusterColorMap[i] = activeColor;
@@ -139,7 +139,7 @@ namespace FATXTools.Controls
                 " Date Created: " + dirent.CreationTime.AsDateTime() + Environment.NewLine + 
                 " Date Written: " + dirent.LastWriteTime.AsDateTime() + Environment.NewLine +
                 " Date Accessed: " + dirent.LastAccessTime.AsDateTime() + Environment.NewLine + 
-                " Deleted: " + (!deleted).ToString() + Environment.NewLine;
+                " Deleted: " + (deleted).ToString() + Environment.NewLine;
 
             return message;
         }
@@ -176,7 +176,7 @@ namespace FATXTools.Controls
                     int index = 1;
                     foreach (var occupant in occupants)
                     {
-                        toolTipMessage += BuildToolTipMessage(index, occupant.GetDirent(), occupant.IsActive);
+                        toolTipMessage += BuildToolTipMessage(index, occupant.GetDirent(), occupant.IsDeleted);
                         index++;
                     }
                 }

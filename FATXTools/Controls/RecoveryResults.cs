@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows.Forms;
 using FATX;
 using FATX.Analyzers;
+using FATXTools.Database;
 using FATXTools.Utilities;
 
 namespace FATXTools
@@ -32,6 +33,8 @@ namespace FATXTools
 
         private IntegrityAnalyzer _integrityAnalyzer;
 
+        private FileDatabase _fileDatabase;
+
         private Color[] statusColor = new Color[] 
         { 
             Color.FromArgb(150, 250, 150), // Green
@@ -41,11 +44,12 @@ namespace FATXTools
             Color.FromArgb(250, 150, 150),
         };
 
-        public RecoveryResults(MetadataAnalyzer analyzer, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
+        public RecoveryResults(MetadataAnalyzer analyzer, FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
         {
             InitializeComponent();
 
             this._analyzer = analyzer;
+            this._fileDatabase = database;
             this._integrityAnalyzer = integrityAnalyzer;
             this._taskRunner = taskRunner;
             this._volume = analyzer.GetVolume();
@@ -179,7 +183,7 @@ namespace FATXTools
                 item.SubItems.Add(dirent.Cluster.ToString());
 
                 //var statusItem = item.SubItems.Add("");
-                var ranking = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
+                var ranking = _fileDatabase.GetFile(dirent);
                 item.BackColor = statusColor[ranking.Ranking];
 
                 index++;
@@ -832,7 +836,7 @@ namespace FATXTools
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    RankedDirectoryEntry rankedDirent = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
+                    RecoveredFile rankedDirent = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
 
                     foreach (var collision in rankedDirent.Collisions)
                     {

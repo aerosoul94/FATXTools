@@ -68,7 +68,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Analyzers\IntegrityAnalyzer.cs" />
     <Compile Include="Controls\DataMap\CellHoveredEventArgs.cs" />
+    <Compile Include="Database\CarvedFile.cs" />
+    <Compile Include="Database\Deserializer.cs" />
+    <Compile Include="Database\DriveDatabase.cs" />
+    <Compile Include="Database\FileDatabase.cs" />
+    <Compile Include="Database\PartitionDatabase.cs" />
+    <Compile Include="Database\RecoveredFile.cs" />
+    <Compile Include="Database\Serializer.cs" />
     <Compile Include="ProgressDialog.cs">
       <SubType>Form</SubType>
     </Compile>

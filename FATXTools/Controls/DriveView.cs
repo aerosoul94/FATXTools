@@ -6,6 +6,7 @@ using FATX;
 using FATXTools.Controls;
 using FATXTools.Utilities;
 using System.IO;
+using FATXTools.Database;
 
 namespace FATXTools
 {
@@ -38,6 +39,8 @@ namespace FATXTools
 
         public event EventHandler TabSelectionChanged;
 
+        private DriveDatabase driveDatabase;
+
         public DriveView()
         {
             InitializeComponent();
@@ -47,6 +50,8 @@ namespace FATXTools
         {
             this.driveName = name;
             this.drive = drive;
+
+            this.driveDatabase = new DriveDatabase(name);
 
             // Single task runner for this drive
             // Currently only one task will be allowed to operate on a drive to avoid race conditions.
@@ -89,7 +94,8 @@ namespace FATXTools
             partitionList.Add(volume);
 
             var page = new TabPage(volume.Name);
-            var partitionView = new PartitionView(taskRunner, volume);
+            var partitionDatabase = driveDatabase.AddPartition(volume);
+            var partitionView = new PartitionView(taskRunner, volume, partitionDatabase);
             partitionView.Dock = DockStyle.Fill;
             page.Controls.Add(partitionView);
             partitionTabControl.TabPages.Add(page);
@@ -103,88 +109,12 @@ namespace FATXTools
 
         public void Save(string path)
         {
-            Dictionary<string, object> databaseObject = new Dictionary<string, object>();
-
-            databaseObject["Version"] = 1;
-            databaseObject["Drive"] = new Dictionary<string, object>();
-
-            var driveObject = databaseObject["Drive"] as Dictionary<string, object>;
-            driveObject["FileName"] = this.driveName;
-
-            driveObject["Partitions"] = new List<Dictionary<string, object>>();
-            var partitionList = driveObject["Partitions"] as List<Dictionary<string, object>>;
-
-            foreach (var partitionView in partitionViews)
-            {
-                var partitionObject = new Dictionary<string, object>();
-                partitionList.Add(partitionObject);
-                partitionView.Save(partitionObject);
-            }
-
-            JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            };
-
-            string json = JsonSerializer.Serialize(databaseObject, jsonSerializerOptions);
-
-            File.WriteAllText(path, json);
-        }
-
-        private bool LoadIfNotExists(JsonElement partitionElement)
-        {
-            foreach (var partitionView in partitionViews)
-            {
-                if (partitionView.PartitionName == partitionElement.GetProperty("Name").GetString())
-                {
-                    partitionView.LoadFromJson(partitionElement);
-
-                    return true;
-                }
-            }
-
-            return false;
+            driveDatabase.Save(path);
         }
 
         public void LoadFromJson(string path)
         {
-            string json = File.ReadAllText(path);
-
-            Dictionary<string, object> databaseObject = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-
-            if (databaseObject.ContainsKey("Drive"))
-            {
-                JsonElement driveJsonElement = (JsonElement)databaseObject["Drive"];
-                
-                if (driveJsonElement.TryGetProperty("Partitions", out var partitionsElement))
-                {
-                    //var partitionList = (List < Dictionary<string, object> > )driveObject["Partitions"];
-                    
-                    foreach (var partitionElement in partitionsElement.EnumerateArray())
-                    {
-                        // Check if partitionview exists
-                        if (!LoadIfNotExists(partitionElement))
-                        {
-                            // Otherwise, add it in
-                            //Volume newVolume = new Volume(this.drive,
-                            //    partitionElement.GetProperty("Name").GetString(),
-                            //    partitionElement.GetProperty("Offset").GetInt64(),
-                            //    partitionElement.GetProperty("Length").GetInt64());
-
-                            //partitionViews.Add(PartitionView.FromJson(partitionElement, this.taskRunner, newVolume));
-                        }
-                    }
-                    
-                }
-                else
-                {
-                    throw new FileLoadException("Database: Drive has no Partition list!");
-                }
-            }
-            else
-            {
-                throw new FileLoadException("Database: Missing Drive object!");
-            }
+            driveDatabase.LoadFromJson(path);
         }
         
         private void SelectedIndexChanged()

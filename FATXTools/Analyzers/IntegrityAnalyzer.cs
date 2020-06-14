@@ -1,61 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using FATXTools.Database;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace FATX.Analyzers
 {
-    /// <summary>
-    /// This may be used in the future for applying modifications at run-time
-    /// for DirectoryEntries
-    /// </summary>
-    public class RankedDirectoryEntry
-    {
-        private bool isActive;
-        private int ranking;
-        private DirectoryEntry dirent;
-        private List<uint> collisions;
-        private List<uint> clusterChain;
-
-        public RankedDirectoryEntry(DirectoryEntry dirent, bool isOriginal)
-        {
-            this.isActive = isOriginal;
-            this.dirent = dirent;
-            this.clusterChain = null;
-        }
-
-        public void GiveRanking(int rank)
-        {
-            this.ranking = rank;
-        }
-
-        public DirectoryEntry GetDirent()
-        {
-            return dirent;
-        }
-
-        public bool IsActive
-        {
-            get => isActive;
-        }
-
-        public int Ranking
-        {
-            get => ranking;
-            set => ranking = value;
-        }
-
-        public List<uint> Collisions
-        {
-            get => collisions;
-            set => collisions = value;
-        }
-
-        public List<uint> ClusterChain
-        {
-            get => clusterChain;
-            set => clusterChain = value;
-        }
-    }
-
     public class IntegrityAnalyzer
     {
         /// <summary>
@@ -63,60 +11,28 @@ namespace FATX.Analyzers
         /// </summary>
         private Volume volume;
 
-        private Dictionary<long, RankedDirectoryEntry> direntList;
+        //private Dictionary<long, RankedDirectoryEntry> direntList;
+        private FileDatabase database;
 
         /// <summary>
         /// Mapping of cluster indexes to a list of entities that occupy it.
         /// </summary>
-        private Dictionary<uint, List<RankedDirectoryEntry>> clusterMap;
+        private Dictionary<uint, List<RecoveredFile>> clusterMap;
 
-        public IntegrityAnalyzer(Volume volume)
+        public IntegrityAnalyzer(Volume volume, FileDatabase database)
         {
             this.volume = volume;
-            direntList = new Dictionary<long, RankedDirectoryEntry>();
+            //direntList = new Dictionary<long, RankedDirectoryEntry>();
+            this.database = database;
 
-            clusterMap = new Dictionary<uint, List<RankedDirectoryEntry>>((int)volume.MaxClusters);
+            clusterMap = new Dictionary<uint, List<RecoveredFile>>((int)volume.MaxClusters);
             for (uint i = 0; i < volume.MaxClusters; i++)
             {
-                clusterMap[i] = new List<RankedDirectoryEntry>();
+                clusterMap[i] = new List<RecoveredFile>();
             }
-
-            RegisterActiveDirectoryEntries(volume.GetRoot());
 
             // Now that we have registered them, let's update the cluster map
             UpdateClusterMap();
-        }
-
-        private void RegisterDirectoryEntry(DirectoryEntry dirent, bool active)
-        {
-            long key = dirent.Offset;
-            // If the dirent is already registered, then we don't need to register it again
-            if (!direntList.ContainsKey(key))
-            {
-                direntList[key] = new RankedDirectoryEntry(dirent, active);
-            }
-        }
-
-        private void RegisterActiveDirectoryEntries(List<DirectoryEntry> dirents)
-        {
-            // Here we will first create RankedDirectoryEntry objects
-            foreach (var dirent in dirents)
-            {
-                if (dirent.IsDeleted())
-                {
-                    // If it's deleted, then its not active
-                    RegisterDirectoryEntry(dirent, false);
-                }
-                else
-                {
-                    RegisterDirectoryEntry(dirent, true);
-                }
-
-                if (dirent.IsDirectory())
-                {
-                    RegisterActiveDirectoryEntries(dirent.Children);
-                }
-            }
         }
 
         private List<uint> GenerateArtificialClusterChain(DirectoryEntry dirent)
@@ -135,7 +51,7 @@ namespace FATX.Analyzers
             }
         }
 
-        private void UpdateClusters(RankedDirectoryEntry rankedDirent)
+        private void UpdateClusters(RecoveredFile rankedDirent)
         {
             foreach (var cluster in rankedDirent.ClusterChain)
             {
@@ -148,12 +64,12 @@ namespace FATX.Analyzers
         private void UpdateClusterMap()
         {
             // For each dirent in dirent list
-            foreach (var pair in direntList)
+            foreach (var pair in database.GetFiles())
             {
                 var rankedDirent = pair.Value;
 
                 // We handle active cluster chains conventionally
-                if (rankedDirent.IsActive)
+                if (!rankedDirent.IsDeleted)
                 {
                     if (rankedDirent.ClusterChain == null)
                     {
@@ -188,23 +104,8 @@ namespace FATX.Analyzers
             }
         }
 
-        private void RegisterInactiveDirectoryEntries(List<DirectoryEntry> dirents)
+        public void Update()
         {
-            foreach (var dirent in dirents)
-            {
-                RegisterDirectoryEntry(dirent, false);
-
-                if (dirent.IsDirectory())
-                {
-                    RegisterInactiveDirectoryEntries(dirent.Children);
-                }
-            }
-        }
-
-        public void MergeMetadataAnalysis(List<DirectoryEntry> recovered)
-        {
-            // Find new dirents
-            RegisterInactiveDirectoryEntries(recovered);
             UpdateClusterMap();
             UpdateCollisions();
             PerformRanking();
@@ -212,14 +113,14 @@ namespace FATX.Analyzers
 
         private void UpdateCollisions()
         {
-            foreach (var pair in direntList)
+            foreach (var pair in database.GetFiles())
             {
                 var rankedDirent = pair.Value;
                 rankedDirent.Collisions = FindCollidingClusters(rankedDirent);
             }
         }
 
-        private List<uint> FindCollidingClusters(RankedDirectoryEntry rankedDirent)
+        private List<uint> FindCollidingClusters(RecoveredFile rankedDirent)
         {
             // Get a list of cluster who are possibly corrupted
             List<uint> collidingClusters = new List<uint>();
@@ -237,7 +138,7 @@ namespace FATX.Analyzers
             return collidingClusters;
         }
 
-        private bool WasModifiedLast(RankedDirectoryEntry rankedDirent, List<uint> collisions)
+        private bool WasModifiedLast(RecoveredFile rankedDirent, List<uint> collisions)
         {
             var dirent = rankedDirent.GetDirent();
             foreach (var cluster in collisions)
@@ -263,9 +164,9 @@ namespace FATX.Analyzers
             return true;
         }
 
-        private void DoRanking(RankedDirectoryEntry rankedDirent)
+        private void DoRanking(RecoveredFile recoveredFile)
         {
-            var dirent = rankedDirent.GetDirent();
+            var dirent = recoveredFile.GetDirent();
 
             // Rank 1
             // - Part of active file system
@@ -285,28 +186,28 @@ namespace FATX.Analyzers
             // - Recovered
             // - All clusters overwritten
 
-            if (rankedDirent.IsActive)
+            if (!recoveredFile.IsDeleted)
             {
                 if (!dirent.IsDeleted())
                 {
-                    rankedDirent.Ranking = (0);
+                    recoveredFile.Ranking = (0);
                 }
             }
             else
             {
                 // File was deleted
-                var collisions = rankedDirent.Collisions;
+                var collisions = recoveredFile.Collisions;
                 if (collisions.Count == 0)
                 {
-                    rankedDirent.Ranking = (1);
+                    recoveredFile.Ranking = (1);
                 }
                 else
                 {
                     // File has colliding clusters
-                    if (WasModifiedLast(rankedDirent, collisions))
+                    if (WasModifiedLast(recoveredFile, collisions))
                     {
                         // This file appears to have been written most recently.
-                        rankedDirent.Ranking = (2);
+                        recoveredFile.Ranking = (2);
                     }
                     else
                     {
@@ -316,12 +217,12 @@ namespace FATX.Analyzers
                         if (collisions.Count != numClusters)
                         {
                             // Not every cluster was overwritten
-                            rankedDirent.Ranking = (3);
+                            recoveredFile.Ranking = (3);
                         }
                         else
                         {
                             // Every cluster appears to have been overwritten
-                            rankedDirent.Ranking = (4);
+                            recoveredFile.Ranking = (4);
                         }
                     }
                 }
@@ -330,15 +231,15 @@ namespace FATX.Analyzers
 
         private void PerformRanking()
         {
-            foreach (var pair in direntList)
+            foreach (var pair in database.GetFiles())
             {
                 DoRanking(pair.Value);
             }
         }
 
-        public RankedDirectoryEntry GetRankedDirectoryEntry(DirectoryEntry dirent)
+        public RecoveredFile GetRankedDirectoryEntry(DirectoryEntry dirent)
         {
-            foreach (var pair in direntList)
+            foreach (var pair in database.GetFiles())
             {
                 if (dirent.Offset == pair.Value.GetDirent().Offset)
                 {
@@ -350,9 +251,9 @@ namespace FATX.Analyzers
             return null;
         }
 
-        public List<RankedDirectoryEntry> GetClusterOccupants(uint cluster)
+        public List<RecoveredFile> GetClusterOccupants(uint cluster)
         {
-            List<RankedDirectoryEntry> occupants;
+            List<RecoveredFile> occupants;
 
             if (clusterMap.ContainsKey(cluster))
             {
