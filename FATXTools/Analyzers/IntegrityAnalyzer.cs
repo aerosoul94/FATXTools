@@ -17,7 +17,7 @@ namespace FATX.Analyzers
         /// <summary>
         /// Mapping of cluster indexes to a list of entities that occupy it.
         /// </summary>
-        private Dictionary<uint, List<RecoveredFile>> clusterMap;
+        private Dictionary<uint, List<DatabaseFile>> clusterMap;
 
         public IntegrityAnalyzer(Volume volume, FileDatabase database)
         {
@@ -25,33 +25,17 @@ namespace FATX.Analyzers
             //direntList = new Dictionary<long, RankedDirectoryEntry>();
             this.database = database;
 
-            clusterMap = new Dictionary<uint, List<RecoveredFile>>((int)volume.MaxClusters);
+            clusterMap = new Dictionary<uint, List<DatabaseFile>>((int)volume.MaxClusters);
             for (uint i = 0; i < volume.MaxClusters; i++)
             {
-                clusterMap[i] = new List<RecoveredFile>();
+                clusterMap[i] = new List<DatabaseFile>();
             }
 
             // Now that we have registered them, let's update the cluster map
             UpdateClusterMap();
         }
 
-        private List<uint> GenerateArtificialClusterChain(DirectoryEntry dirent)
-        {
-            if (dirent.IsDirectory())
-            {
-                // NOTE: Directories with more than one 256 files would have multiple clusters
-                return new List<uint>() { dirent.FirstCluster };
-            }
-            else
-            {
-                var clusterCount = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                         ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
-
-                return Enumerable.Range((int)dirent.FirstCluster, clusterCount).Select(i => (uint)i).ToList();
-            }
-        }
-
-        private void UpdateClusters(RecoveredFile rankedDirent)
+        private void UpdateClusters(DatabaseFile rankedDirent)
         {
             foreach (var cluster in rankedDirent.ClusterChain)
             {
@@ -71,11 +55,6 @@ namespace FATX.Analyzers
                 // We handle active cluster chains conventionally
                 if (!rankedDirent.IsDeleted)
                 {
-                    if (rankedDirent.ClusterChain == null)
-                    {
-                        rankedDirent.ClusterChain = volume.GetClusterChain(rankedDirent.GetDirent());
-                    }
-
                     UpdateClusters(rankedDirent);
                 }
                 // Otherwise, we generate an artificial cluster chain
@@ -89,14 +68,7 @@ namespace FATX.Analyzers
                     {
                         // These are usually always large and/or corrupted
                         // TODO: still don't really know what these files are
-                        rankedDirent.ClusterChain = new List<uint>();
                         continue;
-                    }
-
-                    if (rankedDirent.ClusterChain == null)
-                    {
-                        // Generate an artificial cluster chain
-                        rankedDirent.ClusterChain = GenerateArtificialClusterChain(dirent);
                     }
 
                     UpdateClusters(rankedDirent);
@@ -116,11 +88,11 @@ namespace FATX.Analyzers
             foreach (var pair in database.GetFiles())
             {
                 var rankedDirent = pair.Value;
-                rankedDirent.Collisions = FindCollidingClusters(rankedDirent);
+                rankedDirent.SetCollisions(FindCollidingClusters(rankedDirent));
             }
         }
 
-        private List<uint> FindCollidingClusters(RecoveredFile rankedDirent)
+        private List<uint> FindCollidingClusters(DatabaseFile rankedDirent)
         {
             // Get a list of cluster who are possibly corrupted
             List<uint> collidingClusters = new List<uint>();
@@ -138,7 +110,7 @@ namespace FATX.Analyzers
             return collidingClusters;
         }
 
-        private bool WasModifiedLast(RecoveredFile rankedDirent, List<uint> collisions)
+        private bool WasModifiedLast(DatabaseFile rankedDirent, List<uint> collisions)
         {
             var dirent = rankedDirent.GetDirent();
             foreach (var cluster in collisions)
@@ -164,9 +136,9 @@ namespace FATX.Analyzers
             return true;
         }
 
-        private void DoRanking(RecoveredFile recoveredFile)
+        private void DoRanking(DatabaseFile databaseFile)
         {
-            var dirent = recoveredFile.GetDirent();
+            var dirent = databaseFile.GetDirent();
 
             // Rank 1
             // - Part of active file system
@@ -186,28 +158,28 @@ namespace FATX.Analyzers
             // - Recovered
             // - All clusters overwritten
 
-            if (!recoveredFile.IsDeleted)
+            if (!databaseFile.IsDeleted)
             {
                 if (!dirent.IsDeleted())
                 {
-                    recoveredFile.Ranking = (0);
+                    databaseFile.SetRanking((0));
                 }
             }
             else
             {
                 // File was deleted
-                var collisions = recoveredFile.Collisions;
+                var collisions = databaseFile.GetCollisions();
                 if (collisions.Count == 0)
                 {
-                    recoveredFile.Ranking = (1);
+                    databaseFile.SetRanking((1));
                 }
                 else
                 {
                     // File has colliding clusters
-                    if (WasModifiedLast(recoveredFile, collisions))
+                    if (WasModifiedLast(databaseFile, collisions))
                     {
                         // This file appears to have been written most recently.
-                        recoveredFile.Ranking = (2);
+                        databaseFile.SetRanking((2));
                     }
                     else
                     {
@@ -217,12 +189,12 @@ namespace FATX.Analyzers
                         if (collisions.Count != numClusters)
                         {
                             // Not every cluster was overwritten
-                            recoveredFile.Ranking = (3);
+                            databaseFile.SetRanking((3));
                         }
                         else
                         {
                             // Every cluster appears to have been overwritten
-                            recoveredFile.Ranking = (4);
+                            databaseFile.SetRanking((4));
                         }
                     }
                 }
@@ -237,7 +209,7 @@ namespace FATX.Analyzers
             }
         }
 
-        public RecoveredFile GetRankedDirectoryEntry(DirectoryEntry dirent)
+        public DatabaseFile GetRankedDirectoryEntry(DirectoryEntry dirent)
         {
             foreach (var pair in database.GetFiles())
             {
@@ -251,9 +223,9 @@ namespace FATX.Analyzers
             return null;
         }
 
-        public List<RecoveredFile> GetClusterOccupants(uint cluster)
+        public List<DatabaseFile> GetClusterOccupants(uint cluster)
         {
-            List<RecoveredFile> occupants;
+            List<DatabaseFile> occupants;
 
             if (clusterMap.ContainsKey(cluster))
             {

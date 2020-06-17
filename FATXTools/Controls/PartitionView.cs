@@ -74,18 +74,20 @@ namespace FATXTools
             tabControl1.SelectedTab = carverResultsPage;
         }
 
-        public void AddMetadataAnalyzerPage(MetadataAnalyzer analyzer)
+        public void AddMetadataAnalyzerPage()
         {
             if (recoveryResultsPage != null)
             {
                 tabControl1.TabPages.Remove(recoveryResultsPage);
             }
 
-            partitionDatabase.SetMetadataAnalyzer(analyzer);
-            partitionDatabase.GetFileDatabase().MergeMetadataAnalysis(analyzer);
+            // TODO: We need to do a few things after we load a database or if analysis is completed
+            // 1. Reset or update the IntegrityAnalyzer with the new FileDatabase
+            // 2. Notify the ClusterViewer that we have started/loaded a new database
+            integrityAnalyzer = new IntegrityAnalyzer(this.volume, partitionDatabase.GetFileDatabase());
             integrityAnalyzer.Update();
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");
-            RecoveryResults recoveryResults = new RecoveryResults(analyzer, partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
+            RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);
@@ -105,7 +107,9 @@ namespace FATXTools
         {
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
             metadataAnalyzer = results.analyzer;
-            AddMetadataAnalyzerPage(metadataAnalyzer);
+            partitionDatabase.SetMetadataAnalyzer(true);
+            partitionDatabase.GetFileDatabase().MergeMetadataAnalysis(metadataAnalyzer);
+            AddMetadataAnalyzerPage();
         }
     }
 }

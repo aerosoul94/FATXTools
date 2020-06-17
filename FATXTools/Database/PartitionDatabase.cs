@@ -13,32 +13,52 @@ namespace FATXTools.Database
     {
         // We just want this for the volume info (offset, length, name)
         Volume volume;
-        // TODO: get rid of these
-        // We should be able to get this information from the FileDatabase
-        MetadataAnalyzer metadataAnalyzer;
-        FileCarver fileCarver;
+        
+        FileCarver fileCarver;  // TODO: Get rid of this. We should be able to get this information from the FileDatabase.
 
+        /// <summary>
+        ///  Whether or not the MetadataAnalyzer's results are in.
+        /// </summary>
+        bool metadataAnalyzer;
+
+        /// <summary>
+        /// Database that stores analysis results.
+        /// </summary>
         FileDatabase fileDatabase;
 
-        PartitionView view;
+        /// <summary>
+        /// The associated view for this PartitionDatabase
+        /// </summary>
+        PartitionView view; // TODO: Use events instead.
 
         public PartitionDatabase(Volume volume)
         {
             this.volume = volume;
-            this.metadataAnalyzer = null;
+            this.metadataAnalyzer = false;
             this.fileCarver = null;
 
             this.fileDatabase = new FileDatabase(volume);
         }
 
+        /// <summary>
+        /// Get the partition name associated with this database.
+        /// </summary>
         public string PartitionName => volume.Name;
 
+        /// <summary>
+        /// Set the associated view for this database.
+        /// </summary>
+        /// <param name="view"></param>
         public void SetPartitionView(PartitionView view)
         {
             this.view = view;
         }
 
-        public void SetMetadataAnalyzer(MetadataAnalyzer metadataAnalyzer)
+        /// <summary>
+        /// Set whether or not analysis was performed.
+        /// </summary>
+        /// <param name="metadataAnalyzer"></param>
+        public void SetMetadataAnalyzer(bool metadataAnalyzer)
         {
             this.metadataAnalyzer = metadataAnalyzer;
         }
@@ -48,6 +68,10 @@ namespace FATXTools.Database
             this.fileCarver = fileCarver;
         }
 
+        /// <summary>
+        /// Get the FileDatabase for this partition.
+        /// </summary>
+        /// <returns></returns>
         public FileDatabase GetFileDatabase()
         {
             return this.fileDatabase;
@@ -63,7 +87,7 @@ namespace FATXTools.Database
             var analysisObject = partitionObject["Analysis"] as Dictionary<string, object>;
 
             analysisObject["MetadataAnalyzer"] = new List<Dictionary<string, object>>();
-            if (metadataAnalyzer != null)
+            if (metadataAnalyzer)
             {
                 var metadataAnalysisList = analysisObject["MetadataAnalyzer"] as List<Dictionary<string, object>>;
                 SaveMetadataAnalysis(metadataAnalysisList);
@@ -79,11 +103,11 @@ namespace FATXTools.Database
 
         private void SaveMetadataAnalysis(List<Dictionary<string, object>> metadataAnalysisList)
         {
-            foreach (var directoryEntry in metadataAnalyzer.GetRootDirectory())
+            foreach (var databaseFile in fileDatabase.GetRootFiles())
             {
                 var directoryEntryObject = new Dictionary<string, object>();
                 metadataAnalysisList.Add(directoryEntryObject);
-                SaveDirectoryEntry(directoryEntryObject, directoryEntry);
+                SaveDirectoryEntry(directoryEntryObject, databaseFile);
             }
         }
 
@@ -100,28 +124,15 @@ namespace FATXTools.Database
                 fileCarverList.Add(fileCarverObject);
             }
         }
-        private List<uint> GenerateArtificialClusterChain(DirectoryEntry dirent)
-        {
-            if (dirent.IsDirectory())
-            {
-                // NOTE: Directories with more than one 256 files would have multiple clusters
-                return new List<uint>() { dirent.FirstCluster };
-            }
-            else
-            {
-                var clusterCount = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                         ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
 
-                return Enumerable.Range((int)dirent.FirstCluster, clusterCount).Select(i => (uint)i).ToList();
-            }
-        }
-
-        private void SaveDirectoryEntry(Dictionary<string, object> directoryEntryObject, DirectoryEntry directoryEntry)
+        private void SaveDirectoryEntry(Dictionary<string, object> directoryEntryObject, DatabaseFile directoryEntry)
         {
             directoryEntryObject["Cluster"] = directoryEntry.Cluster;
             directoryEntryObject["Offset"] = directoryEntry.Offset;
 
-            // At this moment, I believe this will only be used for debugging.
+            /*
+             * At this moment, I believe this will only be used for debugging.
+             */
             directoryEntryObject["FileNameLength"] = directoryEntry.FileNameLength;
             directoryEntryObject["FileAttributes"] = (byte)directoryEntry.FileAttributes;
             directoryEntryObject["FileName"] = directoryEntry.FileName;
@@ -144,15 +155,102 @@ namespace FATXTools.Database
                 }
             }
 
-            // TODO: I don't know why I hadn't thought of this before.
-            // We need to make sure we're using the FAT for active files!!!!!
-            directoryEntryObject["Clusters"] = GenerateArtificialClusterChain(directoryEntry);
+            directoryEntryObject["Clusters"] = directoryEntry.ClusterChain;
+        }
+
+        public DatabaseFile LoadDirectoryEntryFromDatabase(JsonElement directoryEntryObject)
+        {
+            // Make sure that the offset property was stored for this file
+            JsonElement offsetElement;
+            if (!directoryEntryObject.TryGetProperty("Offset", out offsetElement))
+            {
+                Console.WriteLine("Failed to load metadata object from database: Missing offset field");
+                return null;
+            }
+
+            // Make sure that the cluster property was stored for this file
+            JsonElement clusterElement;
+            if (!directoryEntryObject.TryGetProperty("Cluster", out clusterElement))
+            {
+                Console.WriteLine("Failed to load metadata object from database: Missing cluster field");
+                return null;
+            }
+
+            long offset = offsetElement.GetInt64();
+            uint cluster = clusterElement.GetUInt32();
+
+            // Ensure that the offset is within the bounds of the partition.
+            if (offset < this.volume.Offset || offset > this.volume.Offset + this.volume.Length)
+            {
+                Console.WriteLine($"Failed to load metadata object from database: Invalid offset {offset}");
+                return null;
+            }
+
+            // Ensure that the cluster index is valid
+            if (cluster < 0 || cluster > this.volume.MaxClusters)
+            {
+                Console.WriteLine($"Failed to load metadata object from database: Invalid cluster {cluster}");
+                return null;
+            }
+
+            // Read the DirectoryEntry data
+            byte[] data = new byte[0x40];
+            this.volume.GetReader().Seek(offset);
+            this.volume.GetReader().Read(data, 0x40);
+
+            // Create a DirectoryEntry
+            var directoryEntry = new DirectoryEntry(this.volume, data, 0);
+            directoryEntry.Cluster = cluster;
+            directoryEntry.Offset = offset;
+
+            // Add this file to the FileDatabase
+            var databaseFile = fileDatabase.AddFile(directoryEntry, true);
+
+            /*
+             * Here we begin assigning our user-configurable modifications
+             */
+
+            if (directoryEntryObject.TryGetProperty("Children", out var childrenElement))
+            {
+                foreach (var childElement in childrenElement.EnumerateArray())
+                {
+                    LoadDirectoryEntryFromDatabase(childElement);
+                }
+            }
+
+            if (directoryEntryObject.TryGetProperty("Clusters", out var clustersElement))
+            {
+                List<uint> clusterChain = new List<uint>();
+
+                //if (databaseFile.FileName == "ears_godfather")
+                //    System.Diagnostics.Debugger.Break();
+
+                foreach (var clusterIndex in clustersElement.EnumerateArray())
+                {
+                    clusterChain.Add(clusterIndex.GetUInt32());
+                }
+
+                databaseFile.ClusterChain = clusterChain;
+            }
+
+            return databaseFile;
+        }
+
+        public void LoadFromDatabase(JsonElement metadataAnalysisObject)
+        {
+            // Load each root file and its children from the json database
+            foreach (var directoryEntryObject in metadataAnalysisObject.EnumerateArray())
+            {
+                LoadDirectoryEntryFromDatabase(directoryEntryObject);
+            }
         }
 
         public void LoadFromJson(JsonElement partitionElement)
         {
-            var metadataAnalyzer = new MetadataAnalyzer(this.volume, this.volume.BytesPerCluster, this.volume.Length);
+            // Create a new file database that will reflect the one being loaded
+            this.fileDatabase = new FileDatabase(this.volume);
 
+            // Find the Analysis element, which contains analysis results
             JsonElement analysisElement;
             if (!partitionElement.TryGetProperty("Analysis", out analysisElement))
             {
@@ -160,24 +258,24 @@ namespace FATXTools.Database
                 throw new FileLoadException($"Database: Partition ${name} is missing Analysis object!");
             }
 
-            //var analysisObject = partitionObject["Analysis"] as Dictionary<string, object>;
-
             if (analysisElement.TryGetProperty("MetadataAnalyzer", out var metadataAnalysisList))
             {
-                var analyzer = new MetadataAnalyzer(this.volume, this.volume.BytesPerCluster, this.volume.Length);
+                // Loads the files from the json into the FileDatabase
+                LoadFromDatabase(metadataAnalysisList);
 
-                analyzer.LoadFromDatabase(metadataAnalysisList);
+                // Ends the transaction to the FileDatabase and trigger an update
+                fileDatabase.Update();
 
-                if (analyzer.GetDirents().Count > 0)
-                {
-                    view.AddMetadataAnalyzerPage(analyzer);
+                // TODO: This should be made into some kind of event
+                view.AddMetadataAnalyzerPage();
 
-                    this.metadataAnalyzer = analyzer;
-                }
+                // Mark that analysis was done
+                this.metadataAnalyzer = true;
             }
 
             if (analysisElement.TryGetProperty("FileCarver", out var fileCarverList))
             {
+                // TODO: We will begin replacing this when we start work on customizable "CarvedFiles"
                 var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster, this.volume.Length);
 
                 analyzer.LoadFromDatabase(fileCarverList);

@@ -14,15 +14,14 @@ namespace FATXTools
 {
     public partial class RecoveryResults : UserControl
     {
-        private MetadataAnalyzer _analyzer;
         private Volume _volume;
         private TaskRunner _taskRunner;
 
         /// <summary>
         /// Mapping of cluster index to it's directory entries.
         /// </summary>
-        private Dictionary<uint, List<DirectoryEntry>> clusterNodes =
-            new Dictionary<uint, List<DirectoryEntry>>();
+        private Dictionary<uint, List<DatabaseFile>> clusterNodes =
+            new Dictionary<uint, List<DatabaseFile>>();
 
         /// <summary>
         /// Leads to the node of the current cluster.
@@ -44,20 +43,19 @@ namespace FATXTools
             Color.FromArgb(250, 150, 150),
         };
 
-        public RecoveryResults(MetadataAnalyzer analyzer, FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
+        public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
         {
             InitializeComponent();
 
-            this._analyzer = analyzer;
             this._fileDatabase = database;
             this._integrityAnalyzer = integrityAnalyzer;
             this._taskRunner = taskRunner;
-            this._volume = analyzer.GetVolume();
+            this._volume = database.GetVolume();
 
             listViewItemComparer = new ListViewItemComparer();
             listView1.ListViewItemSorter = listViewItemComparer;
 
-            PopulateTreeView(analyzer.GetRootDirectory());
+            PopulateTreeView(database.GetRootFiles());
         }
 
         private enum NodeType
@@ -78,7 +76,7 @@ namespace FATXTools
             }
         }
 
-        private void PopulateFolder(List<DirectoryEntry> children, TreeNode parent)
+        private void PopulateFolder(List<DatabaseFile> children, TreeNode parent)
         {
             foreach (var child in children)
             {
@@ -91,15 +89,17 @@ namespace FATXTools
             }
         }
 
-        public void PopulateTreeView(List<DirectoryEntry> results)
+        public void PopulateTreeView(List<DatabaseFile> results)
         {
+            // Remove all nodes
+            treeView1.Nodes.Clear();
+
             foreach (var result in results)
             {
                 var cluster = result.Cluster;
                 if (!clusterNodes.ContainsKey(cluster))
                 {
-                    // Initialize new 
-                    List<DirectoryEntry> list = new List<DirectoryEntry>()
+                    List<DatabaseFile> list = new List<DatabaseFile>()
                     {
                         result
                     };
@@ -133,7 +133,7 @@ namespace FATXTools
             }
         }
 
-        private void PopulateListView(List<DirectoryEntry> dirents, DirectoryEntry parent)
+        private void PopulateListView(List<DatabaseFile> dirents, DatabaseFile parent)
         {
             listView1.BeginUpdate();
             listView1.Items.Clear();
@@ -148,27 +148,27 @@ namespace FATXTools
             else
             {
                 NodeTag nodeTag = (NodeTag)currentClusterNode.Tag;
-                upDir.Tag = new NodeTag(nodeTag.Tag as List<DirectoryEntry>, NodeType.Cluster);
+                upDir.Tag = new NodeTag(nodeTag.Tag as List<DatabaseFile>, NodeType.Cluster);
             }
 
             List<ListViewItem> items = new List<ListViewItem>();
             int index = 1;
-            foreach (DirectoryEntry dirent in dirents)
+            foreach (DatabaseFile databaseFile in dirents)
             {
                 ListViewItem item = new ListViewItem(index.ToString());
-                item.Tag = new NodeTag(dirent, NodeType.Dirent);
+                item.Tag = new NodeTag(databaseFile, NodeType.Dirent);
 
-                item.SubItems.Add(dirent.FileName);
+                item.SubItems.Add(databaseFile.FileName);
 
-                DateTime creationTime = dirent.CreationTime.AsDateTime();
-                DateTime lastWriteTime = dirent.LastWriteTime.AsDateTime();
-                DateTime lastAccessTime = dirent.LastAccessTime.AsDateTime();
+                DateTime creationTime = databaseFile.CreationTime.AsDateTime();
+                DateTime lastWriteTime = databaseFile.LastWriteTime.AsDateTime();
+                DateTime lastAccessTime = databaseFile.LastAccessTime.AsDateTime();
 
                 string sizeStr = "";
-                if (!dirent.IsDirectory())
+                if (!databaseFile.IsDirectory())
                 {
                     item.ImageIndex = 1;
-                    sizeStr = Utility.FormatBytes(dirent.FileSize);
+                    sizeStr = Utility.FormatBytes(databaseFile.FileSize);
                 }
                 else
                 {
@@ -179,12 +179,10 @@ namespace FATXTools
                 item.SubItems.Add(creationTime.ToString());
                 item.SubItems.Add(lastWriteTime.ToString());
                 item.SubItems.Add(lastAccessTime.ToString());
-                item.SubItems.Add("0x" + dirent.Offset.ToString("x"));
-                item.SubItems.Add(dirent.Cluster.ToString());
+                item.SubItems.Add("0x" + databaseFile.Offset.ToString("x"));
+                item.SubItems.Add(databaseFile.Cluster.ToString());
 
-                //var statusItem = item.SubItems.Add("");
-                var ranking = _fileDatabase.GetFile(dirent);
-                item.BackColor = statusColor[ranking.Ranking];
+                item.BackColor = statusColor[databaseFile.GetRanking()];
 
                 index++;
 
@@ -209,15 +207,15 @@ namespace FATXTools
             switch (nodeTag.Type)
             {
                 case NodeType.Cluster:
-                    List<DirectoryEntry> dirents = (List<DirectoryEntry>)nodeTag.Tag;
+                    List<DatabaseFile> dirents = (List<DatabaseFile>)nodeTag.Tag;
 
                     PopulateListView(dirents, null);
 
                     break;
                 case NodeType.Dirent:
-                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
 
-                    PopulateListView(dirent.Children, dirent.GetParent());
+                    PopulateListView(databaseFile.Children, databaseFile.GetParent());
 
                     break;
             }
@@ -235,32 +233,32 @@ namespace FATXTools
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
-                    DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+                    DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
 
-                    if (dirent.IsDirectory())
+                    if (databaseFile.IsDirectory())
                     {
-                        PopulateListView(dirent.Children, dirent.GetParent());
+                        PopulateListView(databaseFile.Children, databaseFile.GetParent());
                     }
 
                     break;
                 case NodeType.Cluster:
-                    List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+                    List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
                     PopulateListView(dirents, null);
 
                     break;
             }
         }
-        private long CountFiles(List<DirectoryEntry> dirents)
+        private long CountFiles(List<DatabaseFile> dirents)
         {
             // DirectoryEntry.CountFiles does not count deleted files
             long numFiles = 0;
 
-            foreach (var dirent in dirents)
+            foreach (var databaseFile in dirents)
             {
-                if (dirent.IsDirectory())
+                if (databaseFile.IsDirectory())
                 {
-                    numFiles += CountFiles(dirent.Children) + 1;
+                    numFiles += CountFiles(databaseFile.Children) + 1;
                 }
                 else
                 {
@@ -271,7 +269,7 @@ namespace FATXTools
             return numFiles;
         }
 
-        private async void RunRecoverAllTaskAsync(string path, Dictionary<string, List<DirectoryEntry>> clusters)
+        private async void RunRecoverAllTaskAsync(string path, Dictionary<string, List<DatabaseFile>> clusters)
         {
             // TODO: There should be a better way to run this.
             RecoveryTask recoverTask = null;
@@ -311,11 +309,11 @@ namespace FATXTools
                 });
         }
 
-        private async void RunRecoverDirectoryEntryTaskAsync(string path, DirectoryEntry dirent)
+        private async void RunRecoverDirectoryEntryTaskAsync(string path, DatabaseFile databaseFile)
         {
             RecoveryTask recoverTask = null;
 
-            var numFiles = dirent.CountFiles();
+            var numFiles = databaseFile.CountFiles();
             _taskRunner.Maximum = numFiles;
             _taskRunner.Interval = 1;
 
@@ -323,7 +321,7 @@ namespace FATXTools
                 (CancellationToken cancellationToken, Progress<int> progress) =>
                 {
                     recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
-                    recoverTask.Save(path, dirent);
+                    recoverTask.Save(path, databaseFile);
                 },
                 (int progress) =>
                 {
@@ -337,7 +335,7 @@ namespace FATXTools
                 });
         }
 
-        private async void RunRecoverClusterTaskAsync(string path, List<DirectoryEntry> dirents)
+        private async void RunRecoverClusterTaskAsync(string path, List<DatabaseFile> dirents)
         {
             RecoveryTask recoverTask = null;
 
@@ -378,7 +376,7 @@ namespace FATXTools
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    List<DirectoryEntry> selectedFiles = new List<DirectoryEntry>();
+                    List<DatabaseFile> selectedFiles = new List<DatabaseFile>();
 
                     foreach (ListViewItem selectedItem in selectedItems)
                     {
@@ -387,9 +385,9 @@ namespace FATXTools
                         switch (nodeTag.Type)
                         {
                             case NodeType.Dirent:
-                                DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+                                DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
 
-                                selectedFiles.Add(dirent);
+                                selectedFiles.Add(databaseFile);
 
                                 break;
                         }
@@ -409,7 +407,7 @@ namespace FATXTools
                     // TODO: Create `DirectoryEntry currentDirectory` for this class
                     //  so that we don't go through the list items.
                     //  Also, should we be dumping to a cluster directory?
-                    List<DirectoryEntry> selectedFiles = new List<DirectoryEntry>();
+                    List<DatabaseFile> selectedFiles = new List<DatabaseFile>();
 
                     foreach (ListViewItem item in listView1.Items)
                     {
@@ -423,9 +421,9 @@ namespace FATXTools
                         switch (nodeTag.Type)
                         {
                             case NodeType.Dirent:
-                                DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
+                                DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
 
-                                selectedFiles.Add(dirent);
+                                selectedFiles.Add(databaseFile);
 
                                 break;
                         }
@@ -442,7 +440,7 @@ namespace FATXTools
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    RunRecoverClusterTaskAsync(dialog.SelectedPath, _analyzer.GetRootDirectory());
+                    RunRecoverClusterTaskAsync(dialog.SelectedPath, _fileDatabase.GetRootFiles());
 
                     Console.WriteLine("Finished recovering files.");
                 }
@@ -466,7 +464,7 @@ namespace FATXTools
                     switch (nodeTag.Type)
                     {
                         case NodeType.Cluster:
-                            List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+                            List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
                             RunRecoverClusterTaskAsync(clusterDir, dirents);
 
@@ -494,7 +492,7 @@ namespace FATXTools
                     switch (nodeTag.Type)
                     {
                         case NodeType.Cluster:
-                            List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+                            List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
                             RunRecoverClusterTaskAsync(clusterDir, dirents);
 
@@ -512,7 +510,7 @@ namespace FATXTools
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    Dictionary<string, List<DirectoryEntry>> clusterList = new Dictionary<string, List<DirectoryEntry>>();
+                    Dictionary<string, List<DatabaseFile>> clusterList = new Dictionary<string, List<DatabaseFile>>();
 
                     foreach (TreeNode clusterNode in treeView1.Nodes)
                     {
@@ -520,23 +518,15 @@ namespace FATXTools
                         switch (nodeTag.Type)
                         {
                             case NodeType.Cluster:
-                                List<DirectoryEntry> dirents = nodeTag.Tag as List<DirectoryEntry>;
+                                List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
                                 clusterList[clusterNode.Text] = dirents;
-
-                                //Save(dirents, clusterDir);
-
-                                //foreach (var dirent in dirents)
-                                //{
-                                //    _analyzer.Dump(dirent, clusterDir);
-                                //}
 
                                 break;
                         }
                     }
 
                     RunRecoverAllTaskAsync(dialog.SelectedPath, clusterList);
-                    //Console.WriteLine("Finished recovering files.");
                 }
             }
         }
@@ -568,36 +558,36 @@ namespace FATXTools
                     "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
             }
 
-            private void WriteFile(string path, DirectoryEntry dirent)
+            private void WriteFile(string path, DatabaseFile databaseFile)
             {
-                const int bufsize = 0x100000;
-                var remains = dirent.FileSize;
-
-                using (FileStream file = new FileStream(path, FileMode.Create))
+                using (FileStream outFile = File.OpenWrite(path))
                 {
-                    while (remains > 0)
+                    uint bytesLeft = databaseFile.FileSize;
+
+                    foreach (uint cluster in databaseFile.ClusterChain)
                     {
-                        var read = Math.Min(remains, bufsize);
-                        remains -= read;
-                        byte[] buf = new byte[read];
-                        volume.GetReader().Read(buf, (int)read);
-                        file.Write(buf, 0, (int)read);
+                        byte[] clusterData = this.volume.ReadCluster(cluster);
+
+                        var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
+                        outFile.Write(clusterData, 0, (int)writeSize);
+
+                        bytesLeft -= writeSize;
                     }
                 }
             }
 
-            private void FileSetTimeStamps(string path, DirectoryEntry dirent)
+            private void FileSetTimeStamps(string path, DatabaseFile databaseFile)
             {
-                File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-                File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-                File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+                File.SetCreationTime(path, databaseFile.CreationTime.AsDateTime());
+                File.SetLastWriteTime(path, databaseFile.LastWriteTime.AsDateTime());
+                File.SetLastAccessTime(path, databaseFile.LastAccessTime.AsDateTime());
             }
 
-            private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
+            private void DirectorySetTimestamps(string path, DatabaseFile databaseFile)
             {
-                Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-                Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-                Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
+                Directory.SetCreationTime(path, databaseFile.CreationTime.AsDateTime());
+                Directory.SetLastWriteTime(path, databaseFile.LastWriteTime.AsDateTime());
+                Directory.SetLastAccessTime(path, databaseFile.LastAccessTime.AsDateTime());
             }
 
             private void TryIOOperation(Action action)
@@ -629,12 +619,12 @@ namespace FATXTools
                 }
             }
 
-            private void SaveDirectory(DirectoryEntry dirent, string path)
+            private void SaveDirectory(DatabaseFile databaseFile, string path)
             {
-                path = path + "\\" + dirent.FileName;
+                path = path + "\\" + databaseFile.FileName;
                 //Console.WriteLine($"{path}");
 
-                currentFile = dirent.FileName;
+                currentFile = databaseFile.FileName;
                 progress.Report(numSaved++);
 
                 if (!Directory.Exists(path))
@@ -642,52 +632,52 @@ namespace FATXTools
                     Directory.CreateDirectory(path);
                 }
 
-                foreach (DirectoryEntry child in dirent.Children)
+                foreach (DatabaseFile child in databaseFile.Children)
                 {
                     Save(path, child);
                 }
 
                 TryIOOperation(() =>
                 {
-                    DirectorySetTimestamps(path, dirent);
+                    DirectorySetTimestamps(path, databaseFile);
                 });
             }
 
-            private void SaveFile(DirectoryEntry dirent, string path)
+            private void SaveFile(DatabaseFile databaseFile, string path)
             {
-                path = path + "\\" + dirent.FileName;
+                path = path + "\\" + databaseFile.FileName;
                 //Console.WriteLine($"{path}");
 
-                currentFile = dirent.FileName;
+                currentFile = databaseFile.FileName;
                 progress.Report(numSaved++);
 
-                volume.SeekToCluster(dirent.FirstCluster);
+                volume.SeekToCluster(databaseFile.FirstCluster);
 
                 TryIOOperation(() =>
                 {
-                    WriteFile(path, dirent);
+                    WriteFile(path, databaseFile);
 
-                    FileSetTimeStamps(path, dirent);
+                    FileSetTimeStamps(path, databaseFile);
                 });
             }
 
-            public void Save(string path, DirectoryEntry dirent)
+            public void Save(string path, DatabaseFile databaseFile)
             {
-                if (dirent.IsDirectory())
+                if (databaseFile.IsDirectory())
                 {
-                    SaveDirectory(dirent, path);
+                    SaveDirectory(databaseFile, path);
                 }
                 else
                 {
-                    SaveFile(dirent, path);
+                    SaveFile(databaseFile, path);
                 }
             }
 
-            public void SaveAll(string path, List<DirectoryEntry> dirents)
+            public void SaveAll(string path, List<DatabaseFile> dirents)
             {
-                foreach (var dirent in dirents)
+                foreach (var databaseFile in dirents)
                 {
-                    Save(path, dirent);
+                    Save(path, databaseFile);
                 }
             }
         }
@@ -768,8 +758,8 @@ namespace FATXTools
                     return result;
                 }
 
-                DirectoryEntry direntX = (DirectoryEntry)((NodeTag)itemX.Tag).Tag;
-                DirectoryEntry direntY = (DirectoryEntry)((NodeTag)itemY.Tag).Tag;
+                DatabaseFile direntX = (DatabaseFile)((NodeTag)itemX.Tag).Tag;
+                DatabaseFile direntY = (DatabaseFile)((NodeTag)itemY.Tag).Tag;
 
                 switch (column)
                 {
@@ -817,9 +807,9 @@ namespace FATXTools
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
-                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
 
-                    FileInfo dialog = new FileInfo(dirent);
+                    FileInfo dialog = new FileInfo(this._volume, databaseFile.GetDirent());
                     dialog.ShowDialog();
 
                     break;
@@ -834,11 +824,9 @@ namespace FATXTools
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
-                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
 
-                    RecoveredFile rankedDirent = _integrityAnalyzer.GetRankedDirectoryEntry(dirent);
-
-                    foreach (var collision in rankedDirent.Collisions)
+                    foreach (var collision in databaseFile.GetCollisions())
                     {
                         Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterToPhysicalOffset(collision)})");
                         var occupants = _integrityAnalyzer.GetClusterOccupants(collision);
@@ -852,5 +840,29 @@ namespace FATXTools
                     break;
             }
         }
+
+        
+        private void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Target: 291581
+            ListViewItem selectedItem = listView1.SelectedItems[0];
+
+            NodeTag nodeTag = (NodeTag)selectedItem.Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
+
+                    if (!databaseFile.ClusterChain.Contains(291581))
+                        databaseFile.ClusterChain.Add(291581);
+
+                    break;
+            }
+
+            _fileDatabase.Update();
+            PopulateTreeView(_fileDatabase.GetRootFiles());
+        }
+        
     }
 }

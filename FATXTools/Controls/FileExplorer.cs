@@ -425,7 +425,7 @@ namespace FATXTools.Controls
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    FileInfo dialog = new FileInfo(dirent);
+                    FileInfo dialog = new FileInfo(this.volume, dirent);
                     dialog.ShowDialog();
 
                     break;

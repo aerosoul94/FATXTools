@@ -75,7 +75,7 @@
     <Compile Include="Database\DriveDatabase.cs" />
     <Compile Include="Database\FileDatabase.cs" />
     <Compile Include="Database\PartitionDatabase.cs" />
-    <Compile Include="Database\RecoveredFile.cs" />
+    <Compile Include="Database\DatabaseFile.cs" />
     <Compile Include="Database\Serializer.cs" />
     <Compile Include="ProgressDialog.cs">
       <SubType>Form</SubType>
