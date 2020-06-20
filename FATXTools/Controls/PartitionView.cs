@@ -40,6 +40,7 @@ namespace FATXTools
 
             // TODO: Use events instead of passing view to database
             partitionDatabase.SetPartitionView(this);
+            partitionDatabase.OnLoadRecoveryFromDatabase += PartitionDatabase_OnLoadNewDatabase;
 
             explorerPage = new TabPage("File Explorer");
             FileExplorer explorer = new FileExplorer(this, taskRunner, volume);
@@ -56,9 +57,23 @@ namespace FATXTools
             this.tabControl1.TabPages.Add(clusterViewerPage);
         }
 
+        private void PartitionDatabase_OnLoadNewDatabase(object sender, EventArgs e)
+        {
+            // At this point the files will be loaded into the file database.
+            var fileDatabase = partitionDatabase.GetFileDatabase();
+
+            Console.WriteLine($"Loaded {fileDatabase.Count()} files for {PartitionName}.");
+
+            fileDatabase.Update();          // Update the file system
+            integrityAnalyzer.Update();     // Update the integrity analyzer
+            clusterViewer.UpdateClusters(); // Update the cluster viewer
+
+            CreateRecoveryView();
+        }
+
         public string PartitionName => volume.Name;
 
-        public void AddFileCarverPage(FileCarver carver)
+        public void CreateCarverView(FileCarver carver)
         {
             if (carverResultsPage != null)
             {
@@ -74,33 +89,26 @@ namespace FATXTools
             tabControl1.SelectedTab = carverResultsPage;
         }
 
-        public void AddMetadataAnalyzerPage()
+        public void CreateRecoveryView()
         {
             if (recoveryResultsPage != null)
             {
                 tabControl1.TabPages.Remove(recoveryResultsPage);
             }
 
-            // TODO: We need to do a few things after we load a database or if analysis is completed
-            // 1. Reset or update the IntegrityAnalyzer with the new FileDatabase
-            // 2. Notify the ClusterViewer that we have started/loaded a new database
-            integrityAnalyzer = new IntegrityAnalyzer(this.volume, partitionDatabase.GetFileDatabase());
-            integrityAnalyzer.Update();
             recoveryResultsPage = new TabPage("Metadata Analyzer Results");
             RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);
             tabControl1.SelectedTab = recoveryResultsPage;
-
-            clusterViewer.UpdateClusters();
         }
 
         private void Explorer_OnFileCarverCompleted(object sender, EventArgs e)
         {
             FileCarverResults results = (FileCarverResults)e;
             fileCarver = results.carver;
-            AddFileCarverPage(fileCarver);
+            CreateCarverView(fileCarver);
         }
 
         private void Explorer_OnMetadataAnalyzerCompleted(object sender, EventArgs e)
@@ -108,8 +116,23 @@ namespace FATXTools
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
             metadataAnalyzer = results.analyzer;
             partitionDatabase.SetMetadataAnalyzer(true);
-            partitionDatabase.GetFileDatabase().MergeMetadataAnalysis(metadataAnalyzer);
-            AddMetadataAnalyzerPage();
+
+            var fileDatabase = partitionDatabase.GetFileDatabase();
+
+            // We've got new analysis results, we need to clear any previous work
+            fileDatabase.Reset();
+
+            // Add in the new results
+            foreach (var dirent in metadataAnalyzer.GetDirents())
+            {
+                fileDatabase.AddFile(dirent, true);
+            }
+
+            fileDatabase.Update();          // Update the file system
+            integrityAnalyzer.Update();     // Update the integrity analyzer
+            clusterViewer.UpdateClusters(); // Update the cluster viewer
+
+            CreateRecoveryView();
         }
     }
 }

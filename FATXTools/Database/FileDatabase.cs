@@ -56,11 +56,15 @@ namespace FATXTools.Database
             LinkFileSystem();
         }
 
+        public void Reset()
+        {
+            this.files = new Dictionary<long, DatabaseFile>();
+
+            MergeActiveFileSystem(this.volume);
+        }
+
         private void FindChildren(DatabaseFile parent)
         {
-            //if (parent.FileName == "ears_godfather")
-            //    Debugger.Break();
-
             var chainMap = parent.ClusterChain;
             foreach (var child in files)
             {
@@ -83,21 +87,26 @@ namespace FATXTools.Database
             }
         }
 
+        /// <summary>
+        /// Build the file system.
+        /// </summary>
         private void LinkFileSystem()
         {
-            foreach (var file in files)
+            // Link all of the files together
+            foreach (var file in files.Values)
             {
-                if (file.Value.IsDirectory())
+                if (file.IsDirectory())
                 {
-                    FindChildren(file.Value);
+                    FindChildren(file);
                 }
             }
 
-            foreach (var file in files)
+            // Gather files at the root
+            foreach (var file in files.Values)
             {
-                if (!file.Value.HasParent())
+                if (!file.HasParent())
                 {
-                    root.Add(file.Value);
+                    root.Add(file);
                 }
             }
         }
@@ -106,9 +115,33 @@ namespace FATXTools.Database
         /// Merge the active file system into this database.
         /// </summary>
         /// <param name="volume">The active file system.</param>
-        public void MergeActiveFileSystem(Volume volume)
+        private void MergeActiveFileSystem(Volume volume)
         {
             RegisterDirectoryEntries(volume.GetRoot());
+        }
+
+        /// <summary>
+        /// Register directory entries in bulk.
+        /// </summary>
+        /// <param name="dirents"></param>
+        private void RegisterDirectoryEntries(List<DirectoryEntry> dirents)
+        {
+            foreach (var dirent in dirents)
+            {
+                if (dirent.IsDeleted())
+                {
+                    AddFile(dirent, true);
+                }
+                else
+                {
+                    AddFile(dirent, false);
+
+                    if (dirent.IsDirectory())
+                    {
+                        RegisterDirectoryEntries(dirent.Children);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -132,50 +165,6 @@ namespace FATXTools.Database
 
                 return Enumerable.Range((int)dirent.FirstCluster, clusterCount).Select(i => (uint)i).ToList();
             }
-        }
-
-        private void RegisterDirectoryEntries(List<DirectoryEntry> dirents)
-        {
-            foreach (var dirent in dirents)
-            {
-                if (dirent.IsDeleted())
-                {
-                    AddFile(dirent, true);
-                }
-                else
-                {
-                    AddFile(dirent, false);
-
-                    if (dirent.IsDirectory())
-                    {
-                        RegisterDirectoryEntries(dirent.Children);
-                    }
-                }
-            }
-        }
-
-        private void RegisterDeletedDirectoryEntries(List<DirectoryEntry> dirents)
-        {
-            foreach (var dirent in dirents)
-            {
-                AddFile(dirent, true);
-            }
-        }
-
-        /// <summary>
-        /// Merge results of the MetadataAnalyzer.
-        /// </summary>
-        /// <param name="analyzer">MetadataAnalyzer instance</param>
-        public void MergeMetadataAnalysis(MetadataAnalyzer analyzer)
-        {
-            RegisterDeletedDirectoryEntries(analyzer.GetDirents());
-
-            LinkFileSystem();
-        }
-
-        public void MergeFileCarver(FileCarver carver)
-        {
-            // TODO
         }
 
         /// <summary>
@@ -243,21 +232,6 @@ namespace FATXTools.Database
             }
 
             return files[dirent.Offset];
-        }
-
-        /// <summary>
-        /// Add an already instantiated DatabaseFile to this database.
-        /// </summary>
-        /// <param name="databaseFile"></param>
-        public DatabaseFile AddFile(DatabaseFile databaseFile)
-        {
-            // Add the file if it does not already exist
-            if (!files.ContainsKey(databaseFile.Offset))
-            {
-                return files[databaseFile.Offset] = databaseFile;
-            }
-
-            return files[databaseFile.Offset];
         }
 
         /// <summary>

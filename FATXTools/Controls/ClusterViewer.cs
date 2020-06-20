@@ -20,6 +20,7 @@ namespace FATXTools.Controls
 
         private ClusterColorMap clusterColorMap;
 
+        private Color emptyColor = Color.White;
         private Color activeColor = Color.Green;
         private Color recoveredColor = Color.Yellow;
         private Color collisionColor = Color.Red;
@@ -57,6 +58,8 @@ namespace FATXTools.Controls
             {
                 var occupants = integrityAnalyzer.GetClusterOccupants(i);
 
+                clusterColorMap[i] = emptyColor;
+
                 if (occupants == null || occupants.Count == 0)
                 {
                     // No occupants
@@ -90,11 +93,14 @@ namespace FATXTools.Controls
                 }
             }
 
+            clusterColorMap[this.volume.RootDirFirstCluster] = rootColor;
+
             UpdateDataMap();
         }
 
         private void InitializeActiveFileSystem()
         {
+            // TODO: See if we can merge this with UpdateClusters
             clusterColorMap[volume.RootDirFirstCluster] = rootColor;
 
             UpdateClusters();
@@ -110,7 +116,7 @@ namespace FATXTools.Controls
             return (uint)cellIndex + 1;
         }
 
-        public void UpdateDataMap()
+        private void UpdateDataMap()
         {
             foreach (var pair in clusterColorMap)
             {

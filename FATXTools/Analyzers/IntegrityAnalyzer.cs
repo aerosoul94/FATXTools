@@ -11,7 +11,6 @@ namespace FATX.Analyzers
         /// </summary>
         private Volume volume;
 
-        //private Dictionary<long, RankedDirectoryEntry> direntList;
         private FileDatabase database;
 
         /// <summary>
@@ -22,84 +21,80 @@ namespace FATX.Analyzers
         public IntegrityAnalyzer(Volume volume, FileDatabase database)
         {
             this.volume = volume;
-            //direntList = new Dictionary<long, RankedDirectoryEntry>();
             this.database = database;
 
+            // Now that we have registered them, let's update the cluster map
+            UpdateClusterMap();
+        }
+
+        private void UpdateClusters(DatabaseFile databaseFile)
+        {
+            foreach (var cluster in databaseFile.ClusterChain)
+            {
+                var occupants = clusterMap[(uint)cluster];
+                if (!occupants.Contains(databaseFile))
+                    occupants.Add(databaseFile);
+            }
+        }
+
+        private void UpdateClusterMap()
+        {
             clusterMap = new Dictionary<uint, List<DatabaseFile>>((int)volume.MaxClusters);
             for (uint i = 0; i < volume.MaxClusters; i++)
             {
                 clusterMap[i] = new List<DatabaseFile>();
             }
 
-            // Now that we have registered them, let's update the cluster map
-            UpdateClusterMap();
-        }
-
-        private void UpdateClusters(DatabaseFile rankedDirent)
-        {
-            foreach (var cluster in rankedDirent.ClusterChain)
-            {
-                var occupants = clusterMap[(uint)cluster];
-                if (!occupants.Contains(rankedDirent))
-                    occupants.Add(rankedDirent);
-            }
-        }
-
-        private void UpdateClusterMap()
-        {
-            // For each dirent in dirent list
             foreach (var pair in database.GetFiles())
             {
-                var rankedDirent = pair.Value;
+                var databaseFile = pair.Value;
 
                 // We handle active cluster chains conventionally
-                if (!rankedDirent.IsDeleted)
+                if (!databaseFile.IsDeleted)
                 {
-                    UpdateClusters(rankedDirent);
+                    UpdateClusters(databaseFile);
                 }
                 // Otherwise, we generate an artificial cluster chain
                 else
                 {
-                    var dirent = rankedDirent.GetDirent();
-
-                    if (dirent.FileName.StartsWith("xdk_data") ||
-                        dirent.FileName.StartsWith("xdk_file") ||
-                        dirent.FileName.StartsWith("tempcda"))
+                    // TODO: Add a blocklist setting
+                    if (databaseFile.FileName.StartsWith("xdk_data") ||
+                        databaseFile.FileName.StartsWith("xdk_file") ||
+                        databaseFile.FileName.StartsWith("tempcda"))
                     {
                         // These are usually always large and/or corrupted
                         // TODO: still don't really know what these files are
                         continue;
                     }
 
-                    UpdateClusters(rankedDirent);
+                    UpdateClusters(databaseFile);
                 }
             }
         }
 
         public void Update()
         {
-            UpdateClusterMap();
-            UpdateCollisions();
-            PerformRanking();
+            UpdateClusterMap(); // Update clusterMap
+            UpdateCollisions(); // Update collisions (Do the collision check)
+            PerformRanking();   // Rank all clusters
         }
 
         private void UpdateCollisions()
         {
-            foreach (var pair in database.GetFiles())
+            foreach (var databaseFile in database.GetFiles().Values)
             {
-                var rankedDirent = pair.Value;
-                rankedDirent.SetCollisions(FindCollidingClusters(rankedDirent));
+                databaseFile.SetCollisions(FindCollidingClusters(databaseFile));
             }
         }
 
-        private List<uint> FindCollidingClusters(DatabaseFile rankedDirent)
+        private List<uint> FindCollidingClusters(DatabaseFile databaseFile)
         {
             // Get a list of cluster who are possibly corrupted
             List<uint> collidingClusters = new List<uint>();
 
             // for each cluster used by this dirent, check if other dirents are
             // also claiming it.
-            foreach (var cluster in rankedDirent.ClusterChain)
+            foreach (var cluster in databaseFile.ClusterChain)
             {
                 if (clusterMap[(uint)cluster].Count > 1)
                 {
@@ -110,9 +105,9 @@ namespace FATX.Analyzers
             return collidingClusters;
         }
 
-        private bool WasModifiedLast(DatabaseFile rankedDirent, List<uint> collisions)
+        private bool WasModifiedLast(DatabaseFile databaseFile, List<uint> collisions)
         {
-            var dirent = rankedDirent.GetDirent();
+            var dirent = databaseFile.GetDirent();
             foreach (var cluster in collisions)
             {
                 var clusterEnts = clusterMap[(uint)cluster];
@@ -207,20 +202,6 @@ namespace FATX.Analyzers
             {
                 DoRanking(pair.Value);
             }
-        }
-
-        public DatabaseFile GetRankedDirectoryEntry(DirectoryEntry dirent)
-        {
-            foreach (var pair in database.GetFiles())
-            {
-                if (dirent.Offset == pair.Value.GetDirent().Offset)
-                {
-                    return pair.Value;
-                }
-            }
-
-            // Dirent was not registered into ranking system
-            return null;
         }
 
         public List<DatabaseFile> GetClusterOccupants(uint cluster)

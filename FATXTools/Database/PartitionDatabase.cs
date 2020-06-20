@@ -31,6 +31,8 @@ namespace FATXTools.Database
         /// </summary>
         PartitionView view; // TODO: Use events instead.
 
+        public event EventHandler OnLoadRecoveryFromDatabase;
+
         public PartitionDatabase(Volume volume)
         {
             this.volume = volume;
@@ -236,19 +238,24 @@ namespace FATXTools.Database
             return databaseFile;
         }
 
-        public void LoadFromDatabase(JsonElement metadataAnalysisObject)
+        public bool LoadFromDatabase(JsonElement metadataAnalysisObject)
         {
+            if (metadataAnalysisObject.GetArrayLength() == 0)
+                return false;
+
             // Load each root file and its children from the json database
             foreach (var directoryEntryObject in metadataAnalysisObject.EnumerateArray())
             {
                 LoadDirectoryEntryFromDatabase(directoryEntryObject);
             }
+
+            return true;
         }
 
         public void LoadFromJson(JsonElement partitionElement)
         {
-            // Create a new file database that will reflect the one being loaded
-            this.fileDatabase = new FileDatabase(this.volume);
+            // We are loading a new database so clear previous results
+            fileDatabase.Reset();
 
             // Find the Analysis element, which contains analysis results
             JsonElement analysisElement;
@@ -261,16 +268,19 @@ namespace FATXTools.Database
             if (analysisElement.TryGetProperty("MetadataAnalyzer", out var metadataAnalysisList))
             {
                 // Loads the files from the json into the FileDatabase
-                LoadFromDatabase(metadataAnalysisList);
+                // Only post the results if there actually was any
+                if (LoadFromDatabase(metadataAnalysisList))
+                {
+                    OnLoadRecoveryFromDatabase?.Invoke(null, null);
 
-                // Ends the transaction to the FileDatabase and trigger an update
-                fileDatabase.Update();
-
-                // TODO: This should be made into some kind of event
-                view.AddMetadataAnalyzerPage();
-
-                // Mark that analysis was done
-                this.metadataAnalyzer = true;
+                    // Mark that analysis was done
+                    this.metadataAnalyzer = true;
+                }
+                else
+                {
+                    // Element was there but no analysis results were loaded
+                    this.metadataAnalyzer = false;
+                }
             }
 
             if (analysisElement.TryGetProperty("FileCarver", out var fileCarverList))
@@ -282,7 +292,7 @@ namespace FATXTools.Database
 
                 if (analyzer.GetCarvedFiles().Count > 0)
                 {
-                    view.AddFileCarverPage(analyzer);
+                    view.CreateCarverView(analyzer);
                     this.fileCarver = analyzer;
                 }
             }
