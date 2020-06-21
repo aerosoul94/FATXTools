@@ -81,7 +81,7 @@ namespace FATXTools
             }
 
             partitionDatabase.SetFileCarver(carver);
-            carverResultsPage = new TabPage("File Carver Results");
+            carverResultsPage = new TabPage("Carver View");
             CarverResults carverResults = new CarverResults(carver);
             carverResults.Dock = DockStyle.Fill;
             carverResultsPage.Controls.Add(carverResults);
@@ -96,7 +96,7 @@ namespace FATXTools
                 tabControl1.TabPages.Remove(recoveryResultsPage);
             }
 
-            recoveryResultsPage = new TabPage("Metadata Analyzer Results");
+            recoveryResultsPage = new TabPage("Recovery View");
             RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResultsPage.Controls.Add(recoveryResults);
