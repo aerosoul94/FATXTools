@@ -1,6 +1,6 @@
-﻿namespace FATXTools
+﻿namespace FATXTools.Dialogs
 {
-    partial class FileInfo
+    partial class FileInfoDialog
     {
         /// <summary>
         /// Required designer variable.

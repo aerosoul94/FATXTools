@@ -1,6 +1,6 @@
-﻿namespace FATXTools
+﻿namespace FATXTools.Dialogs
 {
-    partial class SettingsForm
+    partial class SettingsDialog
     {
         /// <summary>
         /// Required designer variable.

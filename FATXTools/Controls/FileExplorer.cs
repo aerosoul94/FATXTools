@@ -7,6 +7,7 @@ using System.Collections;
 using System.Threading;
 using FATX;
 using FATXTools.Utilities;
+using FATXTools.Dialogs;
 
 namespace FATXTools.Controls
 {
@@ -425,7 +426,7 @@ namespace FATXTools.Controls
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    FileInfo dialog = new FileInfo(this.volume, dirent);
+                    FileInfoDialog dialog = new FileInfoDialog(this.volume, dirent);
                     dialog.ShowDialog();
 
                     break;

@@ -1,4 +1,4 @@
-﻿namespace FATXTools
+﻿namespace FATXTools.Dialogs
 {
     partial class NewPartitionDialog
     {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using FATXTools.Utilities;
 
-namespace FATXTools
+namespace FATXTools.Dialogs
 {
     public partial class ProgressDialog : Form
     {

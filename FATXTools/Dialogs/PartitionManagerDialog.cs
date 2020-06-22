@@ -1,5 +1,4 @@
-﻿using FATX;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,20 +7,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using FATX;
+using FATXTools.Dialogs;
 
-namespace FATXTools
+namespace FATXTools.Dialogs
 {
-    public partial class PartitionManagerForm : Form
+    public partial class PartitionManagerDialog : Form
     {
         private List<Volume> volumes;
         private DriveReader reader;
 
-        public PartitionManagerForm()
+        public PartitionManagerDialog()
         {
             InitializeComponent();
         }
 
-        public PartitionManagerForm(DriveReader reader, List<Volume> volumes)
+        public PartitionManagerDialog(DriveReader reader, List<Volume> volumes)
         {
             InitializeComponent();
 

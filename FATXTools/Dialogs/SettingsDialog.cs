@@ -10,9 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FATXTools
+namespace FATXTools.Dialogs
 {
-    public partial class SettingsForm : Form
+    public partial class SettingsDialog : Form
     {
         public FileCarverInterval FileCarverInterval
         {
@@ -26,7 +26,7 @@ namespace FATXTools
             set;
         }
 
-        public SettingsForm()
+        public SettingsDialog()
         {
             InitializeComponent();
 

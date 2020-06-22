@@ -1,6 +1,6 @@
-﻿namespace FATXTools
+﻿namespace FATXTools.Dialogs
 {
-    partial class PartitionManagerForm
+    partial class PartitionManagerDialog
     {
         /// <summary>
         /// Required designer variable.

@@ -8,6 +8,7 @@ using FATX;
 using FATXTools.DiskTypes;
 using FATXTools.Controls;
 using FATXTools.Utilities;
+using FATXTools.Dialogs;
 
 namespace FATXTools
 {
@@ -206,7 +207,7 @@ namespace FATXTools
                 return;
             }
 
-            DeviceSelector ds = new DeviceSelector(this);
+            DeviceSelectionDialog ds = new DeviceSelectionDialog(this);
             if (ds.ShowDialog() == DialogResult.OK)
             {
                 OpenDisk(ds.SelectedDevice);
@@ -287,7 +288,7 @@ namespace FATXTools
 
         private void settingsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            SettingsForm settings = new SettingsForm();
+            SettingsDialog settings = new SettingsDialog();
             if (settings.ShowDialog() == DialogResult.OK)
             {
                 Properties.Settings.Default.FileCarverInterval = settings.FileCarverInterval;

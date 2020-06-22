@@ -9,6 +9,7 @@ using FATX;
 using FATX.Analyzers;
 using FATXTools.Database;
 using FATXTools.Utilities;
+using FATXTools.Dialogs;
 
 namespace FATXTools
 {
@@ -809,7 +810,7 @@ namespace FATXTools
                 case NodeType.Dirent:
                     DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
 
-                    FileInfo dialog = new FileInfo(this._volume, databaseFile.GetDirent());
+                    FileInfoDialog dialog = new FileInfoDialog(this._volume, databaseFile.GetDirent());
                     dialog.ShowDialog();
 
                     break;

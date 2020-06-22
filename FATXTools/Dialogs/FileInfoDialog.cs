@@ -3,11 +3,11 @@ using System.Windows.Forms;
 using FATX;
 using FATXTools.Database;
 
-namespace FATXTools
+namespace FATXTools.Dialogs
 {
-    public partial class FileInfo : Form
+    public partial class FileInfoDialog : Form
     {
-        public FileInfo(Volume volume, DirectoryEntry dirent)
+        public FileInfoDialog(Volume volume, DirectoryEntry dirent)
         {
             InitializeComponent();
 

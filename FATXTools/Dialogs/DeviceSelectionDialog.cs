@@ -4,13 +4,13 @@ using System.IO;
 using Microsoft.Win32.SafeHandles;
 using FATXTools.Utilities;
 
-namespace FATXTools
+namespace FATXTools.Dialogs
 {
-    public partial class DeviceSelector : Form
+    public partial class DeviceSelectionDialog : Form
     {
         private string selectedDevice;
 
-        public DeviceSelector(MainWindow main)
+        public DeviceSelectionDialog(MainWindow main)
         {
             InitializeComponent();
 
