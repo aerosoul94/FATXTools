@@ -322,13 +322,12 @@ namespace FATX
             var firstCluster = dirent.FirstCluster;
             List<uint> clusterChain = new List<uint>();
 
-            if (firstCluster == 0)
+            if (firstCluster == 0 || firstCluster > this.MaxClusters)
             {
-                // 0 is reserved!
-                Console.WriteLine($"File {dirent.FileName} first cluster is invalid.");
+                Console.WriteLine($" {dirent.GetFullPath()}: First cluster is invalid (FirstCluster={firstCluster} MaxClusters={this.MaxClusters})");
                 return clusterChain;
             }
-            
+
             clusterChain.Add(firstCluster);
             
             if (dirent.IsDeleted())
