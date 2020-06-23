@@ -44,7 +44,7 @@ namespace FATXTools
             Color.FromArgb(250, 150, 150),
         };
 
-        public event EventHandler NotifyChange;
+        public event EventHandler NotifyDatabaseChanged;
 
         public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
         {
@@ -867,7 +867,7 @@ namespace FATXTools
                     {
                         file.ClusterChain = dialog.NewClusterChain;
 
-                        NotifyChange?.Invoke(null, null);
+                        NotifyDatabaseChanged?.Invoke(null, null);
 
                         RefreshTreeView();
                     }
