@@ -44,6 +44,8 @@ namespace FATXTools
             Color.FromArgb(250, 150, 150),
         };
 
+        public event EventHandler NotifyChange;
+
         public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
         {
             InitializeComponent();
@@ -90,10 +92,17 @@ namespace FATXTools
             }
         }
 
+        private void RefreshTreeView()
+        {
+            PopulateTreeView(_fileDatabase.GetRootFiles());
+        }
+
         public void PopulateTreeView(List<DatabaseFile> results)
         {
             // Remove all nodes
+            treeView1.BeginUpdate();
             treeView1.Nodes.Clear();
+            clusterNodes.Clear();
 
             foreach (var result in results)
             {
@@ -132,6 +141,8 @@ namespace FATXTools
                     PopulateFolder(result.Children, rootNode);
                 }
             }
+
+            treeView1.EndUpdate();
         }
 
         private void PopulateListView(List<DatabaseFile> dirents, DatabaseFile parent)
@@ -839,6 +850,30 @@ namespace FATXTools
                     }
 
                     break;
+            }
+        }
+
+        private void editClusterChainToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile file = (DatabaseFile)nodeTag.Tag;
+
+                    ClusterChainDialog dialog = new ClusterChainDialog(this._volume, file);
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        file.ClusterChain = dialog.NewClusterChain;
+
+                        NotifyChange?.Invoke(null, null);
+
+                        RefreshTreeView();
+                    }
+
+                    break;
+
             }
         }
 

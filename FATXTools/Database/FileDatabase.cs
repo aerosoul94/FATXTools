@@ -92,6 +92,13 @@ namespace FATXTools.Database
         /// </summary>
         private void LinkFileSystem()
         {
+            // Clear all previous links
+            foreach (var file in files.Values)
+            {
+                file.Children = new List<DatabaseFile>();
+                file.SetParent(null);
+            }
+
             // Link all of the files together
             foreach (var file in files.Values)
             {

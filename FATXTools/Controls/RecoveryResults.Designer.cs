@@ -51,6 +51,8 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.viewInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewCollisionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.editClusterChainToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -185,7 +187,9 @@
             this.dumpAllToolStripMenuItem,
             this.toolStripSeparator1,
             this.viewInformationToolStripMenuItem,
-            this.viewCollisionsToolStripMenuItem});
+            this.viewCollisionsToolStripMenuItem,
+            this.toolStripSeparator2,
+            this.editClusterChainToolStripMenuItem});
             this.listContextMenu.Name = "contextMenuStrip1";
             this.listContextMenu.Size = new System.Drawing.Size(366, 238);
             // 
@@ -236,6 +240,18 @@
             this.viewCollisionsToolStripMenuItem.Text = "View Collisions";
             this.viewCollisionsToolStripMenuItem.Click += new System.EventHandler(this.viewCollisionsToolStripMenuItem_Click);
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(362, 6);
+            //
+            // editClusterChainToolStripMenuItem
+            //
+            this.editClusterChainToolStripMenuItem.Name = "editClusterChainToolStripMenuItem";
+            this.editClusterChainToolStripMenuItem.Size = new System.Drawing.Size(365, 38);
+            this.editClusterChainToolStripMenuItem.Text = "Edit Cluster Chain";
+            this.editClusterChainToolStripMenuItem.Click += new System.EventHandler(this.editClusterChainToolStripMenuItem_Click);
+            // 
             // RecoveryResults
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
@@ -270,6 +286,7 @@
         private System.Windows.Forms.ContextMenuStrip listContextMenu;
         private System.Windows.Forms.ToolStripMenuItem dumpToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem viewInformationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem dumpAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem recoverCurrentDirectoryToolStripMenuItem;
@@ -278,5 +295,6 @@
         private System.Windows.Forms.ToolStripMenuItem recoverAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem recoverCurrentClusterToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewCollisionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editClusterChainToolStripMenuItem;
     }
 }

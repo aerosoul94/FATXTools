@@ -99,9 +99,24 @@ namespace FATXTools
             recoveryResultsPage = new TabPage("Recovery View");
             RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
             recoveryResults.Dock = DockStyle.Fill;
+            recoveryResults.NotifyChange += RecoveryResults_NotifyChange;
             recoveryResultsPage.Controls.Add(recoveryResults);
             tabControl1.TabPages.Add(recoveryResultsPage);
             tabControl1.SelectedTab = recoveryResultsPage;
+        }
+
+        private void RecoveryResults_NotifyChange(object sender, EventArgs e)
+        {
+            RefreshViews();
+        }
+
+        private void RefreshViews()
+        {
+            var fileDatabase = partitionDatabase.GetFileDatabase();
+
+            fileDatabase.Update();          // Update the file system
+            integrityAnalyzer.Update();     // Update the integrity analyzer
+            clusterViewer.UpdateClusters(); // Update the cluster viewer
         }
 
         private void Explorer_OnFileCarverCompleted(object sender, EventArgs e)
