@@ -226,7 +226,7 @@ namespace FATXTools.Database
         }
 
         /// <summary>
-        /// Add and intialize a new DatabaseFile.
+        /// Add and initialize a new DatabaseFile.
         /// </summary>
         /// <param name="dirent">The associated DirectoryEntry</param>
         /// <param name="deleted">Whether or not this file was deleted</param>

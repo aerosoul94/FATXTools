@@ -201,7 +201,7 @@ namespace FATXTools
 
             if (!isAdmin)
             {
-                MessageBox.Show("You must re-run this program with Administrator priveleges\n" +
+                MessageBox.Show("You must re-run this program with Administrator privileges\n" +
                                 "in order to read from physical drives.",
                                 "Cannot perform operation", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;

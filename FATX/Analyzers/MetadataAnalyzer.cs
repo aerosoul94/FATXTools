@@ -293,7 +293,7 @@ namespace FATX
             }
 
             // NOTE: deleted files have been found with firstCluster set to 0
-            //  To be as thourough as we can, let's include those.
+            //  To be as thorough as we can, let's include those.
             //if (firstCluster == 0)
             //{
             //    return false;

@@ -84,7 +84,7 @@ namespace FATXTools
             {
                 volume.Mount();
 
-                Console.WriteLine($"Successfuly mounted {volume.Name}");
+                Console.WriteLine($"Successfully mounted {volume.Name}");
             }
             catch (Exception e)
             {
