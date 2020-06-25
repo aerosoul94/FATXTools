@@ -10,7 +10,7 @@ using FATXTools.Controls;
 using FATXTools.Utilities;
 using FATXTools.Dialogs;
 
-namespace FATXTools
+namespace FATXTools.Forms
 {
     public partial class MainWindow : Form
     {
@@ -207,7 +207,7 @@ namespace FATXTools
                 return;
             }
 
-            DeviceSelectionDialog ds = new DeviceSelectionDialog(this);
+            DeviceSelectionDialog ds = new DeviceSelectionDialog();
             if (ds.ShowDialog() == DialogResult.OK)
             {
                 OpenDisk(ds.SelectedDevice);

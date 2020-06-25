@@ -10,7 +10,7 @@ namespace FATXTools.Dialogs
     {
         private string selectedDevice;
 
-        public DeviceSelectionDialog(MainWindow main)
+        public DeviceSelectionDialog()
         {
             InitializeComponent();
 

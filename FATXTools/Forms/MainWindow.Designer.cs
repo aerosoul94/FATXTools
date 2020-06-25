@@ -1,4 +1,4 @@
-﻿namespace FATXTools
+﻿namespace FATXTools.Forms
 {
     partial class MainWindow
     {
