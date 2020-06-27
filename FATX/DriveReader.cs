@@ -21,11 +21,11 @@ namespace FATX
             if (ReadUInt64() == 0x534F44534D9058EB)
             {
                 ByteOrder = ByteOrder.Big;
-                AddPartition("Partition1", 0x20E2A000, 0xCE1D0000);
-                AddPartition("Partition2", 0x13FFA000, 0xCE30000);
-                AddPartition("Partition3", 0xDFFA000, 0x6000000);
-                AddPartition("Partition4", 0xBFFA000, 0x2000000);
-                AddPartition("Partition5", 0x7FFA000, 0x4000000);
+                AddPartition("Storage", 0x20E2A000, 0xCE1D0000);
+                AddPartition("SystemExtPartition", 0x13FFA000, 0xCE30000);
+                AddPartition("SystemURLCachePartition", 0xDFFA000, 0x6000000);
+                AddPartition("TitleURLCachePartition", 0xBFFA000, 0x2000000);
+                AddPartition("StorageSystem", 0x7FFA000, 0x4000000);
                 return;
             }
 
