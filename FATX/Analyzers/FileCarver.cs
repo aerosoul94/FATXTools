@@ -151,25 +151,5 @@ namespace FATX
 
             return _carvedFiles;
         }
-
-        public void Dump(FileSignature signature, string path)
-        {
-            const int bufsize = 0x100000;
-            var remains = signature.FileSize;
-            _volume.SeekFileArea(signature.Offset);
-
-            path = path + "/" + signature.FileName;
-            using (FileStream file = new FileStream(path, FileMode.Create))
-            {
-                while (remains > 0)
-                {
-                    var read = Math.Min(remains, bufsize);
-                    remains -= read;
-                    byte[] buf = new byte[read];
-                    _volume.GetReader().Read(buf, (int)read);
-                    file.Write(buf, 0, (int)read);
-                }
-            }
-        }
     }
 }

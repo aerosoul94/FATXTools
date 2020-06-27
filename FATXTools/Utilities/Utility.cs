@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace FATXTools.Utilities
 {
@@ -19,6 +16,31 @@ namespace FATXTools.Utilities
             }
 
             return String.Format("{0:0.##} {1}", dblSByte, Suffix[i]);
+        }
+
+        public static string UniqueFileName(string path, int maxAttempts = 256)
+        {
+            if (!File.Exists(path))
+            {
+                return path;
+            }
+
+            var fileDirectory = Path.GetDirectoryName(path);
+            var fileName = Path.GetFileName(path);
+            var fileBaseName = Path.GetFileNameWithoutExtension(fileName);
+            var fileExt = Path.GetExtension(fileName);
+
+            for (var i = 1; i <= maxAttempts; i++)
+            {
+                var testPath = $"{fileDirectory}\\{fileBaseName} ({i}){fileExt}";
+
+                if (!File.Exists(testPath))
+                {
+                    return testPath;
+                }
+            }
+
+            return null;
         }
     }
 }
