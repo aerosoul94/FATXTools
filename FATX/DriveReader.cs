@@ -20,6 +20,8 @@ namespace FATX
             // Check for memory unit image
             if (ReadUInt64() == 0x534F44534D9058EB)
             {
+                Console.WriteLine("Mounting Xbox 360 Memory Unit..");
+
                 ByteOrder = ByteOrder.Big;
                 AddPartition("Storage", 0x20E2A000, 0xCE1D0000);
                 AddPartition("SystemExtPartition", 0x13FFA000, 0xCE30000);
