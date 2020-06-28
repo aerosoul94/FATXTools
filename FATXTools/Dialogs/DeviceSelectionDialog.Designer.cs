@@ -88,18 +88,20 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // DeviceSelector
+            // DeviceSelectionDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(962, 1088);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.listView1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "DeviceSelector";
-            this.Text = "DeviceSelector";
+            this.MaximizeBox = false;
+            this.Name = "DeviceSelectionDialog";
+            this.Text = "Device Selector";
             this.ResumeLayout(false);
 
         }
