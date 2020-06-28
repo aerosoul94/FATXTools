@@ -35,6 +35,7 @@
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.recoverFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.recoverAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -75,7 +76,8 @@
             // 
             this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(28, 28);
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.recoverFileToolStripMenuItem});
+            this.recoverFileToolStripMenuItem,
+            this.recoverAllToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(197, 40);
             // 
@@ -83,8 +85,15 @@
             // 
             this.recoverFileToolStripMenuItem.Name = "recoverFileToolStripMenuItem";
             this.recoverFileToolStripMenuItem.Size = new System.Drawing.Size(270, 36);
-            this.recoverFileToolStripMenuItem.Text = "Recover File";
+            this.recoverFileToolStripMenuItem.Text = "Recover Selected";
             this.recoverFileToolStripMenuItem.Click += new System.EventHandler(this.recoverFileToolStripMenuItem_Click);
+            // 
+            // recoverFileToolStripMenuItem
+            // 
+            this.recoverAllToolStripMenuItem.Name = "recoverAllToolStripMenuItem";
+            this.recoverAllToolStripMenuItem.Size = new System.Drawing.Size(270, 36);
+            this.recoverAllToolStripMenuItem.Text = "Recover All";
+            this.recoverAllToolStripMenuItem.Click += new System.EventHandler(this.recoverAllToolStripMenuItem_Click);
             // 
             // columnHeader4
             // 
@@ -112,6 +121,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem recoverFileToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem recoverAllToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader4;
     }
 }

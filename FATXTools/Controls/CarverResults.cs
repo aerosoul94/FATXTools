@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 using FATX;
 using FATX.Analyzers.Signatures;
@@ -12,13 +13,15 @@ namespace FATXTools
     {
         private FileCarver _analyzer;
         private Volume _volume;
+        private TaskRunner taskRunner;
 
-        public CarverResults(FileCarver analyzer)
+        public CarverResults(FileCarver analyzer, TaskRunner taskRunner)
         {
             InitializeComponent();
 
             this._analyzer = analyzer;
             this._volume = analyzer.GetVolume();
+            this.taskRunner = taskRunner;
             PopulateResultsList(analyzer.GetCarvedFiles());
         }
 
@@ -70,6 +73,49 @@ namespace FATXTools
                     {
                         SaveFile((FileSignature)item.Tag, fbd.SelectedPath);
                     }
+                }
+            }
+        }
+
+        private async void recoverAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var fbd = new FolderBrowserDialog())
+            {
+                if (fbd.ShowDialog() == DialogResult.OK)
+                {
+                    var numFiles = listView1.Items.Count;
+                    string currentFile = string.Empty;
+                    this.taskRunner.Maximum = listView1.Items.Count;
+                    this.taskRunner.Interval = 1;
+
+                    List<FileSignature> signatures = new List<FileSignature>();
+                    foreach (ListViewItem item in listView1.Items)
+                    {
+                        signatures.Add((FileSignature)item.Tag);
+                    }
+
+                    await taskRunner.RunTaskAsync("Save File",
+                        (CancellationToken cancellationToken, IProgress<int> progress) =>
+                        {
+                            int p = 1;
+                            foreach (var signature in signatures)
+                            {
+                                currentFile = signature.FileName;
+
+                                SaveFile(signature, fbd.SelectedPath);
+
+                                progress.Report(p++);
+                            }
+                        },
+                        (int progress) =>
+                        {
+                            taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
+                            taskRunner.UpdateProgress(progress);
+                        },
+                        () =>
+                        {
+                            Console.WriteLine("Finished saving files.");
+                        });
                 }
             }
         }

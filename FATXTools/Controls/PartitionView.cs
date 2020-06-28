@@ -82,7 +82,7 @@ namespace FATXTools
 
             partitionDatabase.SetFileCarver(carver);
             carverResultsPage = new TabPage("Carver View");
-            CarverResults carverResults = new CarverResults(carver);
+            CarverResults carverResults = new CarverResults(carver, this.taskRunner);
             carverResults.Dock = DockStyle.Fill;
             carverResultsPage.Controls.Add(carverResults);
             tabControl1.TabPages.Add(carverResultsPage);

@@ -297,7 +297,7 @@ namespace FATXTools
             _taskRunner.Interval = 1;
 
             await _taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, Progress<int> progress) =>
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
                     recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
                     foreach (var cluster in clusters)
@@ -330,7 +330,7 @@ namespace FATXTools
             _taskRunner.Interval = 1;
 
             await _taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, Progress<int> progress) =>
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
                     recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
                     recoverTask.Save(path, databaseFile);
@@ -357,7 +357,7 @@ namespace FATXTools
             _taskRunner.Interval = 1;
 
             await _taskRunner.RunTaskAsync("Save All",
-                (CancellationToken cancellationToken, Progress<int> progress) =>
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
                     try
                     {

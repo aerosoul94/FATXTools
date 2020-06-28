@@ -224,7 +224,7 @@ namespace FATXTools.Controls
             {
                 await taskRunner.RunTaskAsync("Metadata Analyzer",
                     // Task
-                    (CancellationToken cancellationToken, Progress<int> progress) =>
+                    (CancellationToken cancellationToken, IProgress<int> progress) =>
                     {
                         analyzer.Analyze(cancellationToken, progress);
                     },
@@ -265,7 +265,7 @@ namespace FATXTools.Controls
             {
                 await taskRunner.RunTaskAsync("File Carver",
                     // Task
-                    (CancellationToken cancellationToken, Progress<int> progress) =>
+                    (CancellationToken cancellationToken, IProgress<int> progress) =>
                     {
                         carver.Analyze(cancellationToken, progress);
                     },
@@ -350,7 +350,7 @@ namespace FATXTools.Controls
             taskRunner.Interval = 1;
 
             await taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, Progress<int> progress) =>
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
                     saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
                     saveContentTask.Save(path, dirent);
@@ -375,7 +375,7 @@ namespace FATXTools.Controls
             taskRunner.Interval = 1;
 
             await taskRunner.RunTaskAsync("Save All",
-                (CancellationToken cancellationToken, Progress<int> progress) =>
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
                     try
                     {

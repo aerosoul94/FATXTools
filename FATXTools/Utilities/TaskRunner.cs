@@ -41,7 +41,7 @@ namespace FATXTools.Utilities
 
         public event EventHandler TaskCompleted;
 
-        public async Task RunTaskAsync(string title, Action<CancellationToken, Progress<int>> task, Action<int> progressUpdate, Action taskCompleted)
+        public async Task RunTaskAsync(string title, Action<CancellationToken, IProgress<int>> task, Action<int> progressUpdate, Action taskCompleted)
         {
             if (_task != null)
             {
