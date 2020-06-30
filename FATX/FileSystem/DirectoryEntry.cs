@@ -1,9 +1,8 @@
-﻿using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FATX
+namespace FATX.FileSystem
 {
     [Flags]
     public enum FileAttribute

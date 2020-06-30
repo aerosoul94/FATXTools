@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FATX
+namespace FATX.FileSystem
 {
     public class X360TimeStamp : TimeStamp
     {

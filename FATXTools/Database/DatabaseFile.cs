@@ -1,4 +1,4 @@
-﻿using FATX;
+﻿using FATX.FileSystem;
 using System.Collections.Generic;
 
 namespace FATXTools.Database

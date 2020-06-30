@@ -1,6 +1,6 @@
 ﻿
 
-namespace FATX
+namespace FATX.FileSystem
 {
     public static class Constants
     {
