@@ -243,11 +243,6 @@ namespace FATX.FileSystem
             return parent;
         }
 
-        public void Save(string path)
-        {
-            this._volume.DumpDirent(path, this);
-        }
-
         public long CountFiles()
         {
             if (IsDeleted())
