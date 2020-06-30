@@ -221,34 +221,27 @@ namespace FATXTools.Controls
 
             MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval, searchLength);
             var numBlocks = searchLength / searchInterval;
-            try
-            {
-                await taskRunner.RunTaskAsync("Metadata Analyzer",
-                    // Task
-                    (CancellationToken cancellationToken, IProgress<int> progress) =>
+            await taskRunner.RunTaskAsync("Metadata Analyzer",
+                // Task
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
+                {
+                    analyzer.Analyze(cancellationToken, progress);
+                },
+                // Progress Update
+                (int progress) =>
+                {
+                    //var progress = analyzer.GetProgress();
+                    taskRunner.UpdateLabel($"Processing cluster {progress}/{numBlocks}");
+                    taskRunner.UpdateProgress(progress);
+                },
+                // On Task Completion
+                () =>
+                {
+                    OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
                     {
-                        analyzer.Analyze(cancellationToken, progress);
-                    },
-                    // Progress Update
-                    (int progress) =>
-                    {
-                        //var progress = analyzer.GetProgress();
-                        taskRunner.UpdateLabel($"Processing cluster {progress}/{numBlocks}");
-                        taskRunner.UpdateProgress(progress);
-                    },
-                    // On Task Completion
-                    () =>
-                    {
-                        OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
-                        {
-                            analyzer = analyzer
-                        });
+                        analyzer = analyzer
                     });
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show(exception.Message);
-            }
+                });
         }
 
         private async void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
@@ -262,34 +255,27 @@ namespace FATXTools.Controls
 
             FileCarver carver = new FileCarver(this.volume, searchInterval, searchLength);
             var numBlocks = searchLength / (long)searchInterval;
-            try
-            {
-                await taskRunner.RunTaskAsync("File Carver",
-                    // Task
-                    (CancellationToken cancellationToken, IProgress<int> progress) =>
+            await taskRunner.RunTaskAsync("File Carver",
+                // Task
+                (CancellationToken cancellationToken, IProgress<int> progress) =>
+                {
+                    carver.Analyze(cancellationToken, progress);
+                },
+                // Progress Update
+                (int progress) =>
+                {
+                    //var progress = carver.GetProgress();
+                    taskRunner.UpdateLabel($"Processing block {progress}/{numBlocks}");
+                    taskRunner.UpdateProgress(progress);
+                },
+                // On Task Completion
+                () =>
+                {
+                    OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
                     {
-                        carver.Analyze(cancellationToken, progress);
-                    },
-                    // Progress Update
-                    (int progress) =>
-                    {
-                        //var progress = carver.GetProgress();
-                        taskRunner.UpdateLabel($"Processing block {progress}/{numBlocks}");
-                        taskRunner.UpdateProgress(progress);
-                    },
-                    // On Task Completion
-                    () =>
-                    {
-                        OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
-                        {
-                            carver = carver
-                        });
+                        carver = carver
                     });
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show(exception.Message);
-            }
+                });
         }
 
         private void SaveNodeTag(string path, NodeTag nodeTag)
@@ -378,15 +364,8 @@ namespace FATXTools.Controls
             await taskRunner.RunTaskAsync("Save All",
                 (CancellationToken cancellationToken, IProgress<int> progress) =>
                 {
-                    try
-                    {
-                        saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
-                        saveContentTask.SaveAll(path, dirents);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Console.WriteLine("Save all cancelled");
-                    }
+                    saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
+                    saveContentTask.SaveAll(path, dirents);
                 },
                 (int progress) =>
                 {

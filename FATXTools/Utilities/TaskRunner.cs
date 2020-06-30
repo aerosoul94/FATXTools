@@ -57,13 +57,24 @@ namespace FATXTools.Utilities
                 progressUpdate(percent);
             });
 
-            _task = Task.Run(() =>
+            try
             {
-                task(cancellationToken, progress);
-            }, cancellationToken);
+                _task = Task.Run(() =>
+                {
+                    task(cancellationToken, progress);
+                }, cancellationToken);
 
-            // wait for worker task to finish.
-            await Task.WhenAll(_task);
+                // wait for worker task to finish.
+                await _task;
+            }
+            catch (TaskCanceledException)
+            {
+                Console.WriteLine("Task cancelled.");
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(exception.Message);
+            }
 
             SystemSounds.Beep.Play();
 

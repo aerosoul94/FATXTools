@@ -139,7 +139,6 @@ namespace FATX.Analyzers
 
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    Console.WriteLine("Task cancelled");
                     return _carvedFiles;
                 }
             }
