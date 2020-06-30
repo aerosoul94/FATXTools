@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using FATX;
 using FATX.FileSystem;
 using FATX.Analyzers.Signatures;
 using FATXTools.Utilities;
+using FATX.Analyzers;
 
 namespace FATXTools
 {

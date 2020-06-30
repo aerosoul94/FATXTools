@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO;
-using FATX.Analyzers.Signatures;
-using FATX.Analyzers.Signatures.Blank;
 using System.Threading;
 using System.Text.Json;
 using FATX.FileSystem;
+using FATX.Analyzers.Signatures;
+using FATX.Analyzers.Signatures.Blank;
 
-namespace FATX
+namespace FATX.Analyzers
 {
     public enum FileCarverInterval
     {
@@ -28,9 +27,9 @@ namespace FATX
 
         public FileCarver(Volume volume)
         {
-            this._volume = volume;
-            this._interval = FileCarverInterval.Cluster;
-            this._length = volume.Length;
+            _volume = volume;
+            _interval = FileCarverInterval.Cluster;
+            _length = volume.Length;
         }
 
         public FileCarver(Volume volume, FileCarverInterval interval, long length)
@@ -40,9 +39,9 @@ namespace FATX
                 length = volume.Length;
             }
 
-            this._volume = volume;
-            this._interval = interval;
-            this._length = length;
+            _volume = volume;
+            _interval = interval;
+            _length = length;
         }
 
         public void LoadFromDatabase(JsonElement fileCarverList)
@@ -58,7 +57,7 @@ namespace FATX
                     continue;
                 }
 
-                var fileSignature = new BlankSignature(this._volume, offsetElement.GetInt64());
+                var fileSignature = new BlankSignature(_volume, offsetElement.GetInt64());
 
                 if (file.TryGetProperty("Name", out var nameElement))
                 {
@@ -70,7 +69,7 @@ namespace FATX
                     fileSignature.FileSize = sizeElement.GetInt64();
                 }
 
-                this._carvedFiles.Add(fileSignature);
+                _carvedFiles.Add(fileSignature);
             }
         }
 
@@ -123,11 +122,11 @@ namespace FATX
                             // Attempt to parse the file
                             _volume.SeekFileArea(offset);
                             signature.Parse();
-                            Console.WriteLine(String.Format("Found {0} at 0x{1:X}.", signature.GetType().Name, offset));
+                            Console.WriteLine(string.Format("Found {0} at 0x{1:X}.", signature.GetType().Name, offset));
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(String.Format("Exception thrown for {0} at 0x{1:X}: {2}", signature.GetType().Name, offset, e.Message));
+                            Console.WriteLine(string.Format("Exception thrown for {0} at 0x{1:X}: {2}", signature.GetType().Name, offset, e.Message));
                             Console.WriteLine(e.StackTrace);
                         }
                     }

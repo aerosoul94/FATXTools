@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-using FATX;
 using FATX.FileSystem;
 using FATX.Analyzers;
 using FATXTools.Controls;

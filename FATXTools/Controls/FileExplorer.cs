@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Collections;
 using System.Threading;
-using FATX;
 using FATX.FileSystem;
 using FATXTools.Utilities;
 using FATXTools.Dialogs;
+using FATX.Analyzers;
 
 namespace FATXTools.Controls
 {

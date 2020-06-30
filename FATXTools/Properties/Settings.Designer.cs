@@ -8,9 +8,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace FATXTools.Properties {
-    
-    
+namespace FATXTools.Properties
+{
+
+
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.6.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
@@ -26,9 +27,9 @@ namespace FATXTools.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Cluster")]
-        public global::FATX.FileCarverInterval FileCarverInterval {
+        public global::FATX.Analyzers.FileCarverInterval FileCarverInterval {
             get {
-                return ((global::FATX.FileCarverInterval)(this["FileCarverInterval"]));
+                return ((global::FATX.Analyzers.FileCarverInterval)(this["FileCarverInterval"]));
             }
             set {
                 this["FileCarverInterval"] = value;

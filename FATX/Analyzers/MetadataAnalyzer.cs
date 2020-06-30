@@ -7,7 +7,7 @@ using System.Threading;
 using System.Text.Json;
 using FATX.FileSystem;
 
-namespace FATX
+namespace FATX.Analyzers
 {
     public class MetadataAnalyzer
     {
@@ -32,11 +32,11 @@ namespace FATX
                 length = volume.FileAreaLength;
             }
 
-            this._volume = volume;
-            this._interval = interval;
-            this._length = length;
+            _volume = volume;
+            _interval = interval;
+            _length = length;
 
-            this._currentYear = DateTime.Now.Year;
+            _currentYear = DateTime.Now.Year;
         }
 
         public List<DirectoryEntry> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
@@ -64,14 +64,14 @@ namespace FATX
                 var clusterOffset = (cluster - 1) * _interval;
                 for (int i = 0; i < 256; i++)
                 {
-                    var direntOffset = (i * 0x40);
+                    var direntOffset = i * 0x40;
                     try
                     {
                         DirectoryEntry dirent = new DirectoryEntry(_volume, data, direntOffset);
 
                         if (IsValidDirent(dirent))
                         {
-                            Console.WriteLine(String.Format("0x{0:X8}: {1}", clusterOffset + direntOffset, dirent.FileName));
+                            Console.WriteLine(string.Format("0x{0:X8}: {1}", clusterOffset + direntOffset, dirent.FileName));
                             dirent.Cluster = cluster;
                             dirent.Offset = _volume.ClusterToPhysicalOffset(cluster) + direntOffset;
                             _dirents.Add(dirent);

@@ -1,4 +1,4 @@
-﻿using FATX;
+﻿using FATX.Analyzers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
