@@ -2,13 +2,8 @@
 using System.IO;
 using System.Collections.Generic;
 
-namespace FATX
+namespace FATX.FileSystem
 {
-    public enum VolumePlatform
-    {
-        Xbox,
-        X360
-    }
 
     public class Volume
     {

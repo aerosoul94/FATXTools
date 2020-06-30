@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 using System;
+using FATX.FileSystem;
 
 namespace FATX
 {

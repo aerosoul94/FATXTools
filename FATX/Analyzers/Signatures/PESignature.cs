@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using FATX.FileSystem;
+using System.Linq;
 
 namespace FATX.Analyzers.Signatures
 {

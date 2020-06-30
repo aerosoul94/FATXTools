@@ -5,7 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using FATX;
+using FATX.FileSystem;
 using FATX.Analyzers;
 using FATXTools.Database;
 using FATXTools.Utilities;

@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using FATX;
+using FATX.FileSystem;
 using FATX.Analyzers;
 //using Be.Windows.Forms;
 

@@ -1,9 +1,5 @@
-﻿using FATX;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using FATX.FileSystem;
 
 namespace FATXTools.Controls
 {

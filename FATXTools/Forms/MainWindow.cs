@@ -4,7 +4,7 @@ using System.Security.Principal;
 using System.IO;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
-using FATX;
+using FATX.FileSystem;
 using FATXTools.DiskTypes;
 using FATXTools.Controls;
 using FATXTools.Utilities;

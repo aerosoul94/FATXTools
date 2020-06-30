@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Text.Json;
+using FATX.FileSystem;
 
 namespace FATX
 {

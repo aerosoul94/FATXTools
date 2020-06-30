@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
 using System.Windows.Forms;
 using FATX;
+using FATX.FileSystem;
 using FATX.Analyzers;
 using FATXTools.Controls;
 using FATXTools.Database;

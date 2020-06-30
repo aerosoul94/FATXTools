@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FATX.FileSystem;
+using System;
 using System.IO;
 using System.Text;
 

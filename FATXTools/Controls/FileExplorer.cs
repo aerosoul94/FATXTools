@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Collections;
 using System.Threading;
 using FATX;
+using FATX.FileSystem;
 using FATXTools.Utilities;
 using FATXTools.Dialogs;
 

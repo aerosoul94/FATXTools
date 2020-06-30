@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using FATX.FileSystem;
+using System.IO;
 using System.Text;
 
 namespace FATX.Analyzers.Signatures
