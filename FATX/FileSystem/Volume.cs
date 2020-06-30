@@ -29,7 +29,7 @@ namespace FATX.FileSystem
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
         private uint[] _fileAllocationTable;
         private long _fileAreaLength;
-        private VolumePlatform _platform;
+        private Platform _platform;
 
         public Volume(DriveReader reader, string name, long offset, long length)
         {
@@ -39,7 +39,7 @@ namespace FATX.FileSystem
             this._partitionOffset = offset;
 
             this._platform = (reader.ByteOrder == ByteOrder.Big) ?
-                VolumePlatform.X360 : VolumePlatform.Xbox;
+                Platform.X360 : Platform.Xbox;
         }
 
         public string Name
@@ -95,7 +95,7 @@ namespace FATX.FileSystem
             return _root;
         }
 
-        public VolumePlatform Platform
+        public Platform Platform
         {
             get { return _platform; }
         }
@@ -224,7 +224,7 @@ namespace FATX.FileSystem
 
             for (int i = 0; i < 256; i++)
             {
-                DirectoryEntry dirent = new DirectoryEntry(this, data, (i * 0x40));
+                DirectoryEntry dirent = new DirectoryEntry(this.Platform, data, (i * 0x40));
 
                 if (dirent.FileNameLength == Constants.DirentNeverUsed ||
                     dirent.FileNameLength == Constants.DirentNeverUsed2)

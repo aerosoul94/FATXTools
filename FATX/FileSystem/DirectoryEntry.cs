@@ -19,24 +19,27 @@ namespace FATX.FileSystem
         private TimeStamp _lastAccessTime;
         private string _fileName;
 
-        private Volume _volume;
         private DirectoryEntry _parent;
         private List<DirectoryEntry> _children = new List<DirectoryEntry>();
         private uint _cluster;
         private long _offset;
 
-        public DirectoryEntry(Volume volume, byte[] data, int offset)
+        public DirectoryEntry(Platform platform, byte[] data, int offset)
         {
-            this._volume = volume;
             this._parent = null;
 
+            ReadDirectoryEntry(platform, data, offset);
+        }
+
+        private void ReadDirectoryEntry(Platform platform, byte[] data, int offset)
+        {
             this._fileNameLength = data[offset + 0];
             this._fileAttributes = data[offset + 1];
 
             this._fileNameBytes = new byte[42];
             Buffer.BlockCopy(data, offset + 2, this._fileNameBytes, 0, 42);
 
-            if (volume.Platform == VolumePlatform.Xbox)
+            if (platform == Platform.Xbox)
             {
                 this._firstCluster = BitConverter.ToUInt32(data, offset + 0x2C);
                 this._fileSize = BitConverter.ToUInt32(data, offset + 0x30);
@@ -47,7 +50,7 @@ namespace FATX.FileSystem
                 this._lastWriteTime = new XTimeStamp(this._lastWriteTimeAsInt);
                 this._lastAccessTime = new XTimeStamp(this._lastAccessTimeAsInt);
             }
-            else if (volume.Platform == VolumePlatform.X360)
+            else if (platform == Platform.X360)
             {
                 Array.Reverse(data, offset + 0x2C, 4);
                 this._firstCluster = BitConverter.ToUInt32(data, offset + 0x2C);
@@ -168,11 +171,6 @@ namespace FATX.FileSystem
                 dirent.SetParent(this);
                 _children.Add(dirent);
             }
-        }
-
-        public Volume GetVolume()
-        {
-            return this._volume;
         }
 
         public void SetParent(DirectoryEntry parent)

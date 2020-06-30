@@ -65,7 +65,7 @@ namespace FATX.Analyzers
                     var direntOffset = i * 0x40;
                     try
                     {
-                        DirectoryEntry dirent = new DirectoryEntry(_volume, data, direntOffset);
+                        DirectoryEntry dirent = new DirectoryEntry(_volume.Platform, data, direntOffset);
 
                         if (IsValidDirent(dirent))
                         {

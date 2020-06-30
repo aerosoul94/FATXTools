@@ -199,7 +199,7 @@ namespace FATXTools.Database
             this.volume.GetReader().Read(data, 0x40);
 
             // Create a DirectoryEntry
-            var directoryEntry = new DirectoryEntry(this.volume, data, 0);
+            var directoryEntry = new DirectoryEntry(this.volume.Platform, data, 0);
             directoryEntry.Cluster = cluster;
             directoryEntry.Offset = offset;
 

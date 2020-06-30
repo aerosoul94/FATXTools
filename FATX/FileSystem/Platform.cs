@@ -1,6 +1,6 @@
 ﻿namespace FATX.FileSystem
 {
-    public enum VolumePlatform
+    public enum Platform
     {
         Xbox,
         X360
