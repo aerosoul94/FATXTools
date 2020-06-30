@@ -1,11 +1,11 @@
-﻿using System;
+﻿using FATX.Analyzers.Signatures;
+using FATX.Analyzers.Signatures.Blank;
+using FATX.FileSystem;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Text.Json;
-using FATX.FileSystem;
-using FATX.Analyzers.Signatures;
-using FATX.Analyzers.Signatures.Blank;
+using System.Threading;
 
 namespace FATX.Analyzers
 {

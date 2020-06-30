@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using FATX;
+﻿using System.IO;
 
 namespace FATXTools.DiskTypes
 {

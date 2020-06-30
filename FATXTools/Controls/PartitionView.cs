@@ -1,10 +1,10 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using FATX.Analyzers;
 using FATX.FileSystem;
-using FATX.Analyzers;
 using FATXTools.Controls;
 using FATXTools.Database;
 using FATXTools.Utilities;
+using System;
+using System.Windows.Forms;
 
 namespace FATXTools
 {

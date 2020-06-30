@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using FATX;
+﻿using FATX;
 using FATX.FileSystem;
 using FATXTools.Controls;
-using FATXTools.Utilities;
 using FATXTools.Database;
+using FATXTools.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace FATXTools
 {
@@ -115,7 +115,7 @@ namespace FATXTools
         {
             driveDatabase.LoadFromJson(path);
         }
-        
+
         private void SelectedIndexChanged()
         {
             TabSelectionChanged?.Invoke(this, new PartitionSelectedEventArgs()

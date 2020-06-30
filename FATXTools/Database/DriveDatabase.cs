@@ -1,8 +1,7 @@
-﻿using System;
+﻿using FATX.FileSystem;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using FATX.FileSystem;
 
 namespace FATXTools.Database
 {

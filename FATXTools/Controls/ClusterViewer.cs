@@ -1,11 +1,10 @@
-﻿using System;
+﻿using FATX.Analyzers;
+using FATX.FileSystem;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using FATX;
-using FATX.FileSystem;
-using FATX.Analyzers;
 //using Be.Windows.Forms;
 
 using ClusterColorMap = System.Collections.Generic.Dictionary<uint, System.Drawing.Color>;
@@ -142,9 +141,9 @@ namespace FATXTools.Controls
                 " Type: " + dataType + Environment.NewLine +
                 " Occupant: " + dirent.FileName + Environment.NewLine +
                 " File Size: " + dirent.FileSize.ToString("X8") + Environment.NewLine +
-                " Date Created: " + dirent.CreationTime.AsDateTime() + Environment.NewLine + 
+                " Date Created: " + dirent.CreationTime.AsDateTime() + Environment.NewLine +
                 " Date Written: " + dirent.LastWriteTime.AsDateTime() + Environment.NewLine +
-                " Date Accessed: " + dirent.LastAccessTime.AsDateTime() + Environment.NewLine + 
+                " Date Accessed: " + dirent.LastAccessTime.AsDateTime() + Environment.NewLine +
                 " Deleted: " + (deleted).ToString() + Environment.NewLine;
 
             return message;

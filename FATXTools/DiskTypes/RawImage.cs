@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using FATX;
+﻿using System.IO;
 
 namespace FATXTools.DiskTypes
 {
@@ -8,7 +6,7 @@ namespace FATXTools.DiskTypes
     {
         // TODO: replace with FileStream to be able to use "using"
         public RawImage(string fileName)
-            : base(new FileStream(fileName,FileMode.Open, FileAccess.Read))
+            : base(new FileStream(fileName, FileMode.Open, FileAccess.Read))
         {
             base.Initialize();
         }

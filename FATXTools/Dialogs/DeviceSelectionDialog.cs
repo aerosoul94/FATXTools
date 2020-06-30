@@ -1,8 +1,8 @@
-﻿using System;
-using System.Windows.Forms;
-using System.IO;
+﻿using FATXTools.Utilities;
 using Microsoft.Win32.SafeHandles;
-using FATXTools.Utilities;
+using System;
+using System.IO;
+using System.Windows.Forms;
 
 namespace FATXTools.Dialogs
 {

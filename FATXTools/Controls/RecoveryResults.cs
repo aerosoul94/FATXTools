@@ -1,15 +1,15 @@
-﻿using System;
+﻿using FATX.Analyzers;
+using FATX.FileSystem;
+using FATXTools.Database;
+using FATXTools.Dialogs;
+using FATXTools.Utilities;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using FATX.FileSystem;
-using FATX.Analyzers;
-using FATXTools.Database;
-using FATXTools.Utilities;
-using FATXTools.Dialogs;
 
 namespace FATXTools
 {
@@ -35,8 +35,8 @@ namespace FATXTools
 
         private FileDatabase _fileDatabase;
 
-        private Color[] statusColor = new Color[] 
-        { 
+        private Color[] statusColor = new Color[]
+        {
             Color.FromArgb(150, 250, 150), // Green
             Color.FromArgb(200, 250, 150), // Yellow-Green
             Color.FromArgb(250, 250, 150),
@@ -898,6 +898,6 @@ namespace FATXTools
             _fileDatabase.Update();
             PopulateTreeView(_fileDatabase.GetRootFiles());
         }
-        
+
     }
 }

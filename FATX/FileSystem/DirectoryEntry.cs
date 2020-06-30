@@ -30,8 +30,8 @@ namespace FATX.FileSystem
             this._volume = volume;
             this._parent = null;
 
-            this._fileNameLength = data[offset+0];
-            this._fileAttributes = data[offset+1];
+            this._fileNameLength = data[offset + 0];
+            this._fileAttributes = data[offset + 1];
 
             this._fileNameBytes = new byte[42];
             Buffer.BlockCopy(data, offset + 2, this._fileNameBytes, 0, 42);
@@ -78,8 +78,8 @@ namespace FATX.FileSystem
 
         public string FileName
         {
-            get 
-            { 
+            get
+            {
                 if (string.IsNullOrEmpty(_fileName))
                 {
                     if (_fileNameLength == Constants.DirentDeleted)

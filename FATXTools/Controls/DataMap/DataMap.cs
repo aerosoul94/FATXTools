@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Diagnostics;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace FATXTools.Controls
@@ -14,8 +14,8 @@ namespace FATXTools.Controls
 
         public Dictionary<int, DataMapCell> Cells { get; set; }
 
-        public long CellCount 
-        { 
+        public long CellCount
+        {
             get
             {
                 return _cellCount;

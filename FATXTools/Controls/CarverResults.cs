@@ -1,12 +1,12 @@
-﻿using System;
+﻿using FATX.Analyzers;
+using FATX.Analyzers.Signatures;
+using FATX.FileSystem;
+using FATXTools.Utilities;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
-using FATX.FileSystem;
-using FATX.Analyzers.Signatures;
-using FATXTools.Utilities;
-using FATX.Analyzers;
 
 namespace FATXTools
 {

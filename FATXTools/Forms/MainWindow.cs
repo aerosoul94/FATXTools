@@ -1,14 +1,14 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Security.Principal;
-using System.IO;
-using System.Text;
-using Microsoft.Win32.SafeHandles;
-using FATX.FileSystem;
-using FATXTools.DiskTypes;
+﻿using FATX.FileSystem;
 using FATXTools.Controls;
-using FATXTools.Utilities;
 using FATXTools.Dialogs;
+using FATXTools.DiskTypes;
+using FATXTools.Utilities;
+using Microsoft.Win32.SafeHandles;
+using System;
+using System.IO;
+using System.Security.Principal;
+using System.Text;
+using System.Windows.Forms;
 
 namespace FATXTools.Forms
 {
@@ -175,7 +175,7 @@ namespace FATXTools.Forms
                        FileShare.None,
                        IntPtr.Zero,
                        FileMode.Open,
-                       0, 
+                       0,
                        IntPtr.Zero);
             long length = WinApi.GetDiskCapactity(handle);
             long sectorLength = WinApi.GetSectorSize(handle);
@@ -280,8 +280,8 @@ namespace FATXTools.Forms
             if (dialogResult == DialogResult.OK)
             {
                 driveView.AddPartition(new Volume(driveView.GetDrive(),
-                    partitionDialog.PartitionName, 
-                    partitionDialog.PartitionOffset, 
+                    partitionDialog.PartitionName,
+                    partitionDialog.PartitionOffset,
                     partitionDialog.PartitionLength));
             }
         }
@@ -300,7 +300,7 @@ namespace FATXTools.Forms
 
         private void saveToJSONToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog() 
+            SaveFileDialog saveFileDialog = new SaveFileDialog()
             {
                 Filter = "JSON File (*.json)|*.json"
             };
@@ -323,7 +323,7 @@ namespace FATXTools.Forms
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 var dialogResult = MessageBox.Show($"Loading a database will overwrite current analysis progress.\n"
-                    + $"Are you sure you want to load \'{Path.GetFileName(openFileDialog.FileName)}\'?", 
+                    + $"Are you sure you want to load \'{Path.GetFileName(openFileDialog.FileName)}\'?",
                     "Load File", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dialogResult == DialogResult.Yes)
                 {

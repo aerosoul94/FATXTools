@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 
 namespace FATX.FileSystem
 {
@@ -130,7 +130,7 @@ namespace FATX.FileSystem
             if (_signature != VolumeSignature)
             {
                 throw new FormatException(
-                    String.Format("Invalid FATX Signature for {0}: {1:X8}",  _partitionName,  _signature.ToString("X8")));
+                    String.Format("Invalid FATX Signature for {0}: {1:X8}", _partitionName, _signature.ToString("X8")));
             }
         }
 
@@ -140,7 +140,7 @@ namespace FATX.FileSystem
         private void CalculateOffsets()
         {
             _bytesPerCluster = _sectorsPerCluster * Constants.SectorSize;
-            _maxClusters = (uint)(_partitionLength / (long)_bytesPerCluster) 
+            _maxClusters = (uint)(_partitionLength / (long)_bytesPerCluster)
                 + Constants.ReservedClusters;
 
             uint bytesPerFat;
@@ -324,7 +324,7 @@ namespace FATX.FileSystem
             }
 
             clusterChain.Add(firstCluster);
-            
+
             if (dirent.IsDeleted())
             {
                 return clusterChain;

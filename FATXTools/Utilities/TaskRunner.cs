@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using FATXTools.Dialogs;
+using System;
 using System.Media;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FATXTools.Dialogs;
 
 namespace FATXTools.Utilities
 {

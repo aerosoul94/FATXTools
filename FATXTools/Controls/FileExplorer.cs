@@ -1,14 +1,14 @@
-﻿using System;
-using System.IO;
-using System.Windows.Forms;
+﻿using FATX.Analyzers;
+using FATX.FileSystem;
+using FATXTools.Dialogs;
+using FATXTools.Utilities;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Collections;
+using System.IO;
 using System.Threading;
-using FATX.FileSystem;
-using FATXTools.Utilities;
-using FATXTools.Dialogs;
-using FATX.Analyzers;
+using System.Windows.Forms;
 
 namespace FATXTools.Controls
 {
@@ -57,7 +57,7 @@ namespace FATXTools.Controls
 
             var rootNode = treeView1.Nodes.Add("Root");
             rootNode.Tag = new NodeTag(null, NodeType.Root);
-            
+
             PopulateTreeNodeDirectory(rootNode, volume.GetRoot());
         }
 
@@ -145,11 +145,11 @@ namespace FATXTools.Controls
             listView1.Items.AddRange(items.ToArray());
             listView1.EndUpdate();
         }
-        
+
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             NodeTag nodeTag = (NodeTag)e.Node.Tag;
-            
+
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
@@ -421,7 +421,7 @@ namespace FATXTools.Controls
         private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
-            
+
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:

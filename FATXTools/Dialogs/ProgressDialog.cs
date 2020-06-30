@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FATXTools.Utilities;
 using System.Windows.Forms;
-using FATXTools.Utilities;
 
 namespace FATXTools.Dialogs
 {
@@ -17,7 +9,7 @@ namespace FATXTools.Dialogs
         private long _interval;
         private TaskRunner _taskRunner;
 
-        public ProgressDialog(TaskRunner taskRunner, Form owner, 
+        public ProgressDialog(TaskRunner taskRunner, Form owner,
             string title, long maxValue, long interval)
         {
             InitializeComponent();

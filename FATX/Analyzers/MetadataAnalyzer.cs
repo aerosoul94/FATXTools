@@ -1,11 +1,9 @@
-﻿using System;
+﻿using FATX.FileSystem;
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
-using System.Text.Json;
-using FATX.FileSystem;
 
 namespace FATX.Analyzers
 {

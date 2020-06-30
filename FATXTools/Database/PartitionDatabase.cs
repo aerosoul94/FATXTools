@@ -1,9 +1,9 @@
-﻿using System;
+﻿using FATX.Analyzers;
+using FATX.FileSystem;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using FATX.Analyzers;
-using FATX.FileSystem;
 
 namespace FATXTools.Database
 {
@@ -11,7 +11,7 @@ namespace FATXTools.Database
     {
         // We just want this for the volume info (offset, length, name)
         Volume volume;
-        
+
         FileCarver fileCarver;  // TODO: Get rid of this. We should be able to get this information from the FileDatabase.
 
         /// <summary>

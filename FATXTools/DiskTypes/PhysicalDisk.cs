@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using FATX;
 using Microsoft.Win32.SafeHandles;
-using FATX;
+using System;
+using System.IO;
 
 namespace FATXTools.DiskTypes
 {
