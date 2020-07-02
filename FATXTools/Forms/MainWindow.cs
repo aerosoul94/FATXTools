@@ -340,7 +340,7 @@ namespace FATXTools.Forms
             // TODO: Add setting for auto-saving (maybe at run-time or while closing)
             if (driveView != null)
             {
-                var dialogResult = MessageBox.Show("Would you like to save progress before closing?", "Save Progress", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                var dialogResult = MessageBox.Show("Would you like to save progress before closing?", "Save Progress", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
                 if (dialogResult == DialogResult.Yes)
                 {
                     SaveFileDialog saveFileDialog = new SaveFileDialog()
@@ -358,6 +358,11 @@ namespace FATXTools.Forms
                     {
                         // User may have accidentally cancelled? Maybe try again?
                     }
+                }
+                else if (dialogResult == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
                 }
             }
 
