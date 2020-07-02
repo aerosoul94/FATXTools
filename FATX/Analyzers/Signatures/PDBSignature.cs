@@ -16,7 +16,7 @@ namespace FATX.Analyzers.Signatures
         public override bool Test()
         {
             byte[] magic = ReadBytes(0x20);
-            if (Encoding.UTF8.GetString(magic) == PDBMagic)
+            if (Encoding.ASCII.GetString(magic) == PDBMagic)
             {
                 return true;
             }

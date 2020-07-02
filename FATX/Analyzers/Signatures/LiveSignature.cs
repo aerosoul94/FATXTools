@@ -16,7 +16,7 @@ namespace FATX.Analyzers.Signatures
         public override bool Test()
         {
             byte[] magic = ReadBytes(4);
-            if (Encoding.UTF8.GetString(magic) == LiveMagic)
+            if (Encoding.ASCII.GetString(magic) == LiveMagic)
             {
                 return true;
             }

@@ -92,7 +92,7 @@ namespace FATX.FileSystem
                         {
                             trueFileNameLength = 42;
                         }
-                        _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, trueFileNameLength);
+                        _fileName = Encoding.ASCII.GetString(_fileNameBytes, 0, trueFileNameLength);
                     }
                     else
                     {
@@ -103,7 +103,7 @@ namespace FATX.FileSystem
                             _fileNameLength = 42;
                         }
 
-                        _fileName = Encoding.UTF8.GetString(_fileNameBytes, 0, _fileNameLength);
+                        _fileName = Encoding.ASCII.GetString(_fileNameBytes, 0, _fileNameLength);
                     }
                 }
 

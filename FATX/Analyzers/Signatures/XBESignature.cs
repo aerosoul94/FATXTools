@@ -17,7 +17,7 @@ namespace FATX.Analyzers.Signatures
         public override bool Test()
         {
             byte[] magic = this.ReadBytes(4);
-            if (Encoding.UTF8.GetString(magic) == XBEMagic)
+            if (Encoding.ASCII.GetString(magic) == XBEMagic)
             {
                 return true;
             }
