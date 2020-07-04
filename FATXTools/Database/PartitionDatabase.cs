@@ -238,7 +238,7 @@ namespace FATXTools.Database
             return databaseFile;
         }
 
-        public bool LoadFromDatabase(JsonElement metadataAnalysisObject)
+        private bool LoadFromDatabase(JsonElement metadataAnalysisObject)
         {
             if (metadataAnalysisObject.GetArrayLength() == 0)
                 return false;

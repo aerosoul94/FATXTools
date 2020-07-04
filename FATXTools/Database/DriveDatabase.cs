@@ -99,9 +99,10 @@ namespace FATXTools.Database
 
                             Volume newVolume = new Volume(this.drive, name, offset, length);
 
-                            AddPartition(newVolume);
-
                             OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(newVolume));
+
+                            // Might need some clean up here. Should not rely on the event to add the partition to the database.
+                            partitionDatabases[partitionDatabases.Count - 1].LoadFromJson(partitionElement);
                         }
                     }
 
