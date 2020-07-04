@@ -1,4 +1,6 @@
-﻿using FATX.FileSystem;
+﻿using FATX;
+using FATX.FileSystem;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -8,15 +10,18 @@ namespace FATXTools.Database
     public class DriveDatabase
     {
         string driveName;
-
+        DriveReader drive;
         List<PartitionDatabase> partitionDatabases;
 
-        public DriveDatabase(string driveName)
+        public DriveDatabase(string driveName, DriveReader drive)
         {
             this.driveName = driveName;
+            this.drive = drive;
 
             partitionDatabases = new List<PartitionDatabase>();
         }
+
+        public event EventHandler<AddPartitionEventArgs> OnPartitionAdded;
 
         public PartitionDatabase AddPartition(Volume volume)
         {
@@ -59,7 +64,7 @@ namespace FATXTools.Database
         {
             foreach (var partitionDatabase in partitionDatabases)
             {
-                if (partitionDatabase.PartitionName == partitionElement.GetProperty("Name").GetString())
+                if (partitionDatabase.Volume.Offset == partitionElement.GetProperty("Offset").GetInt64())
                 {
                     partitionDatabase.LoadFromJson(partitionElement);
 
@@ -82,20 +87,21 @@ namespace FATXTools.Database
 
                 if (driveJsonElement.TryGetProperty("Partitions", out var partitionsElement))
                 {
-                    //var partitionList = (List < Dictionary<string, object> > )driveObject["Partitions"];
-
                     foreach (var partitionElement in partitionsElement.EnumerateArray())
                     {
-                        // Check if partitionview exists
+                        // Check if partition exists
                         if (!LoadIfNotExists(partitionElement))
                         {
-                            // Otherwise, add it in
-                            //Volume newVolume = new Volume(this.drive,
-                            //    partitionElement.GetProperty("Name").GetString(),
-                            //    partitionElement.GetProperty("Offset").GetInt64(),
-                            //    partitionElement.GetProperty("Length").GetInt64());
+                            // It does not exist, let's load it in.
+                            var offset = partitionElement.GetProperty("Offset").GetInt64();
+                            var length = partitionElement.GetProperty("Length").GetInt64();
+                            var name = partitionElement.GetProperty("Name").GetString();
 
-                            //partitionViews.Add(PartitionView.FromJson(partitionElement, this.taskRunner, newVolume));
+                            Volume newVolume = new Volume(this.drive, name, offset, length);
+
+                            AddPartition(newVolume);
+
+                            OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(newVolume));
                         }
                     }
 

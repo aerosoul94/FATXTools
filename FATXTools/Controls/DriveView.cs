@@ -50,7 +50,8 @@ namespace FATXTools
             this.driveName = name;
             this.drive = drive;
 
-            this.driveDatabase = new DriveDatabase(name);
+            this.driveDatabase = new DriveDatabase(name, drive);
+            this.driveDatabase.OnPartitionAdded += DriveDatabase_OnPartitionAdded;
 
             // Single task runner for this drive
             // Currently only one task will be allowed to operate on a drive to avoid race conditions.
@@ -65,6 +66,11 @@ namespace FATXTools
 
             // Fire SelectedIndexChanged event.
             SelectedIndexChanged();
+        }
+
+        private void DriveDatabase_OnPartitionAdded(object sender, AddPartitionEventArgs e)
+        {
+            AddPartition(e.Volume);
         }
 
         private void TaskRunner_TaskCompleted(object sender, EventArgs e)

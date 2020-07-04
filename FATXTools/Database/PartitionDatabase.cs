@@ -45,6 +45,8 @@ namespace FATXTools.Database
         /// </summary>
         public string PartitionName => volume.Name;
 
+        public Volume Volume => volume;
+
         /// <summary>
         /// Set the associated view for this database.
         /// </summary>
