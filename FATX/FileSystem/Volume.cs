@@ -40,6 +40,8 @@ namespace FATX.FileSystem
 
             this._platform = (reader.ByteOrder == ByteOrder.Big) ?
                 Platform.X360 : Platform.Xbox;
+
+            Mounted = false;
         }
 
         public string Name
@@ -100,11 +102,15 @@ namespace FATX.FileSystem
             get { return _platform; }
         }
 
+        public bool Mounted { get; private set; }
+
         /// <summary>
         /// Loads the FATX file system.
         /// </summary>
         public void Mount()
         {
+            Mounted = false;
+
             // Read and verify volume metadata.
             ReadVolumeMetadata();
             CalculateOffsets();
@@ -112,6 +118,8 @@ namespace FATX.FileSystem
 
             _root = ReadDirectoryStream(_rootDirFirstCluster);
             PopulateDirentStream(_root, _rootDirFirstCluster);
+
+            Mounted = true;
         }
 
         /// <summary>

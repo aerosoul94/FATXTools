@@ -110,16 +110,19 @@ namespace FATXTools.Forms
             PartitionSelectedEventArgs eventArgs = (PartitionSelectedEventArgs)e;
             var volume = eventArgs.volume;
 
-            var usedSpace = volume.GetUsedSpace();
-            var freeSpace = volume.GetFreeSpace();
-            var totalSpace = volume.GetTotalSpace();
+            if (volume.Mounted)
+            {
+                var usedSpace = volume.GetUsedSpace();
+                var freeSpace = volume.GetFreeSpace();
+                var totalSpace = volume.GetTotalSpace();
 
-            statusStrip1.Items.Clear();
-            statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
-            statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
-            statusStrip1.Items.Add($"Used Space: {Utility.FormatBytes(usedSpace)}");
-            statusStrip1.Items.Add($"Free Space: {Utility.FormatBytes(freeSpace)}");
-            statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
+                statusStrip1.Items.Clear();
+                statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
+                statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
+                statusStrip1.Items.Add($"Used Space: {Utility.FormatBytes(usedSpace)}");
+                statusStrip1.Items.Add($"Free Space: {Utility.FormatBytes(freeSpace)}");
+                statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
+            }
         }
 
         private void EnableDatabaseOptions()
