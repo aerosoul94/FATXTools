@@ -115,11 +115,19 @@ namespace FATXTools.Controls
             return (uint)cellIndex + 1;
         }
 
+        private void SetCellColor(int cellIndex, Color color)
+        {
+            if (cellIndex < 0 || cellIndex > dataMap.CellCount)
+                return;
+
+            dataMap.Cells[cellIndex].Color = color;
+        }
+
         private void UpdateDataMap()
         {
             foreach (var pair in clusterColorMap)
             {
-                dataMap.Cells[ClusterToCellIndex(pair.Key)].Color = pair.Value;
+                SetCellColor(ClusterToCellIndex(pair.Key), pair.Value);
             }
         }
 
