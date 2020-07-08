@@ -29,6 +29,9 @@
         private void InitializeComponent()
         {
             this.partitionTabControl = new System.Windows.Forms.TabControl();
+            this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // partitionTabControl
@@ -40,6 +43,21 @@
             this.partitionTabControl.Size = new System.Drawing.Size(1913, 1006);
             this.partitionTabControl.TabIndex = 0;
             this.partitionTabControl.SelectedIndexChanged += new System.EventHandler(this.partitionTabControl_SelectedIndexChanged);
+            //
+            // contextMenuStrip
+            //
+            this.contextMenuStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
+            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1});
+            this.contextMenuStrip.Name = "contextMenuStrip1";
+            this.contextMenuStrip.Size = new System.Drawing.Size(270, 42);
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(269, 38);
+            this.toolStripMenuItem1.Text = "Remove Partition";
+            this.toolStripMenuItem1.Click += ToolStripMenuItem1_Click;
             // 
             // DriveView
             // 
@@ -48,6 +66,7 @@
             this.Controls.Add(this.partitionTabControl);
             this.Name = "DriveView";
             this.Size = new System.Drawing.Size(1913, 1006);
+            this.contextMenuStrip.ResumeLayout();
             this.ResumeLayout(false);
 
         }
@@ -55,5 +74,7 @@
         #endregion
 
         private System.Windows.Forms.TabControl partitionTabControl;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
     }
 }

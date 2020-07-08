@@ -105,23 +105,29 @@ namespace FATXTools.Forms
             DisableDatabaseOptions();
         }
 
-        private void DriveView_TabSelectionChanged(object sender, EventArgs e)
+        private void DriveView_TabSelectionChanged(object sender, PartitionSelectedEventArgs e)
         {
-            PartitionSelectedEventArgs eventArgs = (PartitionSelectedEventArgs)e;
-            var volume = eventArgs.volume;
-
-            statusStrip1.Items.Clear();
-            if (volume.Mounted)
+            if (e == null)
             {
-                var usedSpace = volume.GetUsedSpace();
-                var freeSpace = volume.GetFreeSpace();
-                var totalSpace = volume.GetTotalSpace();
+                statusStrip1.Items.Clear();
+            }
+            else
+            {
+                var volume = e.volume;
 
-                statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
-                statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
-                statusStrip1.Items.Add($"Used Space: {Utility.FormatBytes(usedSpace)}");
-                statusStrip1.Items.Add($"Free Space: {Utility.FormatBytes(freeSpace)}");
-                statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
+                statusStrip1.Items.Clear();
+                if (volume.Mounted)
+                {
+                    var usedSpace = volume.GetUsedSpace();
+                    var freeSpace = volume.GetFreeSpace();
+                    var totalSpace = volume.GetTotalSpace();
+
+                    statusStrip1.Items.Add($"Volume Offset: 0x{volume.Offset:X}");
+                    statusStrip1.Items.Add($"Volume Length: 0x{volume.Length:X}");
+                    statusStrip1.Items.Add($"Used Space: {Utility.FormatBytes(usedSpace)}");
+                    statusStrip1.Items.Add($"Free Space: {Utility.FormatBytes(freeSpace)}");
+                    statusStrip1.Items.Add($"Total Space: {Utility.FormatBytes(totalSpace)}");
+                }
             }
         }
 

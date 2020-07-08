@@ -68,6 +68,7 @@ namespace FATXTools
         }
 
         public string PartitionName => volume.Name;
+        public Volume Volume => volume;
 
         public void CreateCarverView(FileCarver carver)
         {

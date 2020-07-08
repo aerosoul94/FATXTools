@@ -22,12 +22,20 @@ namespace FATXTools.Database
         }
 
         public event EventHandler<AddPartitionEventArgs> OnPartitionAdded;
+        public event EventHandler<RemovePartitionEventArgs> OnPartitionRemoved;
 
         public PartitionDatabase AddPartition(Volume volume)
         {
             var partitionDatabase = new PartitionDatabase(volume);
             partitionDatabases.Add(partitionDatabase);
             return partitionDatabase;
+        }
+
+        public void RemovePartition(int index)
+        {
+            partitionDatabases.RemoveAt(index);
+
+            OnPartitionRemoved?.Invoke(this, new RemovePartitionEventArgs(index));
         }
 
         public void Save(string path)
