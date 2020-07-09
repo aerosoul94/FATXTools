@@ -305,6 +305,9 @@ namespace FATXTools.Controls
 
         private void listSaveSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
@@ -399,6 +402,9 @@ namespace FATXTools.Controls
 
         private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
 
             switch (nodeTag.Type)

@@ -383,6 +383,9 @@ namespace FATXTools
 
         private void listRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             var selectedItems = listView1.SelectedItems;
             using (var dialog = new FolderBrowserDialog())
             {
@@ -814,6 +817,9 @@ namespace FATXTools
 
         private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
 
             switch (nodeTag.Type)
@@ -830,6 +836,9 @@ namespace FATXTools
 
         private void viewCollisionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             // TODO: Create a new view or dialog for this.
             NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
 
@@ -855,6 +864,9 @@ namespace FATXTools
 
         private void editClusterChainToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
 
             switch (nodeTag.Type)

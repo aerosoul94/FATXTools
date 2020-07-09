@@ -66,6 +66,9 @@ namespace FATXTools
 
         private void recoverFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
             using (var fbd = new FolderBrowserDialog())
             {
                 if (fbd.ShowDialog() == DialogResult.OK)
