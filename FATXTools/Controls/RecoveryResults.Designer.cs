@@ -102,7 +102,7 @@
             // 
             this.recoverSelectedToolStripMenuItem.Name = "recoverSelectedToolStripMenuItem";
             this.recoverSelectedToolStripMenuItem.Size = new System.Drawing.Size(353, 38);
-            this.recoverSelectedToolStripMenuItem.Text = "Recover Selected Cluster";
+            this.recoverSelectedToolStripMenuItem.Text = "Recover Selected";
             this.recoverSelectedToolStripMenuItem.Click += new System.EventHandler(this.treeRecoverSelectedToolStripMenuItem_Click);
             // 
             // recoverAllToolStripMenuItem

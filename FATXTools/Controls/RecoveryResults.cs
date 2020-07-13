@@ -497,19 +497,24 @@ namespace FATXTools
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    var clusterNode = treeView1.SelectedNode;
+                    var selectedNode = treeView1.SelectedNode;
 
-                    string clusterDir = dialog.SelectedPath + "/" + clusterNode.Text;
-
-                    Directory.CreateDirectory(clusterDir);
-
-                    NodeTag nodeTag = (NodeTag)clusterNode.Tag;
+                    NodeTag nodeTag = (NodeTag)selectedNode.Tag;
                     switch (nodeTag.Type)
                     {
                         case NodeType.Cluster:
                             List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
+                            string clusterDir = dialog.SelectedPath + "/" + selectedNode.Text;
+                            Directory.CreateDirectory(clusterDir);
                             RunRecoverClusterTaskAsync(clusterDir, dirents);
+
+                            break;
+
+                        case NodeType.Dirent:
+                            DatabaseFile dirent = nodeTag.Tag as DatabaseFile;
+
+                            RunRecoverClusterTaskAsync(dialog.SelectedPath, new List<DatabaseFile> { dirent });
 
                             break;
                     }
