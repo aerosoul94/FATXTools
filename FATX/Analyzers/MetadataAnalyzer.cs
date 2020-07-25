@@ -18,7 +18,7 @@ namespace FATX.Analyzers
         private List<DirectoryEntry> _dirents = new List<DirectoryEntry>();
 
         private const string VALID_CHARS = "abcdefghijklmnopqrstuvwxyz" +
-                                           "ABCDEFGHIJKLMNOPQRSTUVWXUZ" +
+                                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                                            "0123456789" +
                                            "!#$%&\'()-.@[]^_`{}~ " +
                                            "\xff";
