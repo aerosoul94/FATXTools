@@ -28,10 +28,14 @@ namespace FATXTools.Dialogs
 
         private void InitializeClusterList(List<uint> clusterChain)
         {
+            listView1.BeginUpdate();
+
             foreach (var cluster in clusterChain)
             {
                 AddCluster(cluster);
             }
+
+            listView1.EndUpdate();
         }
 
         private void AddCluster(uint cluster)
@@ -45,18 +49,6 @@ namespace FATXTools.Dialogs
             listView1.Items.Add(item);
         }
 
-        private void RemoveCluster(uint cluster)
-        {
-            foreach (ListViewItem item in listView1.Items)
-            {
-                if ((uint)item.Tag == cluster)
-                {
-                    listView1.Items.Remove(item);
-                    break;
-                }
-            }
-        }
-
         private void button3_Click(object sender, EventArgs e)
         {
             var cluster = (uint)numericUpDown1.Value;
@@ -66,10 +58,14 @@ namespace FATXTools.Dialogs
 
         private void button4_Click(object sender, EventArgs e)
         {
+            listView1.BeginUpdate();
+
             foreach (ListViewItem item in listView1.SelectedItems)
             {
                 listView1.Items.Remove(item);
             }
+
+            listView1.EndUpdate();
         }
 
         private void button1_Click(object sender, EventArgs e)
