@@ -12,7 +12,7 @@ Download: [AppVeyor](https://ci.appveyor.com/project/aerosoul94/fatxtools/build/
 * The many many testers who provided bug reports <3
 
 # Screenshots
-![](Screenshots/FATXTools_2020-05-23_17-03-34.png)
-![](Screenshots/FATXTools_2020-05-23_17-13-03.png)
-![](Screenshots/FATXTools_2020-05-23_17-06-40.png)
-![](Screenshots/FATXTools_2020-05-23_17-09-13.png)
+![](Screenshots/FATXTools_2020-10-26_11-03-21.png)
+![](Screenshots/FATXTools_2020-10-26_11-04-26.png)
+![](Screenshots/FATXTools_2020-10-26_11-07-02.png)
+![](Screenshots/FATXTools_2020-10-26_11-09-07.png)
