@@ -14,7 +14,7 @@ namespace FATXTools.Dialogs
             listView1.Items.Add("Size in bytes").SubItems.Add(dirent.FileSize.ToString());
             listView1.Items.Add("First Cluster").SubItems.Add(dirent.FirstCluster.ToString());
             listView1.Items.Add("First Cluster Offset").SubItems.Add("0x" +
-                volume.ClusterToPhysicalOffset(dirent.FirstCluster).ToString("x"));
+                volume.ClusterReader.ClusterToPhysicalOffset(dirent.FirstCluster).ToString("x"));
             listView1.Items.Add("Attributes").SubItems.Add(FormatAttributes(dirent.FileAttributes));
 
             DateTime creationTime = new DateTime(dirent.CreationTime.Year,

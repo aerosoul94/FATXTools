@@ -1,4 +1,4 @@
-﻿using FATX;
+﻿using FATX.Drive;
 using FATX.FileSystem;
 using System;
 using System.Collections.Generic;
@@ -8,20 +8,20 @@ namespace FATXTools.Dialogs
 {
     public partial class PartitionManagerDialog : Form
     {
-        private List<Volume> volumes;
-        private DriveReader reader;
+        private List<Volume> _volumes;
+        private XDrive _drive;
 
         public PartitionManagerDialog()
         {
             InitializeComponent();
         }
 
-        public PartitionManagerDialog(DriveReader reader, List<Volume> volumes)
+        public PartitionManagerDialog(XDrive reader, List<Volume> volumes)
         {
             InitializeComponent();
 
-            this.reader = reader;
-            this.volumes = volumes;
+            this._drive = reader;
+            this._volumes = volumes;
 
             PopulateList(volumes);
         }
@@ -32,9 +32,17 @@ namespace FATXTools.Dialogs
             var dialogResult = dialog.ShowDialog();
             if (dialogResult == DialogResult.OK)
             {
-                volumes.Add(new Volume(this.reader, dialog.PartitionName, dialog.PartitionOffset, dialog.PartitionLength));
+                var volume = new Volume(
+                    _drive.Stream,
+                    _drive is XboxDrive ? Platform.Xbox : Platform.X360,
+                    dialog.PartitionName,
+                    dialog.PartitionOffset,
+                    dialog.PartitionLength
+                );
 
-                PopulateList(volumes);
+                _volumes.Add(volume);
+
+                PopulateList(_volumes);
             }
         }
 

@@ -1,19 +1,20 @@
-﻿using FATX;
-using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+
+using FATX.Drive;
+using FATX.FileSystem;
 
 namespace FATXTools.Database
 {
     public class DriveDatabase
     {
         string driveName;
-        DriveReader drive;
+        XDrive drive;
         List<PartitionDatabase> partitionDatabases;
 
-        public DriveDatabase(string driveName, DriveReader drive)
+        public DriveDatabase(string driveName, XDrive drive)
         {
             this.driveName = driveName;
             this.drive = drive;
@@ -105,9 +106,12 @@ namespace FATXTools.Database
                             var length = partitionElement.GetProperty("Length").GetInt64();
                             var name = partitionElement.GetProperty("Name").GetString();
 
-                            Volume newVolume = new Volume(this.drive, name, offset, length);
+                            var partition = new Partition(name, offset, length);
+                            partition.Volume = new Volume(
+                                drive.Stream, drive is XboxDrive ? Platform.Xbox : Platform.X360,
+                                name, offset, length);
 
-                            OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(newVolume));
+                            OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(partition));
 
                             // Might need some clean up here. Should not rely on the event to add the partition to the database.
                             partitionDatabases[partitionDatabases.Count - 1].LoadFromJson(partitionElement);

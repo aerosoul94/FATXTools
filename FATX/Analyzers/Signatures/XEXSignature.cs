@@ -1,55 +1,44 @@
-﻿using FATX.FileSystem;
+﻿using System;
 using System.IO;
 using System.Text;
 
+using FATX.Streams;
+
 namespace FATX.Analyzers.Signatures
 {
-    class XEXSignature : FileSignature
+    public class XEXSignature : IFileSignature
     {
-        private const string XEX1Signature = "XEX1";
-        private const string XEX2Signature = "XEX2";
+        public string Name => "XEX";
 
-        public XEXSignature(Volume volume, long offset)
-            : base(volume, offset)
+        private static readonly string XEX1Signature = "XEX1";
+        private static readonly string XEX2Signature = "XEX2";
+
+        public bool Test(CarverReader reader)
         {
-
+            string magic = Encoding.ASCII.GetString(reader.ReadBytes(4));
+            return magic == XEX2Signature || magic == XEX1Signature;
         }
 
-        public override bool Test()
+        public void Parse(CarverReader reader, CarvedFile carvedFile)
         {
-            byte[] magic = this.ReadBytes(4);
-            if (Encoding.ASCII.GetString(magic) == XEX2Signature)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override void Parse()
-        {
-            Seek(0x10);
-            var securityOffset = ReadUInt32();
-            var headerCount = ReadUInt32();
+            reader.Seek(0x10);
+            var securityOffset = reader.ReadUInt32();
+            var headerCount = reader.ReadUInt32();
             uint fileNameOffset = 0;
             for (int i = 0; i < headerCount; i++)
             {
-                var xid = ReadUInt32();
+                var xid = reader.ReadUInt32();
                 if (xid == 0x000183ff)
-                {
-                    fileNameOffset = ReadUInt32();
-                }
+                    fileNameOffset = reader.ReadUInt32();
                 else
-                {
-                    ReadUInt32();
-                }
+                    reader.ReadUInt32();
             }
-            Seek(securityOffset + 4);
-            this.FileSize = ReadUInt32();
+            reader.Seek(securityOffset + 4);
+            carvedFile.FileSize = reader.ReadUInt32();
             if (fileNameOffset != 0)
             {
-                Seek(fileNameOffset + 4);
-                this.FileName = Path.ChangeExtension(ReadCString(), ".xex");
+                reader.Seek(fileNameOffset + 4);
+                carvedFile.FileName = Path.ChangeExtension(reader.ReadCString(), ".xex");
             }
         }
     }

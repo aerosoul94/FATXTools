@@ -1,108 +1,81 @@
-﻿using System;
+using System;
 
 namespace FATX.FileSystem
 {
     public class X360TimeStamp : TimeStamp
     {
-        public X360TimeStamp(uint time)
-            : base(time)
+        public X360TimeStamp(uint time) : base(time) 
         {
 
         }
+
         public override int Year => base.Year + 1980;
     }
 
     public class XTimeStamp : TimeStamp
     {
-        public XTimeStamp(uint time)
-            : base(time)
+        public XTimeStamp(uint time) : base(time)
         {
 
         }
+
         public override int Year => base.Year + 2000;
     }
 
     public class TimeStamp
     {
-        private uint _Time;
-        private DateTime? _DateTime;
+        uint _time;
+        DateTime? _dataTime;
 
         public TimeStamp(uint time)
         {
-            this._Time = time;
-        }
-        public virtual int Year
-        {
-            get { return (int)((this._Time & 0xFE000000) >> 25); }
+            this._time = time;
         }
 
-        public virtual int Month
-        {
-            get { return (int)((this._Time & 0x1E00000) >> 21); }
-        }
-
-        public virtual int Day
-        {
-            get { return (int)((this._Time & 0x1F0000) >> 16); }
-        }
-
-        public virtual int Hour
-        {
-            get { return (int)((this._Time & 0xF800) >> 11); }
-        }
-
-        public virtual int Minute
-        {
-            get { return (int)((this._Time & 0x7E0) >> 5); }
-        }
-
-        public virtual int Second
-        {
-            get { return (int)((this._Time & 0x1F) * 2); }
-        }
+        public virtual int Year => (int)((this._time & 0xFE000000) >> 25);
+        public virtual int Month => (int)((this._time & 0x1E00000) >> 21);
+        public virtual int Day => (int)((this._time & 0x1F0000) >> 16);
+        public virtual int Hour => (int)((this._time & 0xF800) >> 11);
+        public virtual int Minute => (int)((this._time & 0x7E0) >> 5);
+        public virtual int Second => (int)((this._time & 0x1F) * 2);
 
         public uint AsInteger()
         {
-            return _Time;
+            return _time;
         }
 
         public DateTime AsDateTime()
         {
-            if (this._DateTime.HasValue)
-            {
-                return this._DateTime.Value;
-            }
-            else
+            if (!this._dataTime.HasValue)
             {
                 try
                 {
-                    _DateTime = new DateTime(
-                        this.Year, this.Month,
-                        this.Day, this.Hour,
-                        this.Minute, this.Second);
-                    return _DateTime.Value;
+                    _dataTime = new DateTime(
+                        this.Year, this.Month, this.Day,
+                        this.Hour, this.Minute, this.Second
+                    );
                 }
                 catch (Exception)
                 {
-                    int year = (int)((this._Time & 0xffff) & 0x7f) + 2000;
-                    int month = (int)((this._Time & 0xffff) >> 7) & 0xf;
-                    int day = (int)((this._Time & 0xffff) >> 0xb);
-                    int hour = (int)((this._Time >> 16) & 0x1f);
-                    int minute = (int)((this._Time >> 16) >> 5) & 0x3f;
-                    int second = (int)((this._Time >> 16) >> 10) & 0xfffe;
-
                     try
                     {
-                        _DateTime = new DateTime(year, month, day, hour, minute, second);
+                        _dataTime = new DateTime(
+                            (int)(((_time & 0xffff) & 0x7F) + 2000),
+                            (int)(((_time & 0xffff) >> 7) & 0xF),
+                            (int)((_time & 0xffff) >> 0xB),
+                            (int)((_time >> 16) & 0x1f),
+                            (int)(((_time >> 16) >> 5) & 0x3F),
+                            (int)(((_time >> 16) >> 10) & 0xfffe)
+                        );
                     }
                     catch (Exception)
                     {
-                        _DateTime = DateTime.MinValue;
+                        _dataTime = DateTime.MinValue;
                     }
-
-                    return _DateTime.Value;
                 }
             }
+
+            return _dataTime.Value;
         }
     }
 }

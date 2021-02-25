@@ -21,12 +21,12 @@ namespace FATXTools
             InitializeComponent();
 
             this._analyzer = analyzer;
-            this._volume = analyzer.GetVolume();
+            this._volume = analyzer.Volume;
             this.taskRunner = taskRunner;
-            PopulateResultsList(analyzer.GetCarvedFiles());
+            PopulateResultsList(analyzer.Results);
         }
 
-        public void PopulateResultsList(List<FileSignature> results)
+        public void PopulateResultsList(List<CarvedFile> results)
         {
             var i = 1;
 
@@ -43,11 +43,11 @@ namespace FATXTools
             }
         }
 
-        private void SaveFile(FileSignature signature, string path)
+        private void SaveFile(CarvedFile signature, string path)
         {
             const int bufsize = 0x100000;
             var remains = signature.FileSize;
-            _volume.SeekFileArea(signature.Offset);
+            _volume.FileAreaStream.Seek(signature.Offset, SeekOrigin.Begin);
 
             path = path + "/" + signature.FileName;
             var uniquePath = Utility.UniqueFileName(path);
@@ -58,7 +58,7 @@ namespace FATXTools
                     var read = Math.Min(remains, bufsize);
                     remains -= read;
                     byte[] buf = new byte[read];
-                    _volume.GetReader().Read(buf, (int)read);
+                    _volume.FileAreaStream.Read(buf, 0, (int)read);
                     file.Write(buf, 0, (int)read);
                 }
             }
@@ -75,7 +75,7 @@ namespace FATXTools
                 {
                     foreach (ListViewItem item in listView1.SelectedItems)
                     {
-                        SaveFile((FileSignature)item.Tag, fbd.SelectedPath);
+                        SaveFile((CarvedFile)item.Tag, fbd.SelectedPath);
                     }
                 }
             }
@@ -92,10 +92,10 @@ namespace FATXTools
                     this.taskRunner.Maximum = listView1.Items.Count;
                     this.taskRunner.Interval = 1;
 
-                    List<FileSignature> signatures = new List<FileSignature>();
+                    List<CarvedFile> signatures = new List<CarvedFile>();
                     foreach (ListViewItem item in listView1.Items)
                     {
-                        signatures.Add((FileSignature)item.Tag);
+                        signatures.Add((CarvedFile)item.Tag);
                     }
 
                     await taskRunner.RunTaskAsync("Save File",

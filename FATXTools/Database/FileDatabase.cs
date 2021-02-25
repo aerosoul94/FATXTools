@@ -122,7 +122,7 @@ namespace FATXTools.Database
         /// <param name="volume">The active file system.</param>
         private void MergeActiveFileSystem(Volume volume)
         {
-            RegisterDirectoryEntries(volume.GetRoot());
+            RegisterDirectoryEntries(volume.Root);
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace FATXTools.Database
             }
             else
             {
-                files[dirent.Offset].ClusterChain = this.volume.GetClusterChain(dirent);
+                files[dirent.Offset].ClusterChain = this.volume.FileAllocationTable.GetClusterChain(dirent);
             }
 
             return files[dirent.Offset];

@@ -1,52 +1,67 @@
-﻿using FATX.Analyzers.Signatures;
-using FATX.Analyzers.Signatures.Blank;
-using FATX.FileSystem;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 
+using FATX.Analyzers.Signatures;
+using FATX.FileSystem;
+using FATX.Streams;
+
 namespace FATX.Analyzers
 {
-    public enum FileCarverInterval
+    public class FileCarver : IAnalyzer<List<CarvedFile>>
     {
-        Byte = 0x1,
-        Align = 0x10,
-        Sector = 0x200,
-        Page = 0x1000,
-        Cluster = 0x4000,
-    }
+        FileCarverInterval _interval;
 
-    public class FileCarver
-    {
-        private readonly Volume _volume;
-        private readonly FileCarverInterval _interval;
-        private readonly long _length;
-        private List<FileSignature> _carvedFiles;
+        public string Name => "File Carver";
+        public Volume Volume { get; private set; }
+        public List<CarvedFile> Results { get; } = new List<CarvedFile>();
 
-        public FileCarver(Volume volume)
+        public FileCarver(Volume volume, FileCarverInterval interval)
         {
-            _volume = volume;
-            _interval = FileCarverInterval.Cluster;
-            _length = volume.Length;
+            Volume = volume;
+            _interval = interval;
         }
 
-        public FileCarver(Volume volume, FileCarverInterval interval, long length)
+        public List<CarvedFile> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
         {
-            if (length == 0 || length > volume.FileAreaLength)
+            int interval = (int)_interval;
+            long progressValue = 0;
+            long progressUpdate = interval * 0x200;
+
+            ByteOrder byteOrder = Volume.Platform == Platform.Xbox ? ByteOrder.Little : ByteOrder.Big;
+            SignatureMatcher scanner = new SignatureMatcher(Volume.FileAreaStream, byteOrder, interval);
+
+            for (long offset = 0; offset < Volume.FileAreaLength; offset += interval)
             {
-                length = volume.Length;
+                CarvedFile carvedFile;
+
+                scanner.Match(out carvedFile);
+
+                if (carvedFile != null)
+                {
+                    Results.Add(carvedFile);
+                }
+
+                progressValue += interval;
+                if (progressValue % progressUpdate == 0)
+                    progress?.Report((int)(progressValue / interval));
+
+                if (cancellationToken.IsCancellationRequested)
+                    return Results;
             }
 
-            _volume = volume;
-            _interval = interval;
-            _length = length;
+            progress?.Report((int)(Volume.FileAreaLength / interval));
+            Console.WriteLine("Finished!");
+            return Results;
         }
 
+        // TODO: Get rid of this!
         public void LoadFromDatabase(JsonElement fileCarverList)
         {
-            _carvedFiles = new List<FileSignature>();
+            Results.Clear();
 
             foreach (var file in fileCarverList.EnumerateArray())
             {
@@ -57,98 +72,20 @@ namespace FATX.Analyzers
                     continue;
                 }
 
-                var fileSignature = new BlankSignature(_volume, offsetElement.GetInt64());
+                var carvedFile = new CarvedFile(offsetElement.GetInt64(), "");
 
                 if (file.TryGetProperty("Name", out var nameElement))
                 {
-                    fileSignature.FileName = nameElement.GetString();
+                    carvedFile.FileName = nameElement.GetString();
                 }
 
                 if (file.TryGetProperty("Size", out var sizeElement))
                 {
-                    fileSignature.FileSize = sizeElement.GetInt64();
+                    carvedFile.FileSize = sizeElement.GetInt64();
                 }
 
-                _carvedFiles.Add(fileSignature);
+                Results.Add(carvedFile);
             }
-        }
-
-        public List<FileSignature> GetCarvedFiles()
-        {
-            return _carvedFiles;
-        }
-
-        public Volume GetVolume()
-        {
-            return _volume;
-        }
-
-        public List<FileSignature> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
-        {
-            var allSignatures = from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                                from type in assembly.GetTypes()
-                                where type.Namespace == "FATX.Analyzers.Signatures"
-                                where type.IsSubclassOf(typeof(FileSignature))
-                                select type;
-
-            _carvedFiles = new List<FileSignature>();
-            var interval = (long)_interval;
-
-            var types = allSignatures.ToList();
-
-            var origByteOrder = _volume.GetReader().ByteOrder;
-
-            long progressValue = 0;
-            long progressUpdate = interval * 0x200;
-
-            for (long offset = 0; offset < _length; offset += interval)
-            {
-                foreach (Type type in types)
-                {
-                    // too slow
-                    FileSignature signature = (FileSignature)Activator.CreateInstance(type, _volume, offset);
-
-                    _volume.GetReader().ByteOrder = origByteOrder;
-
-                    _volume.SeekFileArea(offset);
-                    bool test = signature.Test();
-                    if (test)
-                    {
-                        try
-                        {
-                            // Make sure that we record the file first
-                            _carvedFiles.Add(signature);
-
-                            // Attempt to parse the file
-                            _volume.SeekFileArea(offset);
-                            signature.Parse();
-                            Console.WriteLine(string.Format("Found {0} at 0x{1:X}.", signature.GetType().Name, offset));
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(string.Format("Exception thrown for {0} at 0x{1:X}: {2}", signature.GetType().Name, offset, e.Message));
-                            Console.WriteLine(e.StackTrace);
-                        }
-                    }
-                }
-
-                progressValue += interval;
-
-                if (progressValue % progressUpdate == 0)
-                    progress?.Report((int)(progressValue / interval));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return _carvedFiles;
-                }
-            }
-
-            // Fill up the progress bar
-            progress?.Report((int)(_length / interval));
-
-            Console.WriteLine("Complete!");
-
-            return _carvedFiles;
         }
     }
 }

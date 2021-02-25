@@ -1,14 +1,18 @@
-﻿using FATX.FileSystem;
-using FATXTools.Controls;
-using FATXTools.Dialogs;
-using FATXTools.DiskTypes;
-using FATXTools.Utilities;
-using Microsoft.Win32.SafeHandles;
+﻿using Microsoft.Win32.SafeHandles;
+
 using System;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
+
+using FATX.Drive;
+using FATX.FileSystem;
+
+using FATXTools.Controls;
+using FATXTools.Dialogs;
+using FATXTools.DiskTypes;
+using FATXTools.Utilities;
 
 namespace FATXTools.Forms
 {
@@ -169,8 +173,8 @@ namespace FATXTools.Forms
 
             string fileName = Path.GetFileName(path);
 
-            RawImage rawImage = new RawImage(path);
-            driveView.AddDrive(fileName, rawImage);
+            RawImage disk = new RawImage(path);
+            driveView.AddDrive(fileName, disk.Drive);
 
             EnableDatabaseOptions();
         }
@@ -188,8 +192,8 @@ namespace FATXTools.Forms
                        IntPtr.Zero);
             long length = WinApi.GetDiskCapactity(handle);
             long sectorLength = WinApi.GetSectorSize(handle);
-            PhysicalDisk drive = new PhysicalDisk(handle, length, sectorLength);
-            driveView.AddDrive(device, drive);
+            PhysicalDisk disk = new PhysicalDisk(handle, length, sectorLength);
+            driveView.AddDrive(device, disk.Drive);
 
             EnableDatabaseOptions();
         }
@@ -288,10 +292,22 @@ namespace FATXTools.Forms
             var dialogResult = partitionDialog.ShowDialog();
             if (dialogResult == DialogResult.OK)
             {
-                driveView.AddPartition(new Volume(driveView.GetDrive(),
+                var drive = driveView.GetDrive();
+                var partition = new Partition(
                     partitionDialog.PartitionName,
                     partitionDialog.PartitionOffset,
-                    partitionDialog.PartitionLength));
+                    partitionDialog.PartitionLength
+                );
+
+                partition.Volume = new Volume(
+                    drive.Stream, 
+                    drive is XboxDrive ? Platform.Xbox : Platform.X360, 
+                    partitionDialog.PartitionName, 
+                    partitionDialog.PartitionOffset, 
+                    partitionDialog.PartitionLength
+                );
+
+                driveView.AddPartition(partition);
             }
         }
 

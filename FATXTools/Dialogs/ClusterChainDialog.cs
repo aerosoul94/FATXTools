@@ -40,7 +40,7 @@ namespace FATXTools.Dialogs
 
         private void AddCluster(uint cluster)
         {
-            var address = volume.ClusterToPhysicalOffset(cluster);
+            var address = volume.ClusterReader.ClusterToPhysicalOffset(cluster);
 
             ListViewItem item = new ListViewItem(new string[] { $"0x{address.ToString("X")}", cluster.ToString() });
 

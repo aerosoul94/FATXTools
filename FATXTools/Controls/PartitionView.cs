@@ -135,7 +135,7 @@ namespace FATXTools
             fileDatabase.Reset();
 
             // Add in the new results
-            foreach (var dirent in metadataAnalyzer.GetDirents())
+            foreach (var dirent in metadataAnalyzer.Results)
             {
                 fileDatabase.AddFile(dirent, true);
             }

@@ -1,4 +1,4 @@
-﻿namespace FATX.FileSystem
+namespace FATX.FileSystem
 {
     public enum Platform
     {

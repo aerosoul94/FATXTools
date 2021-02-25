@@ -115,7 +115,7 @@ namespace FATXTools.Database
 
         private void SaveFileCarver(List<Dictionary<string, object>> fileCarverList)
         {
-            foreach (var file in fileCarver.GetCarvedFiles())
+            foreach (var file in fileCarver.Results)
             {
                 var fileCarverObject = new Dictionary<string, object>();
 
@@ -197,8 +197,8 @@ namespace FATXTools.Database
 
             // Read the DirectoryEntry data
             byte[] data = new byte[0x40];
-            this.volume.GetReader().Seek(offset);
-            this.volume.GetReader().Read(data, 0x40);
+            this.volume.FileAreaStream.Seek(offset, SeekOrigin.Begin);
+            this.volume.FileAreaStream.Read(data, 0, 0x40);
 
             // Create a DirectoryEntry
             var directoryEntry = new DirectoryEntry(this.volume.Platform, data, 0);
@@ -286,11 +286,11 @@ namespace FATXTools.Database
             if (analysisElement.TryGetProperty("FileCarver", out var fileCarverList))
             {
                 // TODO: We will begin replacing this when we start work on customizable "CarvedFiles"
-                var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster, this.volume.Length);
+                var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster);
 
                 analyzer.LoadFromDatabase(fileCarverList);
 
-                if (analyzer.GetCarvedFiles().Count > 0)
+                if (analyzer.Results.Count > 0)
                 {
                     view.CreateCarverView(analyzer);
                     this.fileCarver = analyzer;

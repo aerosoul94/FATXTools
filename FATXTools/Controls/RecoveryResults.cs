@@ -586,7 +586,7 @@ namespace FATXTools
 
                     foreach (uint cluster in databaseFile.ClusterChain)
                     {
-                        byte[] clusterData = this.volume.ReadCluster(cluster);
+                        byte[] clusterData = this.volume.ClusterReader.ReadCluster(cluster);
 
                         var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
                         outFile.Write(clusterData, 0, (int)writeSize);
@@ -671,7 +671,7 @@ namespace FATXTools
                 currentFile = databaseFile.FileName;
                 progress.Report(numSaved++);
 
-                volume.SeekToCluster(databaseFile.FirstCluster);
+                volume.ClusterReader.ReadCluster(databaseFile.FirstCluster);
 
                 TryIOOperation(() =>
                 {
@@ -854,7 +854,7 @@ namespace FATXTools
 
                     foreach (var collision in databaseFile.GetCollisions())
                     {
-                        Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterToPhysicalOffset(collision)})");
+                        Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterReader.ClusterToPhysicalOffset(collision)})");
                         var occupants = _integrityAnalyzer.GetClusterOccupants(collision);
                         foreach (var occupant in occupants)
                         {

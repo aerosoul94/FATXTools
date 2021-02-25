@@ -1,9 +1,9 @@
-﻿
-
 namespace FATX.FileSystem
 {
     public static class Constants
     {
+        public const uint VolumeSignature = 0x58544146;
+
         public const uint SectorSize = 0x200;
         public const uint PageSize = 0x1000;
         public const uint ReservedBytes = PageSize;

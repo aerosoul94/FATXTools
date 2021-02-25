@@ -1,17 +1,14 @@
-﻿using FATX.FileSystem;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FATX.Drive;
 
 namespace FATXTools.Database
 {
     public class AddPartitionEventArgs
     {
-        public Volume Volume;
+        public Partition Partition;
 
-        public AddPartitionEventArgs(Volume volume)
+        public AddPartitionEventArgs(Partition partition)
         {
-            this.Volume = volume;
+            this.Partition = partition;
         }
     }
 }

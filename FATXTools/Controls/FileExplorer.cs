@@ -58,7 +58,7 @@ namespace FATXTools.Controls
             var rootNode = treeView1.Nodes.Add("Root");
             rootNode.Tag = new NodeTag(null, NodeType.Root);
 
-            PopulateTreeNodeDirectory(rootNode, volume.GetRoot());
+            PopulateTreeNodeDirectory(rootNode, volume.Root);
         }
 
         private void PopulateTreeNodeDirectory(TreeNode parentNode, List<DirectoryEntry> dirents)
@@ -92,9 +92,9 @@ namespace FATXTools.Controls
             upDir.SubItems.Add("...");
             if (parent != null)
             {
-                if (parent.GetParent() != null)
+                if (parent.Parent != null)
                 {
-                    upDir.Tag = new NodeTag(parent.GetParent(), NodeType.Dirent);
+                    upDir.Tag = new NodeTag(parent.Parent, NodeType.Dirent);
                 }
                 else
                 {
@@ -167,7 +167,7 @@ namespace FATXTools.Controls
                     break;
                 case NodeType.Root:
 
-                    PopulateListView(this.volume.GetRoot(), null);
+                    PopulateListView(this.volume.Root, null);
 
                     break;
             }
@@ -205,7 +205,7 @@ namespace FATXTools.Controls
                     break;
 
                 case NodeType.Root:
-                    PopulateListView(this.volume.GetRoot(), null);
+                    PopulateListView(this.volume.Root, null);
                     break;
             }
         }
@@ -219,7 +219,7 @@ namespace FATXTools.Controls
             taskRunner.Maximum = searchLength;
             taskRunner.Interval = searchInterval;
 
-            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval, searchLength);
+            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval);
             var numBlocks = searchLength / searchInterval;
             await taskRunner.RunTaskAsync("Metadata Analyzer",
                 // Task
@@ -253,7 +253,7 @@ namespace FATXTools.Controls
             taskRunner.Maximum = searchLength;
             taskRunner.Interval = (long)searchInterval;
 
-            FileCarver carver = new FileCarver(this.volume, searchInterval, searchLength);
+            FileCarver carver = new FileCarver(this.volume, searchInterval);
             var numBlocks = searchLength / (long)searchInterval;
             await taskRunner.RunTaskAsync("File Carver",
                 // Task
@@ -289,7 +289,7 @@ namespace FATXTools.Controls
 
                     break;
                 case NodeType.Root:
-                    RunSaveAllTaskAsync(path, volume.GetRoot());
+                    RunSaveAllTaskAsync(path, volume.Root);
                     break;
             }
         }
@@ -387,7 +387,7 @@ namespace FATXTools.Controls
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.GetRoot());
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
             }
         }
 
@@ -396,7 +396,7 @@ namespace FATXTools.Controls
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.GetRoot());
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
             }
         }
 
@@ -463,7 +463,7 @@ namespace FATXTools.Controls
 
                     foreach (uint cluster in chainMap)
                     {
-                        byte[] clusterData = this.volume.ReadCluster(cluster);
+                        byte[] clusterData = this.volume.ClusterReader.ReadCluster(cluster);
 
                         var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
                         outFile.Write(clusterData, 0, (int)writeSize);
@@ -524,7 +524,7 @@ namespace FATXTools.Controls
                 currentFile = dirent.FileName;
                 progress.Report(numSaved++);
 
-                List<uint> chainMap = this.volume.GetClusterChain(dirent);
+                List<uint> chainMap = this.volume.FileAllocationTable.GetClusterChain(dirent);
 
                 TryIOOperation(() =>
                 {

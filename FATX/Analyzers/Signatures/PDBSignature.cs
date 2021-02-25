@@ -1,37 +1,30 @@
-﻿using FATX.FileSystem;
 using System.Text;
+
+using FATX.Streams;
 
 namespace FATX.Analyzers.Signatures
 {
-    class PDBSignature : FileSignature
+    public class PDBSignature : IFileSignature
     {
-        private const string PDBMagic = "Microsoft C/C++ MSF 7.00\r\n\x1A\x44\x53\0\0\0";
+        public string Name => "PDB";
 
-        public PDBSignature(Volume volume, long offset)
-            : base(volume, offset)
+        private static readonly string PDBMagic = "Microsoft C/C++ MSF 7.00\r\n\x1A\x44\x53\0\0\0";
+
+        public bool Test(CarverReader reader)
         {
+            byte[] magic = reader.ReadBytes(0x20);
 
+            return Encoding.ASCII.GetString(magic) == PDBMagic;
         }
 
-        public override bool Test()
+        public void Parse(CarverReader reader, CarvedFile carvedFile)
         {
-            byte[] magic = ReadBytes(0x20);
-            if (Encoding.ASCII.GetString(magic) == PDBMagic)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override void Parse()
-        {
-            SetByteOrder(ByteOrder.Little);
-            Seek(0x20);
-            var blockSize = ReadUInt32();
-            Seek(0x28);
-            var numBlocks = ReadUInt32();
-            this.FileSize = blockSize * numBlocks;
+            reader.ByteOrder = ByteOrder.Little;
+            reader.Seek(0x20);
+            var blockSize = reader.ReadUInt32();
+            reader.Seek(0x28);
+            var numBlocks = reader.ReadUInt32();
+            carvedFile.FileSize = blockSize * numBlocks;
         }
     }
 }

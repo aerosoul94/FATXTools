@@ -1,4 +1,4 @@
-﻿using FATX;
+﻿using FATX.Drive;
 using FATX.FileSystem;
 using FATXTools.Controls;
 using FATXTools.Database;
@@ -21,7 +21,7 @@ namespace FATXTools
         /// <summary>
         /// Currently loaded drive.
         /// </summary>
-        private DriveReader drive;
+        private XDrive drive;
 
         private string driveName;
 
@@ -45,7 +45,7 @@ namespace FATXTools
             InitializeComponent();
         }
 
-        public void AddDrive(string name, DriveReader drive)
+        public void AddDrive(string name, XDrive drive)
         {
             this.driveName = name;
             this.drive = drive;
@@ -62,9 +62,9 @@ namespace FATXTools
 
             this.partitionTabControl.MouseClick += PartitionTabControl_MouseClick;
 
-            foreach (var volume in drive.Partitions)
+            foreach (var partition in drive.Partitions)
             {
-                AddPartition(volume);
+                AddPartition(partition);
             }
 
             // Fire SelectedIndexChanged event.
@@ -97,7 +97,7 @@ namespace FATXTools
 
         private void DriveDatabase_OnPartitionAdded(object sender, AddPartitionEventArgs e)
         {
-            AddPartition(e.Volume);
+            AddPartition(e.Partition);
         }
 
         private void TaskRunner_TaskCompleted(object sender, EventArgs e)
@@ -110,8 +110,10 @@ namespace FATXTools
             TaskStarted?.Invoke(sender, e);
         }
 
-        public void AddPartition(Volume volume)
+        public void AddPartition(Partition partition)
         {
+            var volume = partition.Volume;
+
             try
             {
                 volume.Mount();
@@ -132,7 +134,7 @@ namespace FATXTools
             partitionViews.Add(partitionView);
         }
 
-        public DriveReader GetDrive()
+        public XDrive GetDrive()
         {
             return drive;
         }

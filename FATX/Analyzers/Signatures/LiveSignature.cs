@@ -1,30 +1,22 @@
-﻿using FATX.FileSystem;
-using System.Text;
+﻿using System.Text;
+
+using FATX.Streams;
 
 namespace FATX.Analyzers.Signatures
 {
-    class LiveSignature : FileSignature
+    public class LiveSignature : IFileSignature
     {
-        private string LiveMagic = "LIVE";
+        public string Name => "Live Content";
 
-        public LiveSignature(Volume volume, long offset)
-            : base(volume, offset)
+        private static readonly string LiveMagic = "LIVE";
+
+        public bool Test(CarverReader reader)
         {
-
+            byte[] magic = reader.ReadBytes(4);
+            return Encoding.ASCII.GetString(magic) == LiveMagic;
         }
 
-        public override bool Test()
-        {
-            byte[] magic = ReadBytes(4);
-            if (Encoding.ASCII.GetString(magic) == LiveMagic)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override void Parse()
+        public void Parse(CarverReader reader, CarvedFile carvedFile)
         {
             // does nothing for now
         }

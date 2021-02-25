@@ -1,14 +1,16 @@
 ﻿using System.IO;
 
+using FATX.Drive;
+
 namespace FATXTools.DiskTypes
 {
-    public class RawImage : FATX.DriveReader
+    public class RawImage : DiskHandler
     {
-        // TODO: replace with FileStream to be able to use "using"
         public RawImage(string fileName)
-            : base(new FileStream(fileName, FileMode.Open, FileAccess.Read))
         {
-            base.Initialize();
+            _stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+
+            Drive = DriveFactory.Detect(_stream);
         }
     }
 }

@@ -92,7 +92,7 @@ namespace FATXTools.Controls
                 }
             }
 
-            clusterColorMap[this.volume.RootDirFirstCluster] = rootColor;
+            clusterColorMap[this.volume.Metadata.RootDirFirstCluster] = rootColor;
 
             UpdateDataMap();
         }
@@ -100,7 +100,7 @@ namespace FATXTools.Controls
         private void InitializeActiveFileSystem()
         {
             // TODO: See if we can merge this with UpdateClusters
-            clusterColorMap[volume.RootDirFirstCluster] = rootColor;
+            clusterColorMap[volume.Metadata.RootDirFirstCluster] = rootColor;
 
             UpdateClusters();
         }
@@ -170,9 +170,9 @@ namespace FATXTools.Controls
                 var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
 
                 string toolTipMessage = "Cluster Index: " + clusterIndex.ToString() + Environment.NewLine;
-                toolTipMessage += "Cluster Address: 0x" + volume.ClusterToPhysicalOffset(clusterIndex).ToString("X");
+                toolTipMessage += "Cluster Address: 0x" + volume.ClusterReader.ClusterToPhysicalOffset(clusterIndex).ToString("X");
 
-                if (clusterIndex == volume.RootDirFirstCluster)
+                if (clusterIndex == volume.Metadata.RootDirFirstCluster)
                 {
                     toolTipMessage += Environment.NewLine + Environment.NewLine;
                     toolTipMessage += " Type: Root Directory";

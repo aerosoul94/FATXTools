@@ -1,41 +1,33 @@
-﻿using FATX.FileSystem;
-using System.IO;
+﻿using System.IO;
 using System.Text;
+
+using FATX.Streams;
 
 namespace FATX.Analyzers.Signatures
 {
-    class XBESignature : FileSignature
+    public class XBESignature : IFileSignature
     {
-        private const string XBEMagic = "XBEH";
+        public string Name => "XBE";
 
-        public XBESignature(Volume volume, long offset)
-            : base(volume, offset)
+        private static readonly string XBEMagic = "XBEH";
+
+        public bool Test(CarverReader reader)
         {
-
+            byte[] magic = reader.ReadBytes(4);
+            return Encoding.ASCII.GetString(magic) == XBEMagic;
         }
 
-        public override bool Test()
+        public void Parse(CarverReader reader, CarvedFile carvedFile)
         {
-            byte[] magic = this.ReadBytes(4);
-            if (Encoding.ASCII.GetString(magic) == XBEMagic)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override void Parse()
-        {
-            Seek(0x104);
-            var baseAddress = ReadUInt32();
-            Seek(0x10C);
-            this.FileSize = ReadUInt32();
-            Seek(0x150);
-            var debugFileNameOffset = ReadUInt32();
-            Seek(debugFileNameOffset - baseAddress);
-            var debugFileName = ReadCString();
-            this.FileName = Path.ChangeExtension(debugFileName, ".xbe");
+            reader.Seek(0x104);
+            var baseAddress = reader.ReadUInt32();
+            reader.Seek(0x10C);
+            carvedFile.FileSize = reader.ReadUInt32();
+            reader.Seek(0x150);
+            var debugFileNameOffset = reader.ReadUInt32();
+            reader.Seek(debugFileNameOffset - baseAddress);
+            var debugFileName = reader.ReadCString();
+            carvedFile.FileName = Path.ChangeExtension(debugFileName, ".xbe");
         }
     }
 }
