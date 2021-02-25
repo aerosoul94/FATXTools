@@ -55,24 +55,19 @@ namespace FATX.FileSystem
             }
         }
 
-        public List<uint> GetClusterChain(DirectoryEntry dirent)
+        public List<uint> GetClusterChain(uint firstCluster)
         {
-            List<uint> clusterChain = new List<uint>();
-            var firstCluster = dirent.FirstCluster;
-            
             if (firstCluster == 0 || firstCluster > _maxClusters)
                 throw new IndexOutOfRangeException(
                     $"First cluster is invalid (FirstCluster={firstCluster} MaxClusters={_maxClusters})"
                 );
 
-            clusterChain.Add(firstCluster);
-
-            if (dirent.IsDeleted())
-                return clusterChain;
+            List<uint> clusterChain = new List<uint>() { firstCluster };
 
             uint fatEntry = firstCluster;
-            uint reservedIndexes = (FatType == FatType.Fat16) ? 
+            uint reservedIndexes = (FatType == FatType.Fat16) ?
                 Constants.Cluster16Reserved : Constants.ClusterReserved;
+
             while (true)
             {
                 fatEntry = FileAllocationTableBuffer[fatEntry];
@@ -81,16 +76,26 @@ namespace FATX.FileSystem
                     break;
 
                 if (fatEntry == 0 || fatEntry > FileAllocationTableBuffer.Length)
-                {
-                    clusterChain = new List<uint>(1);
-                    clusterChain.Add(firstCluster);
-                    return clusterChain;
-                }
+                    return new List<uint>() { firstCluster };
 
                 clusterChain.Add(fatEntry);
             }
 
             return clusterChain;
+        }
+
+        public List<uint> GetClusterChain(DirectoryEntry dirent)
+        {
+            var firstCluster = dirent.FirstCluster;
+            if (firstCluster == 0 || firstCluster > _maxClusters)
+                throw new IndexOutOfRangeException(
+                    $"First cluster is invalid (FirstCluster={firstCluster} MaxClusters={_maxClusters})"
+                );
+
+            if (dirent.IsDeleted())
+                return new List<uint>() { dirent.FirstCluster };
+
+            return GetClusterChain(firstCluster);
         }
 
         public IEnumerator<uint> GetEnumerator()
