@@ -113,8 +113,10 @@ namespace FATX.Drive
         {
             Name = "Xbox 360 DevKit HDD";
 
+            reader.Seek(0, SeekOrigin.Begin);
+
             // Kernel version
-            reader.ReadUInt32();    // Major
+            reader.ReadUInt16();    // Major
             reader.ReadUInt16();    // Minor
             reader.ReadUInt16();    // Build
             reader.ReadUInt16();    // Qfe
@@ -154,9 +156,9 @@ namespace FATX.Drive
             // AddPartition("Cache1", ReadSectorCount(reader), ReadSectorCount(reader));
         }
 
-        private uint ReadSectorCount(EndianReader reader)
+        private long ReadSectorCount(EndianReader reader)
         {
-            return reader.ReadUInt32() * Constants.SectorSize;
+            return (long)reader.ReadUInt32() * Constants.SectorSize;
         }
 
         private void CreateFATXPartition(Stream stream, string name, long offset, long length)
