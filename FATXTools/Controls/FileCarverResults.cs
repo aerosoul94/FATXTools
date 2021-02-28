@@ -1,10 +1,12 @@
-﻿using FATX.Analyzers;
-using System;
+﻿using System;
+using System.Collections.Generic;
+
+using FATX.Analyzers;
 
 namespace FATXTools.Controls
 {
     public class FileCarverResults : EventArgs
     {
-        public FileCarver carver;
+        public List<CarvedFile> Results;
     }
 }

@@ -1,14 +1,16 @@
-﻿using FATX.Analyzers;
-using FATX.FileSystem;
-using FATXTools.Dialogs;
-using FATXTools.Utilities;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+
+using FATX.Analyzers;
+using FATX.FileSystem;
+
+using FATXTools.Dialogs;
+using FATXTools.Tasks;
+using FATXTools.Utilities;
 
 namespace FATXTools.Controls
 {
@@ -22,8 +24,6 @@ namespace FATXTools.Controls
         public event EventHandler OnFileCarverCompleted;
 
         private ListViewItemComparer listViewItemComparer;
-
-        private TaskRunner taskRunner;
 
         private enum NodeType
         {
@@ -43,11 +43,10 @@ namespace FATXTools.Controls
             }
         }
 
-        public FileExplorer(TaskRunner taskRunner, Volume volume)
+        public FileExplorer(Volume volume)
         {
             InitializeComponent();
 
-            this.taskRunner = taskRunner;
             this.volume = volume;
 
             this.listViewItemComparer = new ListViewItemComparer();
@@ -214,32 +213,18 @@ namespace FATXTools.Controls
             var searchLength = this.volume.FileAreaLength;
             var searchInterval = this.volume.BytesPerCluster;
 
-            taskRunner.Maximum = searchLength;
-            taskRunner.Interval = searchInterval;
+            var options = new TaskDialogOptions() { Title = "Metadata Analyzer" };
+            List<DirectoryEntry> results = null;
 
             MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval);
-            var numBlocks = searchLength / searchInterval;
-            await taskRunner.RunTaskAsync("Metadata Analyzer",
-                // Task
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    analyzer.Analyze(cancellationToken, progress);
-                },
-                // Progress Update
-                (int progress) =>
-                {
-                    //var progress = analyzer.GetProgress();
-                    taskRunner.UpdateLabel($"Processing cluster {progress}/{numBlocks}");
-                    taskRunner.UpdateProgress(progress);
-                },
-                // On Task Completion
-                () =>
-                {
-                    OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
-                    {
-                        analyzer = analyzer
-                    });
-                });
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
+                (cancellationToken, progress) => results = analyzer.Analyze(cancellationToken, progress)
+            );
+
+            OnMetadataAnalyzerCompleted?.Invoke(this, new MetadataAnalyzerResults()
+            {
+                Results = results
+            });
         }
 
         private async void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
@@ -248,32 +233,18 @@ namespace FATXTools.Controls
             var searchLength = this.volume.FileAreaLength;
             var searchInterval = Properties.Settings.Default.FileCarverInterval;
 
-            taskRunner.Maximum = searchLength;
-            taskRunner.Interval = (long)searchInterval;
+            var options = new TaskDialogOptions() { Title = "File Carver" };
+            List<CarvedFile> results = null;
 
             FileCarver carver = new FileCarver(this.volume, searchInterval);
-            var numBlocks = searchLength / (long)searchInterval;
-            await taskRunner.RunTaskAsync("File Carver",
-                // Task
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    carver.Analyze(cancellationToken, progress);
-                },
-                // Progress Update
-                (int progress) =>
-                {
-                    //var progress = carver.GetProgress();
-                    taskRunner.UpdateLabel($"Processing block {progress}/{numBlocks}");
-                    taskRunner.UpdateProgress(progress);
-                },
-                // On Task Completion
-                () =>
-                {
-                    OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
-                    {
-                        carver = carver
-                    });
-                });
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
+                (cancellationToken, progress) => results = carver.Analyze(cancellationToken, progress)
+            );
+
+            OnFileCarverCompleted?.Invoke(this, new FileCarverResults()
+            {
+                Results = results
+            });
         }
 
         private void SaveNodeTag(string path, NodeTag nodeTag)
@@ -329,55 +300,36 @@ namespace FATXTools.Controls
             }
         }
 
+        private Action<CancellationToken, IProgress<(int, string)>> RunSaveDirectoryEntryTask(string path, DirectoryEntry dirents)
+        {
+            return (cancellationToken, progress) =>
+            {
+                new SaveContentTask(volume, cancellationToken, progress)
+                    .Save(path, dirents);
+            };
+        }
+
         private async void RunSaveDirectoryEntryTaskAsync(string path, DirectoryEntry dirent)
         {
-            SaveContentTask saveContentTask = null;
+            var options = new TaskDialogOptions() { Title = "Save File" };
 
-            var numFiles = dirent.CountFiles();
-            taskRunner.Maximum = numFiles;
-            taskRunner.Interval = 1;
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunSaveDirectoryEntryTask(path, dirent));
+        }
 
-            await taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
-                    saveContentTask.Save(path, dirent);
-                },
-                (int progress) =>
-                {
-                    string currentFile = saveContentTask.GetCurrentFile();
-                    taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                    taskRunner.UpdateProgress(progress);
-                },
-                () =>
-                {
-                    Console.WriteLine("Finished saving files.");
-                });
+        private Action<CancellationToken, IProgress<(int, string)>> RunSaveAllTask(string path, List<DirectoryEntry> dirents)
+        {
+            return (cancellationToken, progress) =>
+            {
+                new SaveContentTask(volume, cancellationToken, progress)
+                    .SaveAll(path, dirents);
+            };
         }
 
         private async void RunSaveAllTaskAsync(string path, List<DirectoryEntry> dirents)
         {
-            SaveContentTask saveContentTask = null;
-            var numFiles = volume.CountFiles();
-            taskRunner.Maximum = numFiles;
-            taskRunner.Interval = 1;
+            var options = new TaskDialogOptions() { Title = "Save All" };
 
-            await taskRunner.RunTaskAsync("Save All",
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    saveContentTask = new SaveContentTask(this.volume, cancellationToken, progress);
-                    saveContentTask.SaveAll(path, dirents);
-                },
-                (int progress) =>
-                {
-                    string currentFile = saveContentTask.GetCurrentFile();
-                    taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                    taskRunner.UpdateProgress(progress);
-                },
-                () =>
-                {
-                    Console.WriteLine("Finished saving files.");
-                });
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunSaveAllTask(path, dirents));
         }
 
         private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -414,194 +366,6 @@ namespace FATXTools.Controls
                     dialog.ShowDialog();
 
                     break;
-            }
-        }
-
-        public class SaveContentTask
-        {
-            private CancellationToken cancellationToken;
-
-            private IProgress<int> progress;
-
-            private Volume volume;
-
-            private string currentFile;
-
-            private int numSaved;
-
-            public SaveContentTask(Volume volume, CancellationToken cancellationToken, IProgress<int> progress)
-            {
-                currentFile = String.Empty;
-
-                this.cancellationToken = cancellationToken;
-                this.progress = progress;
-                this.volume = volume;
-
-                this.numSaved = 0;
-            }
-
-            public string GetCurrentFile()
-            {
-                // I am considering returning a DirectoryEntry instead to show
-                // more information about the current file.
-                return currentFile;
-            }
-
-            private DialogResult ShowIOErrorDialog(Exception e)
-            {
-                return MessageBox.Show($"{e.Message}",
-                    "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
-            }
-
-            private void WriteFile(string path, DirectoryEntry dirent, List<uint> chainMap)
-            {
-                using (FileStream outFile = File.OpenWrite(path))
-                {
-                    uint bytesLeft = dirent.FileSize;
-
-                    foreach (uint cluster in chainMap)
-                    {
-                        byte[] clusterData = this.volume.ClusterReader.ReadCluster(cluster);
-
-                        var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
-                        outFile.Write(clusterData, 0, (int)writeSize);
-
-                        bytesLeft -= writeSize;
-                    }
-                }
-            }
-            private void FileSetTimeStamps(string path, DirectoryEntry dirent)
-            {
-                File.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-                File.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-                File.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
-            }
-
-            private void DirectorySetTimestamps(string path, DirectoryEntry dirent)
-            {
-                Directory.SetCreationTime(path, dirent.CreationTime.AsDateTime());
-                Directory.SetLastWriteTime(path, dirent.LastWriteTime.AsDateTime());
-                Directory.SetLastAccessTime(path, dirent.LastAccessTime.AsDateTime());
-            }
-
-            private void TryIOOperation(Action action)
-            {
-                try
-                {
-                    action();
-                }
-                catch (IOException e)
-                {
-                    while (true)
-                    {
-                        var dialogResult = ShowIOErrorDialog(e);
-
-                        if (dialogResult == DialogResult.Retry)
-                        {
-                            try
-                            {
-                                action();
-                            }
-                            catch (Exception)
-                            {
-                                continue;
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            private void SaveFile(string path, DirectoryEntry dirent)
-            {
-                path = path + "\\" + dirent.FileName;
-                Console.WriteLine(path);
-
-                // Report where we are at
-                currentFile = dirent.FileName;
-                progress.Report(numSaved++);
-
-                List<uint> chainMap = this.volume.FileAllocationTable.GetClusterChain(dirent);
-
-                TryIOOperation(() =>
-                {
-                    WriteFile(path, dirent, chainMap);
-
-                    FileSetTimeStamps(path, dirent);
-                });
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-            }
-
-            private void SaveDirectory(string path, DirectoryEntry dirent)
-            {
-                path = path + "\\" + dirent.FileName;
-                Console.WriteLine(path);
-
-                // Report where we are at
-                currentFile = dirent.FileName;
-                progress.Report(numSaved++);
-
-                Directory.CreateDirectory(path);
-
-                foreach (DirectoryEntry child in dirent.Children)
-                {
-                    SaveDirectoryEntry(path, child);
-                }
-
-                TryIOOperation(() =>
-                {
-                    DirectorySetTimestamps(path, dirent);
-                });
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-            }
-
-            private void SaveDeleted(string path, DirectoryEntry dirent)
-            {
-                path = path + "\\" + dirent.FileName;
-
-                currentFile = dirent.GetFullPath();
-
-                Console.WriteLine($"{path}: Cannot save deleted files.");
-            }
-
-            private void SaveDirectoryEntry(string path, DirectoryEntry dirent)
-            {
-                if (dirent.IsDeleted())
-                {
-                    SaveDeleted(path, dirent);
-                    return;
-                }
-
-                if (dirent.IsDirectory())
-                {
-                    SaveDirectory(path, dirent);
-                }
-                else
-                {
-                    SaveFile(path, dirent);
-                }
-            }
-
-            public void Save(string path, DirectoryEntry dirent)
-            {
-                SaveDirectoryEntry(path, dirent);
-            }
-
-            public void SaveAll(string path, List<DirectoryEntry> dirents)
-            {
-                foreach (var dirent in dirents)
-                {
-                    SaveDirectoryEntry(path, dirent);
-                }
             }
         }
 

@@ -1,10 +1,13 @@
-﻿using FATX.Analyzers;
+﻿using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+using FATX.Analyzers;
 using FATX.FileSystem;
+
 using FATXTools.Controls;
 using FATXTools.Database;
 using FATXTools.Utilities;
-using System;
-using System.Windows.Forms;
 
 namespace FATXTools
 {
@@ -18,19 +21,15 @@ namespace FATXTools
         private PartitionDatabase partitionDatabase;
         private IntegrityAnalyzer integrityAnalyzer;
         private ClusterViewer clusterViewer;
-        private TaskRunner taskRunner;
 
         private Volume volume;
-        private MetadataAnalyzer metadataAnalyzer;
-        private FileCarver fileCarver;
 
-        public PartitionView(TaskRunner taskRunner, Volume volume, PartitionDatabase partitionDatabase)
+        public PartitionView(Volume volume, PartitionDatabase partitionDatabase)
         {
             InitializeComponent();
 
             integrityAnalyzer = new IntegrityAnalyzer(volume, partitionDatabase.GetFileDatabase());
 
-            this.taskRunner = taskRunner;
             this.volume = volume;
             this.partitionDatabase = partitionDatabase;
 
@@ -39,7 +38,7 @@ namespace FATXTools
             partitionDatabase.OnLoadRecoveryFromDatabase += PartitionDatabase_OnLoadNewDatabase;
 
             explorerPage = new TabPage("File Explorer");
-            FileExplorer explorer = new FileExplorer(taskRunner, volume);
+            FileExplorer explorer = new FileExplorer(volume);
             explorer.Dock = DockStyle.Fill;
             explorer.OnMetadataAnalyzerCompleted += Explorer_OnMetadataAnalyzerCompleted;
             explorer.OnFileCarverCompleted += Explorer_OnFileCarverCompleted;
@@ -70,16 +69,16 @@ namespace FATXTools
         public string PartitionName => volume.Name;
         public Volume Volume => volume;
 
-        public void CreateCarverView(FileCarver carver)
+        public void CreateCarverView(List<CarvedFile> files)
         {
             if (carverResultsPage != null)
             {
                 tabControl1.TabPages.Remove(carverResultsPage);
             }
 
-            partitionDatabase.SetFileCarver(carver);
+            //partitionDatabase.SetFileCarver(carver);
             carverResultsPage = new TabPage("Carver View");
-            CarverResults carverResults = new CarverResults(carver, this.taskRunner);
+            CarverResults carverResults = new CarverResults(volume, files);
             carverResults.Dock = DockStyle.Fill;
             carverResultsPage.Controls.Add(carverResults);
             tabControl1.TabPages.Add(carverResultsPage);
@@ -94,7 +93,7 @@ namespace FATXTools
             }
 
             recoveryResultsPage = new TabPage("Recovery View");
-            RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer, taskRunner);
+            RecoveryResults recoveryResults = new RecoveryResults(partitionDatabase.GetFileDatabase(), integrityAnalyzer);
             recoveryResults.Dock = DockStyle.Fill;
             recoveryResults.NotifyDatabaseChanged += RecoveryResults_NotifyDatabaseChanged;
             recoveryResultsPage.Controls.Add(recoveryResults);
@@ -119,14 +118,12 @@ namespace FATXTools
         private void Explorer_OnFileCarverCompleted(object sender, EventArgs e)
         {
             FileCarverResults results = (FileCarverResults)e;
-            fileCarver = results.carver;
-            CreateCarverView(fileCarver);
+            CreateCarverView(results.Results);
         }
 
         private void Explorer_OnMetadataAnalyzerCompleted(object sender, EventArgs e)
         {
             MetadataAnalyzerResults results = (MetadataAnalyzerResults)e;
-            metadataAnalyzer = results.analyzer;
             partitionDatabase.SetMetadataAnalyzer(true);
 
             var fileDatabase = partitionDatabase.GetFileDatabase();
@@ -135,7 +132,7 @@ namespace FATXTools
             fileDatabase.Reset();
 
             // Add in the new results
-            foreach (var dirent in metadataAnalyzer.Results)
+            foreach (var dirent in results.Results)
             {
                 fileDatabase.AddFile(dirent, true);
             }

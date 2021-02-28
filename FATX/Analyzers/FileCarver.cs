@@ -25,7 +25,7 @@ namespace FATX.Analyzers
             _interval = interval;
         }
 
-        public List<CarvedFile> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
+        public List<CarvedFile> Analyze(CancellationToken cancellationToken, IProgress<(int, string)> progress)
         {
             int interval = (int)_interval;
             long progressValue = 0;
@@ -47,45 +47,18 @@ namespace FATX.Analyzers
 
                 progressValue += interval;
                 if (progressValue % progressUpdate == 0)
-                    progress?.Report((int)(progressValue / interval));
+                {
+                    var p = (int)(((float)offset / (float)Volume.FileAreaLength) * 100);
+                    progress?.Report((p, $"Analyzing offset {offset} ({p}%)): Found {Results.Count} files"));
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                     return Results;
             }
 
-            progress?.Report((int)(Volume.FileAreaLength / interval));
+            progress?.Report((100, "Finished"));
             Console.WriteLine("Finished!");
             return Results;
-        }
-
-        // TODO: Get rid of this!
-        public void LoadFromDatabase(JsonElement fileCarverList)
-        {
-            Results.Clear();
-
-            foreach (var file in fileCarverList.EnumerateArray())
-            {
-                JsonElement offsetElement;
-                if (!file.TryGetProperty("Offset", out offsetElement))
-                {
-                    Console.WriteLine("Failed to load signature from database: Missing offset field");
-                    continue;
-                }
-
-                var carvedFile = new CarvedFile(offsetElement.GetInt64(), "");
-
-                if (file.TryGetProperty("Name", out var nameElement))
-                {
-                    carvedFile.FileName = nameElement.GetString();
-                }
-
-                if (file.TryGetProperty("Size", out var sizeElement))
-                {
-                    carvedFile.FileSize = sizeElement.GetInt64();
-                }
-
-                Results.Add(carvedFile);
-            }
         }
     }
 }

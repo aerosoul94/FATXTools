@@ -30,8 +30,6 @@ namespace FATXTools
         /// </summary>
         private List<PartitionView> partitionViews = new List<PartitionView>();
 
-        private TaskRunner taskRunner;
-
         public event EventHandler TaskStarted;
 
         public event EventHandler TaskCompleted;
@@ -53,12 +51,6 @@ namespace FATXTools
             this.driveDatabase = new DriveDatabase(name, drive);
             this.driveDatabase.OnPartitionAdded += DriveDatabase_OnPartitionAdded;
             this.driveDatabase.OnPartitionRemoved += DriveDatabase_OnPartitionRemoved;
-
-            // Single task runner for this drive
-            // Currently only one task will be allowed to operate on a drive to avoid race conditions.
-            this.taskRunner = new TaskRunner(this.ParentForm);
-            this.taskRunner.TaskStarted += TaskRunner_TaskStarted;
-            this.taskRunner.TaskCompleted += TaskRunner_TaskCompleted;
 
             this.partitionTabControl.MouseClick += PartitionTabControl_MouseClick;
 
@@ -127,7 +119,7 @@ namespace FATXTools
 
             var page = new TabPage(volume.Name);
             var partitionDatabase = driveDatabase.AddPartition(volume);
-            var partitionView = new PartitionView(taskRunner, volume, partitionDatabase);
+            var partitionView = new PartitionView(volume, partitionDatabase);
             partitionView.Dock = DockStyle.Fill;
             page.Controls.Add(partitionView);
             partitionTabControl.TabPages.Add(page);

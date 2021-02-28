@@ -1,108 +1,58 @@
-﻿using FATXTools.Dialogs;
-using System;
+﻿using System;
 using System.Media;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using FATXTools.Dialogs;
+
 namespace FATXTools.Utilities
 {
     public class TaskRunner
     {
-        Form _owner;
         Task _task;
-        ProgressDialog _progressDialog;
 
-        CancellationToken cancellationToken;
-        CancellationTokenSource cancellationTokenSource;
+        private static TaskRunner _instance;
 
-        public TaskRunner(Form owner)
+        TaskRunner()
         {
-            _owner = owner;
-        }
-
-        public long Maximum
-        {
-            get;
-            set;
-        }
-
-        public long Interval
-        {
-            get;
-            set;
-        }
-
-        public event EventHandler TaskStarted;
-
-        public event EventHandler TaskCompleted;
-
-        public async Task RunTaskAsync(string title, Action<CancellationToken, IProgress<int>> task, Action<int> progressUpdate, Action taskCompleted)
-        {
-            if (_task != null)
-            {
-                throw new Exception("A task is already running.");
-            }
-
-            cancellationTokenSource = new CancellationTokenSource();
-            cancellationToken = cancellationTokenSource.Token;
-
-            TaskStarted?.Invoke(this, null);
-
-            _progressDialog = new ProgressDialog(this, _owner, $"Task - {title}", Maximum, Interval);
-            _progressDialog.Show();
-
-            var progress = new Progress<int>(percent =>
-            {
-                progressUpdate(percent);
-            });
-
-            try
-            {
-                _task = Task.Run(() =>
-                {
-                    task(cancellationToken, progress);
-                }, cancellationToken);
-
-                // wait for worker task to finish.
-                await _task;
-            }
-            catch (TaskCanceledException)
-            {
-                Console.WriteLine("Task cancelled.");
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show(exception.Message);
-            }
-
-            SystemSounds.Beep.Play();
-
-            taskCompleted();
-
-            _progressDialog.Close();
-
-            TaskCompleted?.Invoke(this, null);
-
-            _progressDialog = null;
             _task = null;
         }
 
-        public bool CancelTask()
+        public static TaskRunner Instance
         {
-            cancellationTokenSource.Cancel();
+            get
+            {
+                if (_instance == null)
+                    _instance = new TaskRunner();
 
-            return (_task == null) || _task.IsCompleted;
+                return _instance;
+            }
         }
 
-        public void UpdateProgress(long newValue)
+        public async Task RunTaskAsync(Form owner, TaskDialogOptions options, 
+            Action<CancellationToken, IProgress<ValueTuple<int, string>>> action)
         {
-            _progressDialog.UpdateProgress(newValue);
-        }
+            if (_task != null) 
+                throw new Exception("A task is already running.");
 
-        public void UpdateLabel(string newLabel)
-        {
-            _progressDialog.UpdateLabel(newLabel);
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var cancellationToken = cancellationTokenSource.Token;
+
+                var dialog = new TaskDialog(owner, options, ref _task, cancellationTokenSource);
+                dialog.Show();
+
+                _task = Task.Run(() => action(cancellationToken, dialog.Progress), cancellationToken);
+
+                await _task;
+
+                dialog.Close();
+
+                SystemSounds.Beep.Play();
+
+                _task = null;
+            }
         }
     }
 }

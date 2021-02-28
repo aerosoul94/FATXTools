@@ -12,7 +12,7 @@ namespace FATXTools.Database
         // We just want this for the volume info (offset, length, name)
         Volume volume;
 
-        FileCarver fileCarver;  // TODO: Get rid of this. We should be able to get this information from the FileDatabase.
+        //FileCarver fileCarver;  // TODO: Get rid of this. We should be able to get this information from the FileDatabase.
 
         /// <summary>
         ///  Whether or not the MetadataAnalyzer's results are in.
@@ -29,13 +29,15 @@ namespace FATXTools.Database
         /// </summary>
         PartitionView view; // TODO: Use events instead.
 
+        List<CarvedFile> carvedFiles;
+
         public event EventHandler OnLoadRecoveryFromDatabase;
 
         public PartitionDatabase(Volume volume)
         {
             this.volume = volume;
             this.metadataAnalyzer = false;
-            this.fileCarver = null;
+            //this.fileCarver = null;
 
             this.fileDatabase = new FileDatabase(volume);
         }
@@ -65,11 +67,6 @@ namespace FATXTools.Database
             this.metadataAnalyzer = metadataAnalyzer;
         }
 
-        public void SetFileCarver(FileCarver fileCarver)
-        {
-            this.fileCarver = fileCarver;
-        }
-
         /// <summary>
         /// Get the FileDatabase for this partition.
         /// </summary>
@@ -96,7 +93,7 @@ namespace FATXTools.Database
             }
 
             analysisObject["FileCarver"] = new List<Dictionary<string, object>>();
-            if (fileCarver != null)
+            if (carvedFiles.Count > 0)
             {
                 var fileCarverObject = analysisObject["FileCarver"] as List<Dictionary<string, object>>;
                 SaveFileCarver(fileCarverObject);
@@ -115,7 +112,7 @@ namespace FATXTools.Database
 
         private void SaveFileCarver(List<Dictionary<string, object>> fileCarverList)
         {
-            foreach (var file in fileCarver.Results)
+            foreach (var file in carvedFiles)
             {
                 var fileCarverObject = new Dictionary<string, object>();
 
@@ -252,6 +249,33 @@ namespace FATXTools.Database
             return true;
         }
 
+        public void LoadFileCarverResults(JsonElement fileCarverList)
+        {
+            foreach (var file in fileCarverList.EnumerateArray())
+            {
+                JsonElement offsetElement;
+                if (!file.TryGetProperty("Offset", out offsetElement))
+                {
+                    Console.WriteLine("Failed to load signature from database: Missing offset field");
+                    continue;
+                }
+
+                var carvedFile = new CarvedFile(offsetElement.GetInt64(), "");
+
+                if (file.TryGetProperty("Name", out var nameElement))
+                {
+                    carvedFile.FileName = nameElement.GetString();
+                }
+
+                if (file.TryGetProperty("Size", out var sizeElement))
+                {
+                    carvedFile.FileSize = sizeElement.GetInt64();
+                }
+
+                carvedFiles.Add(carvedFile);
+            }
+        }
+
         public void LoadFromJson(JsonElement partitionElement)
         {
             // We are loading a new database so clear previous results
@@ -286,14 +310,13 @@ namespace FATXTools.Database
             if (analysisElement.TryGetProperty("FileCarver", out var fileCarverList))
             {
                 // TODO: We will begin replacing this when we start work on customizable "CarvedFiles"
-                var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster);
+                //var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster);
 
-                analyzer.LoadFromDatabase(fileCarverList);
+                LoadFromDatabase(fileCarverList);
 
-                if (analyzer.Results.Count > 0)
+                if (carvedFiles.Count > 0)
                 {
-                    view.CreateCarverView(analyzer);
-                    this.fileCarver = analyzer;
+                    view.CreateCarverView(carvedFiles);
                 }
             }
         }

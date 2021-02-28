@@ -1,9 +1,4 @@
-﻿using FATX.Analyzers;
-using FATX.FileSystem;
-using FATXTools.Database;
-using FATXTools.Dialogs;
-using FATXTools.Utilities;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,12 +6,18 @@ using System.IO;
 using System.Threading;
 using System.Windows.Forms;
 
+using FATX.Analyzers;
+using FATX.FileSystem;
+using FATXTools.Database;
+using FATXTools.Dialogs;
+using FATXTools.Tasks;
+using FATXTools.Utilities;
+
 namespace FATXTools
 {
     public partial class RecoveryResults : UserControl
     {
         private Volume _volume;
-        private TaskRunner _taskRunner;
 
         /// <summary>
         /// Mapping of cluster index to it's directory entries.
@@ -46,13 +47,12 @@ namespace FATXTools
 
         public event EventHandler NotifyDatabaseChanged;
 
-        public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer, TaskRunner taskRunner)
+        public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer)
         {
             InitializeComponent();
 
             this._fileDatabase = database;
             this._integrityAnalyzer = integrityAnalyzer;
-            this._taskRunner = taskRunner;
             this._volume = database.GetVolume();
 
             listViewItemComparer = new ListViewItemComparer();
@@ -261,124 +261,61 @@ namespace FATXTools
                     break;
             }
         }
-        private long CountFiles(List<DatabaseFile> dirents)
+
+        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverAllTask(string path, Dictionary<string, List<DatabaseFile>> clusters)
         {
-            // DirectoryEntry.CountFiles does not count deleted files
-            long numFiles = 0;
-
-            foreach (var databaseFile in dirents)
+            return (cancellationToken, progress) =>
             {
-                if (databaseFile.IsDirectory())
-                {
-                    numFiles += CountFiles(databaseFile.Children) + 1;
-                }
-                else
-                {
-                    numFiles++;
-                }
-            }
-
-            return numFiles;
+                new RecoveryTask(_volume, cancellationToken, progress)
+                    .SaveClusters(path, clusters);
+            };
         }
 
         private async void RunRecoverAllTaskAsync(string path, Dictionary<string, List<DatabaseFile>> clusters)
         {
-            // TODO: There should be a better way to run this.
-            RecoveryTask recoverTask = null;
+            var options = new TaskDialogOptions() { Title = "Save File" };
 
-            long numFiles = 0;
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunRecoverAllTask(path, clusters));
+        }
 
-            foreach (var cluster in clusters)
+        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverDirectoryEntryTask(string path, DatabaseFile file)
+        {
+            return (cancellationToken, progress) =>
             {
-                numFiles += CountFiles(cluster.Value);
-            }
-
-            _taskRunner.Maximum = numFiles;
-            _taskRunner.Interval = 1;
-
-            await _taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
-                    foreach (var cluster in clusters)
-                    {
-                        string clusterDir = path + "\\" + cluster.Key;
-
-                        Directory.CreateDirectory(clusterDir);
-
-                        recoverTask.SaveAll(clusterDir, cluster.Value);
-                    }
-                },
-                (int progress) =>
-                {
-                    string currentFile = recoverTask.GetCurrentFile();
-                    _taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                    _taskRunner.UpdateProgress(progress);
-                },
-                () =>
-                {
-                    Console.WriteLine("Finished saving files.");
-                });
+                new RecoveryTask(_volume, cancellationToken, progress)
+                    .Save(path, file);
+            };
         }
 
         private async void RunRecoverDirectoryEntryTaskAsync(string path, DatabaseFile databaseFile)
         {
-            RecoveryTask recoverTask = null;
+            var options = new TaskDialogOptions() { Title = "Save File" };
 
-            var numFiles = databaseFile.CountFiles();
-            _taskRunner.Maximum = numFiles;
-            _taskRunner.Interval = 1;
-
-            await _taskRunner.RunTaskAsync("Save File",
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
-                {
-                    recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
-                    recoverTask.Save(path, databaseFile);
-                },
-                (int progress) =>
-                {
-                    string currentFile = recoverTask.GetCurrentFile();
-                    _taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                    _taskRunner.UpdateProgress(progress);
-                },
-                () =>
-                {
-                    Console.WriteLine("Finished saving files.");
-                });
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
+                RunRecoverDirectoryEntryTask(path, databaseFile));
         }
 
-        private async void RunRecoverClusterTaskAsync(string path, List<DatabaseFile> dirents)
+        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverCluster(string path, List<DatabaseFile> files)
         {
-            RecoveryTask recoverTask = null;
-
-            long numFiles = CountFiles(dirents);
-
-            _taskRunner.Maximum = numFiles;
-            _taskRunner.Interval = 1;
-
-            await _taskRunner.RunTaskAsync("Save All",
-                (CancellationToken cancellationToken, IProgress<int> progress) =>
+            return (cancellationToken, progress) =>
+            {
+                try
                 {
-                    try
-                    {
-                        recoverTask = new RecoveryTask(this._volume, cancellationToken, progress);
-                        recoverTask.SaveAll(path, dirents);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        Console.WriteLine("Save all cancelled");
-                    }
-                },
-                (int progress) =>
+                    new RecoveryTask(_volume, cancellationToken, progress)
+                        .SaveAll(path, files);
+                }
+                catch (OperationCanceledException)
                 {
-                    string currentFile = recoverTask.GetCurrentFile();
-                    _taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                    _taskRunner.UpdateProgress(progress);
-                },
-                () =>
-                {
-                    Console.WriteLine("Finished saving files.");
-                });
+                    Console.WriteLine("Save all cancelled.");
+                }
+            };
+        }
+
+        private async void RunRecoverClusterTaskAsync(string path, List<DatabaseFile> files)
+        {
+            var options = new TaskDialogOptions() { Title = "Save All" };
+
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunRecoverCluster(path, files));
         }
 
         private void listRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
@@ -547,157 +484,6 @@ namespace FATXTools
                     }
 
                     RunRecoverAllTaskAsync(dialog.SelectedPath, clusterList);
-                }
-            }
-        }
-
-        private class RecoveryTask
-        {
-            private CancellationToken cancellationToken;
-            private IProgress<int> progress;
-            private Volume volume;
-
-            private string currentFile = String.Empty;
-            private int numSaved = 0;
-
-            public RecoveryTask(Volume volume, CancellationToken cancellationToken, IProgress<int> progress)
-            {
-                this.volume = volume;
-                this.cancellationToken = cancellationToken;
-                this.progress = progress;
-            }
-
-            public string GetCurrentFile()
-            {
-                return currentFile;
-            }
-
-            private DialogResult ShowIOErrorDialog(Exception e)
-            {
-                return MessageBox.Show($"{e.Message}",
-                    "Error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
-            }
-
-            private void WriteFile(string path, DatabaseFile databaseFile)
-            {
-                using (FileStream outFile = File.OpenWrite(path))
-                {
-                    uint bytesLeft = databaseFile.FileSize;
-
-                    foreach (uint cluster in databaseFile.ClusterChain)
-                    {
-                        byte[] clusterData = this.volume.ClusterReader.ReadCluster(cluster);
-
-                        var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
-                        outFile.Write(clusterData, 0, (int)writeSize);
-
-                        bytesLeft -= writeSize;
-                    }
-                }
-            }
-
-            private void FileSetTimeStamps(string path, DatabaseFile databaseFile)
-            {
-                File.SetCreationTime(path, databaseFile.CreationTime.AsDateTime());
-                File.SetLastWriteTime(path, databaseFile.LastWriteTime.AsDateTime());
-                File.SetLastAccessTime(path, databaseFile.LastAccessTime.AsDateTime());
-            }
-
-            private void DirectorySetTimestamps(string path, DatabaseFile databaseFile)
-            {
-                Directory.SetCreationTime(path, databaseFile.CreationTime.AsDateTime());
-                Directory.SetLastWriteTime(path, databaseFile.LastWriteTime.AsDateTime());
-                Directory.SetLastAccessTime(path, databaseFile.LastAccessTime.AsDateTime());
-            }
-
-            private void TryIOOperation(Action action)
-            {
-                try
-                {
-                    action();
-                }
-                catch (IOException e)
-                {
-                    while (true)
-                    {
-                        var dialogResult = ShowIOErrorDialog(e);
-
-                        if (dialogResult == DialogResult.Retry)
-                        {
-                            try
-                            {
-                                action();
-                            }
-                            catch (Exception)
-                            {
-                                continue;
-                            }
-                        }
-
-                        break;
-                    }
-                }
-            }
-
-            private void SaveDirectory(DatabaseFile databaseFile, string path)
-            {
-                path = path + "\\" + databaseFile.FileName;
-                //Console.WriteLine($"{path}");
-
-                currentFile = databaseFile.FileName;
-                progress.Report(numSaved++);
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-
-                foreach (DatabaseFile child in databaseFile.Children)
-                {
-                    Save(path, child);
-                }
-
-                TryIOOperation(() =>
-                {
-                    DirectorySetTimestamps(path, databaseFile);
-                });
-            }
-
-            private void SaveFile(DatabaseFile databaseFile, string path)
-            {
-                path = path + "\\" + databaseFile.FileName;
-                //Console.WriteLine($"{path}");
-
-                currentFile = databaseFile.FileName;
-                progress.Report(numSaved++);
-
-                volume.ClusterReader.ReadCluster(databaseFile.FirstCluster);
-
-                TryIOOperation(() =>
-                {
-                    WriteFile(path, databaseFile);
-
-                    FileSetTimeStamps(path, databaseFile);
-                });
-            }
-
-            public void Save(string path, DatabaseFile databaseFile)
-            {
-                if (databaseFile.IsDirectory())
-                {
-                    SaveDirectory(databaseFile, path);
-                }
-                else
-                {
-                    SaveFile(databaseFile, path);
-                }
-            }
-
-            public void SaveAll(string path, List<DatabaseFile> dirents)
-            {
-                foreach (var databaseFile in dirents)
-                {
-                    Save(path, databaseFile);
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿using FATX.Analyzers;
 using FATX.Analyzers.Signatures;
 using FATX.FileSystem;
+using FATXTools.Dialogs;
 using FATXTools.Utilities;
 using System;
 using System.Collections.Generic;
@@ -12,18 +13,16 @@ namespace FATXTools
 {
     public partial class CarverResults : UserControl
     {
-        private FileCarver _analyzer;
+        private List<CarvedFile> _carvedFiles;
         private Volume _volume;
-        private TaskRunner taskRunner;
 
-        public CarverResults(FileCarver analyzer, TaskRunner taskRunner)
+        public CarverResults(Volume volume, List<CarvedFile> files)
         {
             InitializeComponent();
 
-            this._analyzer = analyzer;
-            this._volume = analyzer.Volume;
-            this.taskRunner = taskRunner;
-            PopulateResultsList(analyzer.Results);
+            this._carvedFiles = files;
+            this._volume = volume;
+            PopulateResultsList(_carvedFiles);
         }
 
         public void PopulateResultsList(List<CarvedFile> results)
@@ -81,45 +80,38 @@ namespace FATXTools
             }
         }
 
+        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverAllTask(string path, List<CarvedFile> files)
+        {
+            return (cancellationToken, progress) =>
+            {
+                var i = 1;
+                var count = files.Count;
+
+                foreach (var file in files)
+                {
+                    SaveFile(file, path);
+
+                    var percent = (int)(((float)i / (float)count) * 100);
+                    progress.Report((percent, $"{i}/{count}: {file.FileName}"));
+                }
+            };
+        }
+
         private async void recoverAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var fbd = new FolderBrowserDialog())
             {
                 if (fbd.ShowDialog() == DialogResult.OK)
                 {
-                    var numFiles = listView1.Items.Count;
-                    string currentFile = string.Empty;
-                    this.taskRunner.Maximum = listView1.Items.Count;
-                    this.taskRunner.Interval = 1;
-
-                    List<CarvedFile> signatures = new List<CarvedFile>();
+                    List<CarvedFile> files = new List<CarvedFile>();
                     foreach (ListViewItem item in listView1.Items)
                     {
-                        signatures.Add((CarvedFile)item.Tag);
+                        files.Add((CarvedFile)item.Tag);
                     }
 
-                    await taskRunner.RunTaskAsync("Save File",
-                        (CancellationToken cancellationToken, IProgress<int> progress) =>
-                        {
-                            int p = 1;
-                            foreach (var signature in signatures)
-                            {
-                                currentFile = signature.FileName;
+                    var options = new TaskDialogOptions() { Title = "Save File" };
 
-                                SaveFile(signature, fbd.SelectedPath);
-
-                                progress.Report(p++);
-                            }
-                        },
-                        (int progress) =>
-                        {
-                            taskRunner.UpdateLabel($"{progress}/{numFiles}: {currentFile}");
-                            taskRunner.UpdateProgress(progress);
-                        },
-                        () =>
-                        {
-                            Console.WriteLine("Finished saving files.");
-                        });
+                    await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunRecoverAllTask(fbd.SelectedPath, files));
                 }
             }
         }

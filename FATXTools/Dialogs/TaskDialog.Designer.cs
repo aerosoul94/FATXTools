@@ -1,6 +1,6 @@
 ﻿namespace FATXTools.Dialogs
 {
-    partial class ProgressDialog
+    partial class TaskDialog
     {
         /// <summary>
         /// Required designer variable.
@@ -62,7 +62,7 @@
             this.MaximizeBox = false;
             this.Name = "ProgressDialog";
             this.Text = "Progress Bar";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.AnalyzerProgress_FormClosing);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TaskDialog_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 

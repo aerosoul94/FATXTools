@@ -22,7 +22,7 @@ namespace FATX.Analyzers
             _interval = interval;
         }
 
-        public List<DirectoryEntry> Analyze(CancellationToken cancellationToken, IProgress<int> progress)
+        public List<DirectoryEntry> Analyze(CancellationToken cancellationToken, IProgress<(int, string)> progress)
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -37,7 +37,7 @@ namespace FATX.Analyzers
             return Results;
         }
 
-        private void RecoverMetadata(CancellationToken cancellationToken, IProgress<int> progress)
+        private void RecoverMetadata(CancellationToken cancellationToken, IProgress<(int, string)> progress)
         {
             var validator = new DirectoryEntryValidator((int)Volume.MaxClusters, DateTime.Now.Year);
             var clusterReader = Volume.ClusterReader;
@@ -74,7 +74,10 @@ namespace FATX.Analyzers
                 }
 
                 if (cluster % 0x100 == 0)
-                    progress?.Report((int)cluster);
+                {
+                    var p = (int)(((float)cluster / (float)Volume.MaxClusters) * 100);
+                    progress?.Report((p, $"Analyzing cluster {cluster} of {Volume.MaxClusters} ({p}%): Found {Results.Count} dirents."));
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -85,8 +88,8 @@ namespace FATX.Analyzers
                     break;
                 }
             }
-            
-            progress?.Report((int)Volume.MaxClusters);
+
+            progress?.Report((100, "Finished"));
         }
     }
 }

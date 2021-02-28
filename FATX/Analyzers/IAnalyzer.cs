@@ -10,6 +10,6 @@ namespace FATX.Analyzers
         Volume Volume { get; }
         string Name { get; }
         T Results { get; }
-        T Analyze(CancellationToken cancellationToken, IProgress<int> progress);
+        T Analyze(CancellationToken cancellationToken, IProgress<(int, string)> progress);
     }
 }
