@@ -16,7 +16,6 @@ namespace FATXTools.Controls
     {
         private Color deletedColor = Color.FromArgb(255, 200, 200);
 
-        private PartitionView parent;
         private Volume volume;
 
         public event EventHandler OnMetadataAnalyzerCompleted;
@@ -44,11 +43,10 @@ namespace FATXTools.Controls
             }
         }
 
-        public FileExplorer(PartitionView parent, TaskRunner taskRunner, Volume volume)
+        public FileExplorer(TaskRunner taskRunner, Volume volume)
         {
             InitializeComponent();
 
-            this.parent = parent;
             this.taskRunner = taskRunner;
             this.volume = volume;
 

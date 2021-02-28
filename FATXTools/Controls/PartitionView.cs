@@ -39,7 +39,7 @@ namespace FATXTools
             partitionDatabase.OnLoadRecoveryFromDatabase += PartitionDatabase_OnLoadNewDatabase;
 
             explorerPage = new TabPage("File Explorer");
-            FileExplorer explorer = new FileExplorer(this, taskRunner, volume);
+            FileExplorer explorer = new FileExplorer(taskRunner, volume);
             explorer.Dock = DockStyle.Fill;
             explorer.OnMetadataAnalyzerCompleted += Explorer_OnMetadataAnalyzerCompleted;
             explorer.OnFileCarverCompleted += Explorer_OnFileCarverCompleted;
