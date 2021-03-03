@@ -5,9 +5,9 @@ using System.IO;
 using FATX.Drive;
 using FATX.Streams;
 
-namespace FATXTools.DiskTypes
+namespace FATX.Devices
 {
-    public class PhysicalDisk : DiskHandler
+    public class PhysicalDisk : DeviceHandler
     {
         public PhysicalDisk(SafeFileHandle handle, long length, long sectorLength)
         {

@@ -6,12 +6,12 @@ using System.Security.Principal;
 using System.Text;
 using System.Windows.Forms;
 
+using FATX.Devices;
 using FATX.Drive;
 using FATX.FileSystem;
 
 using FATXTools.Controls;
 using FATXTools.Dialogs;
-using FATXTools.DiskTypes;
 using FATXTools.Utilities;
 
 namespace FATXTools.Forms

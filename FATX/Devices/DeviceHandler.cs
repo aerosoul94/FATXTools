@@ -2,9 +2,9 @@
 
 using FATX.Drive;
 
-namespace FATXTools.DiskTypes
+namespace FATX.Devices
 {
-    public abstract class DiskHandler
+    public abstract class DeviceHandler
     {
         protected Stream _stream;
 

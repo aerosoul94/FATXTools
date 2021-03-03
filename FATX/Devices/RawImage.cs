@@ -2,9 +2,9 @@
 
 using FATX.Drive;
 
-namespace FATXTools.DiskTypes
+namespace FATX.Devices
 {
-    public class RawImage : DiskHandler
+    public class RawImage : DeviceHandler
     {
         public RawImage(string fileName)
         {
