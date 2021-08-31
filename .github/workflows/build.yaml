@@ -1,0 +1,46 @@
+name: Build FATXTools
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    # Install the .NET Core workload
+    - name: Install .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1
+        
+    # Add MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+      
+    # Restore the application to populate the obj folder with RuntimeIdentifiers
+    - name: Restore the application
+      run: msbuild FATXTools.sln /t:Restore /p:Configuration=Release
+      
+    # Build the application
+    - name: Build the application
+      run: msbuild FATXTools.sln /p:Configuration=Release /p:Platform="Any CPU"
+    
+    # Execute all unit tests in the solution
+    - name: Execute unit tests
+      run: dotnet test
+      
+    # Upload the release build artifacts
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: FATXTools-Release
+        path: FATXTools/bin/Release/
