@@ -48,7 +48,7 @@ namespace FATX.Analyzers
                         _scanner.Seek(0, SeekOrigin.Begin);
                         signature.Parse(_reader, carvedFile);
 
-                        if (carvedFile.FileName == null)
+                        if (string.IsNullOrWhiteSpace(carvedFile.FileName))
                         {
                             carvedFile.FileName = Convert.ToString(_scanner.Offset, 16) + "." + signature.Name;
                         }
