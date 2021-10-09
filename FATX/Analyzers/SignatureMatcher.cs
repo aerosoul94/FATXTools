@@ -45,7 +45,13 @@ namespace FATX.Analyzers
                     {
                         carvedFile = new CarvedFile(_scanner.Offset, signature.Name);
 
+                        _scanner.Seek(0, SeekOrigin.Begin);
                         signature.Parse(_reader, carvedFile);
+
+                        if (string.IsNullOrWhiteSpace(carvedFile.FileName))
+                        {
+                            carvedFile.FileName = Convert.ToString(_scanner.Offset, 16) + "." + signature.Name;
+                        }
 
                         Console.WriteLine($"Found {signature.Name} at 0x{_scanner.Offset:X}.");
 
