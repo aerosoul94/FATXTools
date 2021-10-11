@@ -21,6 +21,21 @@ namespace FATX.FileSystem.Tests
             }
         }
 
+        [TestMethod]
+        public void TestClusterToPhysicalOffset()
+        {
+            using (MemoryStream stream = CreateMockStream())
+            {
+                ClusterReader reader = new ClusterReader(stream, 0x100);
+
+                var address = reader.ClusterToPhysicalOffset(1);
+                Assert.AreEqual(address, 0);
+
+                address = reader.ClusterToPhysicalOffset(2);
+                Assert.AreEqual(address, 0x100);
+            }
+        }
+
         private MemoryStream CreateMockStream()
         {
             MemoryStream stream = new MemoryStream();
