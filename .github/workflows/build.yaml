@@ -2,9 +2,13 @@ name: Build FATXTools
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - fatx-refactor
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - fatx-refactor
   
 jobs:
   build:
@@ -17,6 +21,11 @@ jobs:
         fetch-depth: 0
         
     # Install the .NET Core workload
+    # - name: Install .NET Standard
+    #   uses: actions/setup-dotnet@v1
+    #   with:
+    #     dotnet-version: 5.0.1
+        
     - name: Install .NET Core
       uses: actions/setup-dotnet@v1
       with:
