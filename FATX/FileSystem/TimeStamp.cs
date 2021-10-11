@@ -1,81 +1,192 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace FATX.FileSystem
 {
+    /// <summary>
+    /// Represents an encoded timestamp for the xbox 360.
+    /// 
+    /// Bit Format:
+    ///     Year : 7 bits
+    ///     Month : 4 bits
+    ///     Day : 5 bits
+    ///     Hour : 5 bits
+    ///     Minute : 6 bits
+    ///     DoubleSeconds : 5 bits
+    /// </summary>
     public class X360TimeStamp : TimeStamp
     {
-        public X360TimeStamp(uint time) : base(time) 
+        public X360TimeStamp() : base() { }
+        public X360TimeStamp(uint time) : base(time) { }
+
+        /// <summary>
+        /// The year is relative to 1980 on the xbox 360.
+        /// </summary>
+        public override int Year 
         {
-
+            get => base.Year + 1980;
+            set => base.Year = value - 1980;
         }
-
-        public override int Year => base.Year + 1980;
     }
 
+    /// <summary>
+    /// Represents an encoded timestamp for the original xbox.
+    /// 
+    /// Bit Format:
+    ///     Year : 7 bits
+    ///     Month : 4 bits
+    ///     Day : 5 bits
+    ///     Hour : 5 bits
+    ///     Minute : 6 bits
+    ///     DoubleSeconds : 5 bits
+    /// </summary>
     public class XTimeStamp : TimeStamp
     {
-        public XTimeStamp(uint time) : base(time)
+        public XTimeStamp() : base() { }
+        public XTimeStamp(uint time) : base(time) { }
+
+        /// <summary>
+        /// The year is relative to 2000 on the original xbox.
+        /// </summary>
+        public override int Year
         {
-
+            get => base.Year + 2000;
+            set => base.Year = value - 2000;
         }
-
-        public override int Year => base.Year + 2000;
     }
 
-    public class TimeStamp
+    /// <summary>
+    /// Base class for the original xbox and xbox 360 timestamps.
+    /// </summary>
+    public abstract class TimeStamp
     {
         uint _time;
-        DateTime? _dataTime;
+        DateTime? _dateTime;
 
+        public TimeStamp() : this(0) { }
         public TimeStamp(uint time)
         {
             this._time = time;
         }
 
-        public virtual int Year => (int)((this._time & 0xFE000000) >> 25);
-        public virtual int Month => (int)((this._time & 0x1E00000) >> 21);
-        public virtual int Day => (int)((this._time & 0x1F0000) >> 16);
-        public virtual int Hour => (int)((this._time & 0xF800) >> 11);
-        public virtual int Minute => (int)((this._time & 0x7E0) >> 5);
-        public virtual int Second => (int)((this._time & 0x1F) * 2);
+        /// <summary>
+        /// The year represented by 7 bits.
+        /// </summary>
+        public virtual int Year
+        {
+            get => (int)((this._time & 0xFE000000) >> 25);
+            set => this._time = ( (uint)(this._time & ~(0xFE000000)) | (((uint)value & 0x7F) << 25) );
+        }
 
+        /// <summary>
+        /// The month represented by 4 bits.
+        /// </summary>
+        public virtual int Month
+        {
+            get => (int)((this._time & 0x1E00000) >> 21);
+            set => this._time = ( (uint)(this._time & ~(0x1E00000)) | (((uint)value & 0xF) << 21) );
+        }
+
+        /// <summary>
+        /// The day represented by 5 bits.
+        /// </summary>
+        public virtual int Day
+        {
+            get => (int)((this._time & 0x1F0000) >> 16);
+            set => this._time = ( (uint)(this._time & ~(0x1F0000)) | (((uint)value & 0x1F) << 16) );
+        }
+
+        /// <summary>
+        /// The hour represented by 5 bits.
+        /// </summary>
+        public virtual int Hour 
+        {
+            get => (int)((this._time & 0xF800) >> 11);
+            set => this._time = ( (uint)(this._time & ~(0xF800)) | (((uint)value & 0x1F) << 11) );
+        }
+
+        /// <summary>
+        /// The minute represented by 6 bits.
+        /// </summary>
+        public virtual int Minute 
+        {
+            get => (int)((this._time & 0x7E0) >> 5);
+            set => this._time = ( (uint)(this._time & ~(0x7E0)) | (((uint)value & 0x3F) << 5) );
+        }
+
+        /// <summary>
+        /// The second represented by 5 bits. The internal value represents double seconds.
+        /// </summary>
+        public virtual int Second
+        {
+            get => (int)((this._time & 0x1F) * 2);
+            set => this._time = ((uint)(this._time & ~(0x1F)) | ((uint)(value / 2) & 0x1F) );
+        }
+
+        /// <summary>
+        /// Gets the raw timestamp.
+        /// </summary>
+        /// <returns>The raw timestamp,.</returns>
         public uint AsInteger()
         {
             return _time;
         }
 
+        /// <summary>
+        /// Gets the timestamp as a DateTime object.
+        /// </summary>
+        /// <returns>The timestamp as a DateTime object.</returns>
         public DateTime AsDateTime()
         {
-            if (!this._dataTime.HasValue)
+            return this._dateTime.HasValue ? _dateTime.Value : TryConvertToDateTime();
+        }
+
+        /// <summary>
+        /// Tries to parse the timestamp to a DateTime object. If it fails, then we try to parse it differently.
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private DateTime TryConvertToDateTime()
+        {
+            try
             {
+                // Try and create a DateTime from what we have.
+                _dateTime = new DateTime(
+                    this.Year, this.Month, this.Day,
+                    this.Hour, this.Minute, this.Second
+                );
+            }
+            catch (Exception)
+            {
+                // Try parsing the timestamp in a different manner.
                 try
                 {
-                    _dataTime = new DateTime(
-                        this.Year, this.Month, this.Day,
-                        this.Hour, this.Minute, this.Second
+                    // This is the same as the regular format, just the fields are swapped.
+                    // Bit Format:
+                    //     DoubleSeconds : 5 bits
+                    //     Minute : 6 bits
+                    //     Hour : 5 bits
+                    //     Day : 5 bits
+                    //     Month : 4 bits
+                    //     Year : 7 bits
+                    _dateTime = new DateTime(
+                        (int)(((_time & 0xffff) & 0x7F) + 2000),    // Year
+                        (int)(((_time & 0xffff) >> 7) & 0xF),       // Month
+                        (int)((_time & 0xffff) >> 0xB),             // Day
+                        (int)((_time >> 16) & 0x1f),                // Hour
+                        (int)(((_time >> 16) >> 5) & 0x3F),         // Minute
+                        (int)(((_time >> 16) >> 10) & 0xfffe)       // Second
                     );
                 }
                 catch (Exception)
                 {
-                    try
-                    {
-                        _dataTime = new DateTime(
-                            (int)(((_time & 0xffff) & 0x7F) + 2000),
-                            (int)(((_time & 0xffff) >> 7) & 0xF),
-                            (int)((_time & 0xffff) >> 0xB),
-                            (int)((_time >> 16) & 0x1f),
-                            (int)(((_time >> 16) >> 5) & 0x3F),
-                            (int)(((_time >> 16) >> 10) & 0xfffe)
-                        );
-                    }
-                    catch (Exception)
-                    {
-                        _dataTime = DateTime.MinValue;
-                    }
+                    // Just default to minimum value.
+                    // Hopefully the user can infer that the timestamp was an unknown/invalid format from that.
+                    _dateTime = DateTime.MinValue;
                 }
             }
 
-            return _dataTime.Value;
+            return _dateTime.Value;
         }
     }
 }
