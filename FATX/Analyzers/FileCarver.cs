@@ -31,6 +31,8 @@ namespace FATX.Analyzers
             long progressValue = 0;
             long progressUpdate = interval * 0x200;
 
+            var blockCount = Volume.FileAreaLength / (long)interval;
+
             ByteOrder byteOrder = Volume.Platform == Platform.Xbox ? ByteOrder.Little : ByteOrder.Big;
             SignatureMatcher scanner = new SignatureMatcher(Volume.FileAreaStream, byteOrder, interval);
 
@@ -48,8 +50,9 @@ namespace FATX.Analyzers
                 progressValue += interval;
                 if (progressValue % progressUpdate == 0)
                 {
-                    var p = (int)(((float)offset / (float)Volume.FileAreaLength) * 100);
-                    progress?.Report((p, $"Analyzing offset {offset} ({p}%)): Found {Results.Count} files"));
+                    var blockIndex = offset / interval;
+
+                    ReportProgress(blockIndex, blockCount, progress);
                 }
 
                 if (cancellationToken.IsCancellationRequested)
@@ -59,6 +62,12 @@ namespace FATX.Analyzers
             progress?.Report((100, "Finished"));
             Console.WriteLine("Finished!");
             return Results;
+        }
+
+        private void ReportProgress(long block, long totalBlocks, IProgress<(int, string)> progress)
+        {
+            var percentage = (int)(((float)block / (float)totalBlocks) * 100);
+            progress?.Report((percentage, $"Analyzing block {block} out of {totalBlocks} blocks ({percentage}%): Found {Results.Count} files"));
         }
     }
 }
