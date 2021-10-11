@@ -66,38 +66,41 @@ namespace FATX.FileSystem
         public bool IsDeleted() => FileNameLength == Constants.DirentDeleted;
 
         string _fileName;
-        public string FileName 
-        { 
-            get
+        public string FileName
+        {
+            get => ReadFileName();
+        }
+
+        private string ReadFileName()
+        {
+            // The reason for this being here is for lazy loading, to prevent the Indexer from
+            // running slowly.
+            if (string.IsNullOrEmpty(_fileName))
             {
-                // TODO: May move this back to ReadDirectoryEntry()
-                // The reason for this being here is for lazy loading, to prevent the Indexer from
-                // running slowly.
-                if (string.IsNullOrEmpty(_fileName))
+                if (FileNameLength == Constants.DirentDeleted)
                 {
-                    if (FileNameLength == Constants.DirentDeleted)
-                    {
-                        var trueFileNameLength = Array.IndexOf(FileNameBytes, (byte)0xff);
+                    // If the file was deleted, then the FileNameLength field was overwritten.
+                    // The name will be the characters up until the first 0xff bytes with a max of 42 characters.
+                    var trueFileNameLength = Array.IndexOf(FileNameBytes, (byte)0xff);
 
-                        if (trueFileNameLength == -1)
-                            trueFileNameLength = 42;
+                    if (trueFileNameLength == -1)
+                        trueFileNameLength = 42;
 
-                        _fileName = Encoding.ASCII.GetString(FileNameBytes, 0, trueFileNameLength);
-                    }
-                    else
-                    {
-                        if (FileNameLength > 42)
-                        {
-                            // Should throw exception
-                            FileNameLength = 42;
-                        }
-
-                        _fileName = Encoding.ASCII.GetString(FileNameBytes, 0, FileNameLength);
-                    }
+                    _fileName = Encoding.ASCII.GetString(FileNameBytes, 0, trueFileNameLength);
                 }
-                
-                return _fileName;
+                else
+                {
+                    if (FileNameLength > 42)
+                    {
+                        // Should throw exception
+                        FileNameLength = 42;
+                    }
+
+                    _fileName = Encoding.ASCII.GetString(FileNameBytes, 0, FileNameLength);
+                }
             }
+
+            return _fileName;
         }
 
         public void AddChildren(List<DirectoryEntry> children)
