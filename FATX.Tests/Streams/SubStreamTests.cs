@@ -19,7 +19,7 @@ namespace FATX.Streams.Tests
                 // Try reading from the start
                 byte[] expected = new byte[0x200];
                 for (var i = 0; i < 0x200; i++)
-                    expected[i] = i < 0x100 ? 0x1 : 0x2;
+                    expected[i] = i < 0x100 ? (byte)0x1 : (byte)0x2;
                 stream.Seek(0, SeekOrigin.Begin);
                 byte[] array = new byte[0x200];
                 stream.Read(array, 0, 0x200);

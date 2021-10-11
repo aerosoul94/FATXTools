@@ -48,7 +48,7 @@ namespace FATX.FileSystem.Tests
         {
             MemoryStream stream = new MemoryStream();
             stream.WriteByte(0x4);                          // FileNameLength
-            stream.WriteByte(isFile ? 0x00 : (byte)FileAttribute.Directory);         // FileAttributes
+            stream.WriteByte(isFile ? (byte)0x00 : (byte)FileAttribute.Directory);         // FileAttributes
             stream.Write(Encoding.ASCII.GetBytes("test"));  // FileName
             for (var i = 0; i < 42 - 4; i++)
                 stream.WriteByte(0xff);
