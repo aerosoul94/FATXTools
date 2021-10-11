@@ -1,8 +1,8 @@
-﻿using FATXTools.Utilities;
-using Microsoft.Win32.SafeHandles;
-using System;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
+
+using FATXTools.Utilities;
 
 namespace FATXTools.Dialogs
 {
@@ -14,58 +14,24 @@ namespace FATXTools.Dialogs
         {
             InitializeComponent();
 
-            for (int i = 0; i < 24; i++)
+            List<WinApi.DeviceInfo> list = WinApi.GetDeviceList();
+
+            for (var i = 0; i < list.Count; i++)
             {
-                string deviceName = String.Format(@"\\.\PhysicalDrive{0}", i);
-                SafeFileHandle handle = WinApi.CreateFile(
-                    deviceName,
-                    FileAccess.Read,
-                    FileShare.None,
-                    IntPtr.Zero,
-                    FileMode.Open,
-                    0,
-                    IntPtr.Zero
-                    );
+                var device = list[i];
+                var deviceItem = listView1.Items.Add(device.DeviceName);
 
-                if (handle.IsInvalid)
-                {
-                    continue;
-                }
-
-                var deviceItem = listView1.Items.Add(deviceName);
-                deviceItem.SubItems.Add(FormatSize(WinApi.GetDiskCapactity(handle)));
+                deviceItem.SubItems.Add(Utility.FormatBytes(device.Capacity));
                 deviceItem.ImageIndex = 0;
                 deviceItem.StateImageIndex = 0;
-
-                handle.Close();
             }
         }
 
-        static readonly string[] suffixes = { "Bytes", "KB", "MB", "GB", "TB", "PB" };
-        public static string FormatSize(Int64 bytes)
-        {
-            int counter = 0;
-            decimal number = (decimal)bytes;
-            while (Math.Round(number / 1024) >= 1)
-            {
-                number = number / 1024;
-                counter++;
-            }
-            return string.Format("{0:n1}{1}", number, suffixes[counter]);
-        }
-
-        public string SelectedDevice
-        {
-            get { return selectedDevice; }
-        }
+        public string SelectedDevice => selectedDevice;
 
         private void button2_Click(object sender, EventArgs e)
         {
             this.selectedDevice = listView1.SelectedItems[0].Text;
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
         }
     }
 }
