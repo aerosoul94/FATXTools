@@ -45,18 +45,21 @@ namespace FATX.Drive
             if (IsMemoryUnit(reader))
             {
                 BuildMmu(stream);
+                return;
             }
 
             // Dev kits have variable layouts
             if (IsDevKit(reader))
             {
                 BuildDevKit(reader);
+                return;
             }
 
             // Retail have always had the same layout
             if (IsRetail(reader))
             {
                 BuildRetail(stream);
+                return;
             }
         }
 
