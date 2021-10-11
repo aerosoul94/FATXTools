@@ -5,7 +5,7 @@ FATXTools is a data recovery tool for FATX file systems. The goal of this projec
 
 This is a C# port of the Python version: [fatx-tools](https://github.com/aerosoul94/fatx-tools)
 
-Download: [AppVeyor](https://ci.appveyor.com/project/aerosoul94/fatxtools/build/artifacts)
+Download: [Github Releases](https://github.com/aerosoul94/FATXTools/releases)
 
 # Contributors
 * Tdijital - Thanks for the bug reports and the amazing app logo <3
