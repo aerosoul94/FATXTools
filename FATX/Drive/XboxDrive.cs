@@ -33,7 +33,7 @@ namespace FATX.Drive
         private void CreateFATXPartition(Stream stream, string name, long offset, long length)
         {
             AddPartition(name, offset, length)
-                .Volume = new Volume(stream, Platform.Xbox, name, offset, length);
+                .Volume = new Volume(new SubStream(stream, offset, length), Platform.Xbox, name, offset, length);
         }
     }
 }

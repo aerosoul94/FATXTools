@@ -5,6 +5,7 @@ using System.Text.Json;
 
 using FATX.Drive;
 using FATX.FileSystem;
+using FATX.Streams;
 
 namespace FATXTools.Database
 {
@@ -108,8 +109,10 @@ namespace FATXTools.Database
 
                             var partition = new Partition(name, offset, length);
                             partition.Volume = new Volume(
-                                drive.Stream, drive is XboxDrive ? Platform.Xbox : Platform.X360,
-                                name, offset, length);
+                                new SubStream(drive.Stream, offset, length), 
+                                drive is XboxDrive ? Platform.Xbox : Platform.X360,
+                                name, offset, length
+                            );
 
                             OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(partition));
 

@@ -23,7 +23,7 @@ namespace FATX.FileSystem
 
         public void Read()
         {
-            //_stream.Seek(0, SeekOrigin.Begin);
+            _stream.Seek(0, SeekOrigin.Begin);
 
             var header = new byte[0x10];
             _stream.Read(header, 0, 0x10);

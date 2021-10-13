@@ -35,8 +35,9 @@ namespace FATX.FileSystem
             this._stream = stream;  // Should be a sub-stream from offset to offset + length
 
             Name = name;
-            Offset = offset;    // TODO: Not needed: Move to Partition
-            Length = length;    // TODO: Not needed: Move to Partition
+            // TODO: Get rid of these dependencies
+            Offset = offset;
+            Length = length;
 
             Platform = platform;
             Mounted = false;
@@ -45,12 +46,11 @@ namespace FATX.FileSystem
         public void Mount()
         {
             // TODO: Remove Offset dependency, use a SubStream then Seek to 0.
-            _stream.Seek(Offset, SeekOrigin.Begin);
             Metadata = new VolumeMetadata(_stream, Platform);
 
             FatByteOffset = Constants.ReservedBytes;
             BytesPerCluster = Metadata.SectorsPerCluster * Constants.SectorSize;
-            MaxClusters = (uint)((Length / (long)BytesPerCluster)  + Constants.ReservedClusters);
+            MaxClusters = (uint)((_stream.Length / (long)BytesPerCluster)  + Constants.ReservedClusters);
 
             FatType fatType = (MaxClusters < Constants.Cluster16Reserved) ?
                 FatType.Fat16 : FatType.Fat32;
@@ -58,13 +58,13 @@ namespace FATX.FileSystem
             BytesPerFat = (uint)(MaxClusters * (int)((fatType == FatType.Fat16) ? 2 : 4));
             BytesPerFat = (BytesPerFat + (Constants.PageSize - 1)) & ~(Constants.PageSize - 1);
 
-            _stream.Seek(Offset + FatByteOffset, SeekOrigin.Begin);
+            _stream.Seek(FatByteOffset, SeekOrigin.Begin);
             FileAllocationTable = new FileAllocationTable(_stream, Platform, fatType, MaxClusters);
             
             FileAreaByteOffset = FatByteOffset + BytesPerFat;
-            FileAreaLength = Length - FileAreaByteOffset;
+            FileAreaLength = _stream.Length - FileAreaByteOffset;
 
-            FileAreaStream = new SubStream(_stream, Offset + FileAreaByteOffset, FileAreaLength);
+            FileAreaStream = new SubStream(_stream, FileAreaByteOffset, FileAreaLength);
             ClusterReader = new ClusterReader(FileAreaStream, BytesPerCluster);
             _indexer = new Indexer(ClusterReader, FileAllocationTable, Platform, Metadata.RootDirFirstCluster);
 

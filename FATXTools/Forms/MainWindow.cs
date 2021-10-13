@@ -1,6 +1,4 @@
-﻿using Microsoft.Win32.SafeHandles;
-
-using System;
+﻿using System;
 using System.IO;
 using System.Security.Principal;
 using System.Windows.Forms;
@@ -8,10 +6,13 @@ using System.Windows.Forms;
 using FATX.Devices;
 using FATX.Drive;
 using FATX.FileSystem;
+using FATX.Streams;
 
 using FATXTools.Controls;
 using FATXTools.Dialogs;
 using FATXTools.Utilities;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace FATXTools.Forms
 {
@@ -331,7 +332,7 @@ namespace FATXTools.Forms
                 );
 
                 partition.Volume = new Volume(
-                    drive.Stream,
+                    new SubStream(drive.Stream, partitionDialog.PartitionOffset, partitionDialog.PartitionLength),
                     drive is XboxDrive ? Platform.Xbox : Platform.X360,
                     partitionDialog.PartitionName,
                     partitionDialog.PartitionOffset,

@@ -1,8 +1,10 @@
-﻿using FATX.Drive;
-using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+
+using FATX.Drive;
+using FATX.FileSystem;
+using FATX.Streams;
 
 namespace FATXTools.Dialogs
 {
@@ -33,7 +35,7 @@ namespace FATXTools.Dialogs
             if (dialogResult == DialogResult.OK)
             {
                 var volume = new Volume(
-                    _drive.Stream,
+                    new SubStream(_drive.Stream, dialog.PartitionOffset, dialog.PartitionLength),
                     _drive is XboxDrive ? Platform.Xbox : Platform.X360,
                     dialog.PartitionName,
                     dialog.PartitionOffset,
