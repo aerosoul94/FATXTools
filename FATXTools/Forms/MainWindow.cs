@@ -3,7 +3,6 @@
 using System;
 using System.IO;
 using System.Security.Principal;
-using System.Text;
 using System.Windows.Forms;
 
 using FATX.Devices;
@@ -34,49 +33,6 @@ namespace FATXTools.Forms
             Console.WriteLine("--------------------------------");
             Console.WriteLine("FATX-Tools v0.3");
             Console.WriteLine("--------------------------------");
-        }
-
-        public class LogWriter : TextWriter
-        {
-            private TextBox textBox;
-            private delegate void SafeCallDelegate(string text);
-            public LogWriter(TextBox textBox)
-            {
-                this.textBox = textBox;
-            }
-
-            public override void Write(char value)
-            {
-                textBox.Text += value;
-            }
-
-            public override void Write(string value)
-            {
-                textBox.AppendText(value);
-            }
-
-            public override void WriteLine()
-            {
-                textBox.AppendText(NewLine);
-            }
-
-            public override void WriteLine(string value)
-            {
-                if (textBox.InvokeRequired)
-                {
-                    var d = new SafeCallDelegate(WriteLine);
-                    textBox.BeginInvoke(d, new object[] { value });
-                }
-                else
-                {
-                    textBox.AppendText(value + NewLine);
-                }
-            }
-
-            public override Encoding Encoding
-            {
-                get { return Encoding.ASCII; }
-            }
         }
 
         private void CreateNewDriveView(string path)
