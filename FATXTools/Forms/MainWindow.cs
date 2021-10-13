@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using FATX.Devices;
 using FATX.Drive;
 using FATX.FileSystem;
-using FATX.Streams;
 
 using FATXTools.Controls;
 using FATXTools.Dialogs;
@@ -325,19 +324,14 @@ namespace FATXTools.Forms
             if (dialogResult == DialogResult.OK)
             {
                 var drive = driveView.Drive;
-                var partition = new Partition(
-                    partitionDialog.PartitionName,
-                    partitionDialog.PartitionOffset,
+
+                var partition = drive.AddPartition(
+                    partitionDialog.PartitionName, 
+                    partitionDialog.PartitionOffset, 
                     partitionDialog.PartitionLength
                 );
 
-                partition.Volume = new Volume(
-                    new SubStream(drive.Stream, partitionDialog.PartitionOffset, partitionDialog.PartitionLength),
-                    drive is XboxDrive ? Platform.Xbox : Platform.X360,
-                    partitionDialog.PartitionName,
-                    partitionDialog.PartitionOffset,
-                    partitionDialog.PartitionLength
-                );
+                partition.Volume = new Volume(partition, drive is XboxDrive ? Platform.Xbox : Platform.X360);
 
                 driveView.AddPartition(partition);
             }

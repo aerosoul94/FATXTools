@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using FATX.Drive;
 using FATX.Streams;
 
 namespace FATX.FileSystem
@@ -9,10 +10,12 @@ namespace FATX.FileSystem
     public class Volume
     {
         Indexer _indexer;
+        Partition _partition;
         readonly Stream _stream;
-        public string Name { get; }
-        public long Offset { get; }
-        public long Length { get; }
+
+        public string Name => _partition.Name;
+        public long Offset => _partition.Offset;
+        public long Length => _partition.Length;
 
         public Platform Platform { get; }
         public Boolean Mounted { get; private set; }
@@ -30,14 +33,10 @@ namespace FATX.FileSystem
         public long FileAreaByteOffset { get; private set; }
         public long FileAreaLength { get; private set; }
 
-        public Volume(Stream stream, Platform platform, string name, long offset, long length)
+        public Volume(Partition partition, Platform platform)
         {
-            this._stream = stream;  // Should be a sub-stream from offset to offset + length
-
-            Name = name;
-            // TODO: Get rid of these dependencies
-            Offset = offset;
-            Length = length;
+            _partition = partition;
+            _stream = partition.Stream;  // Should be a sub-stream from offset to offset + length
 
             Platform = platform;
             Mounted = false;
@@ -45,7 +44,6 @@ namespace FATX.FileSystem
 
         public void Mount()
         {
-            // TODO: Remove Offset dependency, use a SubStream then Seek to 0.
             Metadata = new VolumeMetadata(_stream, Platform);
 
             FatByteOffset = Constants.ReservedBytes;

@@ -86,11 +86,11 @@ namespace FATX.Drive
         {
             Name = "Xbox 360 Memory Unit";
 
-            CreateFATXPartition(stream, "Storage", 0x20E2A000, 0xCE1D0000);
-            CreateFATXPartition(stream, "SystemExtPartition", 0x13FFA000, 0xCE30000);
-            CreateFATXPartition(stream, "SystemURLCachePartition", 0xDFFA000, 0x6000000);
-            CreateFATXPartition(stream, "TitleURLCachePartition", 0xBFFA000, 0x2000000);
-            CreateFATXPartition(stream, "StorageSystem", 0x7FFA000, 0x4000000);
+            CreateFATXPartition("Storage", 0x20E2A000, 0xCE1D0000);
+            CreateFATXPartition("SystemExtPartition", 0x13FFA000, 0xCE30000);
+            CreateFATXPartition("SystemURLCachePartition", 0xDFFA000, 0x6000000);
+            CreateFATXPartition("TitleURLCachePartition", 0xBFFA000, 0x2000000);
+            CreateFATXPartition("StorageSystem", 0x7FFA000, 0x4000000);
         }
 
         private void BuildRetail(Stream stream)
@@ -99,8 +99,8 @@ namespace FATX.Drive
 
             const long dumpPartitionOffset = 0x100080000;
 
-            CreateFATXPartition(stream, "Partition1", 0x130eb0000, stream.Length - 0x130eb0000);
-            CreateFATXPartition(stream, "SystemPartition", 0x120eb0000, 0x10000000);
+            CreateFATXPartition("Partition1", 0x130eb0000, stream.Length - 0x130eb0000);
+            CreateFATXPartition("SystemPartition", 0x120eb0000, 0x10000000);
 
             // AddPartition("Cache0", 0x80000, 0x80000000);
             // AddPartition("Cache1", 0x80080000, 0x80000000);
@@ -109,7 +109,7 @@ namespace FATX.Drive
             // AddPartition("SystemURLCachePartition", dumpPartitionOffset + 0, 0x6000000);
             // AddPartition("TitleURLCachePartition", dumpPartitionOffset + 0x6000000, 0x2000000);
             // AddPartition("SystemExtPartition", dumpPartitionOffset + 0x0C000000, 0xCE30000);
-            CreateFATXPartition(stream, "SystemAuxPartition", dumpPartitionOffset + 0x18e30000, 0x8000000);
+            CreateFATXPartition("SystemAuxPartition", dumpPartitionOffset + 0x18e30000, 0x8000000);
         }
 
         private void BuildDevKit(EndianReader reader)
@@ -125,14 +125,10 @@ namespace FATX.Drive
             reader.ReadUInt16();    // Qfe
 
             // Partition1
-            CreateFATXPartition(reader.BaseStream, "Partition1",
-                ReadSectorCount(reader),
-                ReadSectorCount(reader));
+            CreateFATXPartition("Partition1", ReadSectorCount(reader), ReadSectorCount(reader));
 
             // SystemPartition
-            CreateFATXPartition(reader.BaseStream, "SystemPartition",
-                ReadSectorCount(reader),
-                ReadSectorCount(reader));
+            CreateFATXPartition("SystemPartition", ReadSectorCount(reader), ReadSectorCount(reader));
 
             // Unknown
             // AddPartition("Unknown1", ReadSectorCount(reader), ReadSectorCount(reader));
@@ -164,10 +160,11 @@ namespace FATX.Drive
             return (long)reader.ReadUInt32() * Constants.SectorSize;
         }
 
-        private void CreateFATXPartition(Stream stream, string name, long offset, long length)
+        private void CreateFATXPartition(string name, long offset, long length)
         {
-            AddPartition(name, offset, length)
-                .Volume = new Volume(new SubStream(stream, offset, length), Platform.X360, name, offset, length);
+            var partition = AddPartition(name, offset, length);
+
+            partition.Volume = new Volume(partition, Platform.X360);
         }
     }
 }

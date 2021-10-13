@@ -16,8 +16,10 @@ namespace FATX.Drive
 
         public Partition AddPartition(string name, long offset, long length)
         {
-            var partition = new Partition(name, offset, length);
+            var partition = new Partition(this.Stream, name, offset, length);
+
             Partitions.Add(partition);
+
             return partition;
         }
     }
