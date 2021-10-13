@@ -192,6 +192,9 @@ namespace FATXTools.Database
                 return null;
             }
 
+            // Convert the offset to an offset relative to the File Area
+            offset -= (this.volume.Offset + this.volume.FileAreaByteOffset);
+
             // Read the DirectoryEntry data
             byte[] data = new byte[0x40];
             this.volume.FileAreaStream.Seek(offset, SeekOrigin.Begin);
@@ -251,6 +254,8 @@ namespace FATXTools.Database
 
         public void LoadFileCarverResults(JsonElement fileCarverList)
         {
+            carvedFiles = new List<CarvedFile>();
+
             foreach (var file in fileCarverList.EnumerateArray())
             {
                 JsonElement offsetElement;
@@ -312,7 +317,7 @@ namespace FATXTools.Database
                 // TODO: We will begin replacing this when we start work on customizable "CarvedFiles"
                 //var analyzer = new FileCarver(this.volume, FileCarverInterval.Cluster);
 
-                LoadFromDatabase(fileCarverList);
+                LoadFileCarverResults(fileCarverList);
 
                 if (carvedFiles.Count > 0)
                 {
