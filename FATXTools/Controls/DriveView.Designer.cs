@@ -43,6 +43,7 @@
             this.partitionTabControl.Size = new System.Drawing.Size(1913, 1006);
             this.partitionTabControl.TabIndex = 0;
             this.partitionTabControl.SelectedIndexChanged += new System.EventHandler(this.partitionTabControl_SelectedIndexChanged);
+            this.partitionTabControl.MouseClick += new System.Windows.Forms.MouseEventHandler(this.partitionTabControl_MouseClick);
             //
             // contextMenuStrip
             //

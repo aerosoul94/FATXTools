@@ -13,6 +13,16 @@ namespace FATXTools.Utilities
         Task _task;
 
         private static TaskRunner _instance;
+        
+        /// <summary>
+        /// This event fires before a task is about to start.
+        /// </summary>
+        public event EventHandler OnTaskStarted;
+
+        /// <summary>
+        /// This event fires after a task has ended.
+        /// </summary>
+        public event EventHandler OnTaskEnded;
 
         TaskRunner()
         {
@@ -38,6 +48,9 @@ namespace FATXTools.Utilities
 
             using (var cancellationTokenSource = new CancellationTokenSource())
             {
+                // Notify subscribers that a task has started.
+                OnTaskStarted?.Invoke(this, null);
+
                 var cancellationToken = cancellationTokenSource.Token;
 
                 var dialog = new TaskDialog(owner, options, ref _task, cancellationTokenSource);
@@ -52,6 +65,9 @@ namespace FATXTools.Utilities
                 SystemSounds.Beep.Play();
 
                 _task = null;
+
+                // Notify subscribers that a task has ended.
+                OnTaskEnded?.Invoke(this, null);
             }
         }
     }

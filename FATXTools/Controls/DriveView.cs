@@ -14,55 +14,110 @@ namespace FATXTools
     public partial class DriveView : UserControl
     {
         /// <summary>
-        /// List of loaded drives.
-        /// </summary>
-        //private List<DriveReader> driveList = new List<DriveReader>();
-
-        /// <summary>
         /// Currently loaded drive.
         /// </summary>
         private XDrive drive;
-
-        private string driveName;
 
         /// <summary>
         /// List of partitions in this drive.
         /// </summary>
         private List<PartitionView> partitionViews = new List<PartitionView>();
 
-        public event EventHandler TaskStarted;
+        /// <summary>
+        /// The database model for this drive.
+        /// </summary>
+        private DriveDatabase driveDatabase;
 
-        public event EventHandler TaskCompleted;
-
+        /// <summary>
+        /// This event fires when a new tab has been selected.
+        /// </summary>
         public event EventHandler<PartitionSelectedEventArgs> TabSelectionChanged;
 
-        private DriveDatabase driveDatabase;
+        /// <summary>
+        /// Get the drive for this view.
+        /// </summary>
+        public XDrive Drive => drive;
+
+        /// <summary>
+        /// Get all file systems for this drive.
+        /// </summary>
+        public List<Volume> Volumes => partitionViews.Select(partitionView => partitionView.Volume).ToList();
 
         public DriveView()
         {
             InitializeComponent();
         }
 
-        public void AddDrive(string name, XDrive drive)
+        public void SetDrive(string name, XDrive drive)
         {
-            this.driveName = name;
             this.drive = drive;
 
             this.driveDatabase = new DriveDatabase(name, drive);
             this.driveDatabase.OnPartitionAdded += DriveDatabase_OnPartitionAdded;
             this.driveDatabase.OnPartitionRemoved += DriveDatabase_OnPartitionRemoved;
 
-            this.partitionTabControl.MouseClick += PartitionTabControl_MouseClick;
-
             foreach (var partition in drive.Partitions)
             {
                 AddPartition(partition);
             }
 
-            // Fire SelectedIndexChanged event.
-            SelectedIndexChanged();
+            // Fire SelectedPartitionChanged event.
+            SelectedPartitionChanged();
         }
 
+        public void AddPartition(Partition partition)
+        {
+            var volume = partition.Volume;
+
+            // Try to mount it as a FATX file system.
+            try
+            {
+                volume.Mount();
+
+                Console.WriteLine($"Successfully mounted {volume.Name}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to mount {volume.Name}: {e.Message}");
+            }
+
+            var page = new TabPage(volume.Name);
+            var partitionDatabase = driveDatabase.AddPartition(volume);
+            var partitionView = new PartitionView(volume, partitionDatabase);
+
+            partitionView.Dock = DockStyle.Fill;
+            page.Controls.Add(partitionView);
+            partitionTabControl.TabPages.Add(page);
+            partitionViews.Add(partitionView);
+        }
+
+        /// <summary>
+        /// Save the database to the specified path.
+        /// </summary>
+        /// <param name="path">The path to save the database to.</param>
+        public void Save(string path)
+        {
+            driveDatabase.Save(path);
+        }
+
+        /// <summary>
+        /// Load a database from the specified path.
+        /// </summary>
+        /// <param name="path">The path to load the database from.</param>
+        public void LoadFromJson(string path)
+        {
+            driveDatabase.LoadFromJson(path);
+        }
+
+        private void SelectedPartitionChanged()
+        {
+            TabSelectionChanged?.Invoke(this, partitionTabControl.TabCount == 0 ? null : new PartitionSelectedEventArgs()
+            {
+                volume = partitionViews[partitionTabControl.SelectedIndex].Volume
+            });
+        }
+
+        #region Drive Database Events
         private void DriveDatabase_OnPartitionRemoved(object sender, RemovePartitionEventArgs e)
         {
             var index = e.Index;
@@ -70,7 +125,14 @@ namespace FATXTools
             partitionViews.RemoveAt(index);
         }
 
-        private void PartitionTabControl_MouseClick(object sender, MouseEventArgs e)
+        private void DriveDatabase_OnPartitionAdded(object sender, AddPartitionEventArgs e)
+        {
+            AddPartition(e.Partition);
+        }
+        #endregion
+
+        #region Partition Tab Control Events
+        private void partitionTabControl_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
@@ -87,76 +149,9 @@ namespace FATXTools
             }
         }
 
-        private void DriveDatabase_OnPartitionAdded(object sender, AddPartitionEventArgs e)
-        {
-            AddPartition(e.Partition);
-        }
-
-        private void TaskRunner_TaskCompleted(object sender, EventArgs e)
-        {
-            TaskCompleted?.Invoke(sender, e);
-        }
-
-        private void TaskRunner_TaskStarted(object sender, EventArgs e)
-        {
-            TaskStarted?.Invoke(sender, e);
-        }
-
-        public void AddPartition(Partition partition)
-        {
-            var volume = partition.Volume;
-
-            try
-            {
-                volume.Mount();
-
-                Console.WriteLine($"Successfully mounted {volume.Name}");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Failed to mount {volume.Name}: {e.Message}");
-            }
-
-            var page = new TabPage(volume.Name);
-            var partitionDatabase = driveDatabase.AddPartition(volume);
-            var partitionView = new PartitionView(volume, partitionDatabase);
-            partitionView.Dock = DockStyle.Fill;
-            page.Controls.Add(partitionView);
-            partitionTabControl.TabPages.Add(page);
-            partitionViews.Add(partitionView);
-        }
-
-        public XDrive GetDrive()
-        {
-            return drive;
-        }
-
-        public List<Volume> GetVolumes()
-        {
-            return partitionViews.Select(partitionView => partitionView.Volume).ToList();
-        }
-
-        public void Save(string path)
-        {
-            driveDatabase.Save(path);
-        }
-
-        public void LoadFromJson(string path)
-        {
-            driveDatabase.LoadFromJson(path);
-        }
-
-        private void SelectedIndexChanged()
-        {
-            TabSelectionChanged?.Invoke(this, partitionTabControl.TabCount == 0 ? null : new PartitionSelectedEventArgs()
-            {
-                volume = partitionViews[partitionTabControl.SelectedIndex].Volume
-            });
-        }
-
         private void partitionTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            SelectedIndexChanged();
+            SelectedPartitionChanged();
         }
 
         private void ToolStripMenuItem1_Click(object sender, System.EventArgs e)
@@ -167,5 +162,6 @@ namespace FATXTools
                 driveDatabase.RemovePartition(partitionTabControl.SelectedIndex);
             }
         }
+        #endregion
     }
 }
