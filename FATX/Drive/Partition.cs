@@ -1,4 +1,3 @@
-using System;
 
 using FATX.FileSystem;
 

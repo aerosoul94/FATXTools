@@ -1,6 +1,7 @@
-﻿using FATX.Analyzers;
-using System;
+﻿using System;
 using System.Windows.Forms;
+
+using FATX.Analyzers;
 
 namespace FATXTools.Dialogs
 {

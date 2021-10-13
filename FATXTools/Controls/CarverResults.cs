@@ -7,8 +7,8 @@ using FATX.Analyzers;
 using FATX.FileSystem;
 
 using FATXTools.Dialogs;
-using FATXTools.Utilities;
 using FATXTools.Tasks;
+using FATXTools.Utilities;
 
 namespace FATXTools
 {

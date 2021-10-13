@@ -1,7 +1,7 @@
 using System;
-using System.IO;
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 
 namespace FATX.FileSystem
 {

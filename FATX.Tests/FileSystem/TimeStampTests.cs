@@ -1,7 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using System;
-
 namespace FATX.FileSystem.Tests
 {
     [TestClass]

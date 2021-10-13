@@ -1,7 +1,7 @@
 using System.IO;
 
-using FATX.Streams;
 using FATX.FileSystem;
+using FATX.Streams;
 
 namespace FATX.Drive
 {

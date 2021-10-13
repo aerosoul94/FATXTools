@@ -1,7 +1,7 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using System;
 using System.IO;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace FATX.Streams.Tests
 {

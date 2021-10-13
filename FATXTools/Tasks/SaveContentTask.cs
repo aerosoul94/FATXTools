@@ -1,9 +1,10 @@
-﻿using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Windows.Forms;
+
+using FATX.FileSystem;
 
 namespace FATXTools.Tasks
 {

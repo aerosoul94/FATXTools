@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 using FATX.Analyzers;
 using FATX.FileSystem;
+
 using FATXTools.Database;
 using FATXTools.Dialogs;
 using FATXTools.Tasks;

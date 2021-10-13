@@ -1,9 +1,10 @@
-﻿using FATX.Analyzers;
-using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+
+using FATX.Analyzers;
+using FATX.FileSystem;
 
 namespace FATXTools.Database
 {

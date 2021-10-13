@@ -3,8 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using FATXTools.Utilities;
-
 namespace FATXTools.Dialogs
 {
     public partial class TaskDialog : Form

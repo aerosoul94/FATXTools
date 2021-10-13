@@ -1,6 +1,7 @@
-﻿using FATXTools.Forms;
-using System;
+﻿using System;
 using System.Windows.Forms;
+
+using FATXTools.Forms;
 
 namespace FATXTools
 {

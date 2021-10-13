@@ -1,13 +1,14 @@
-﻿using FATX.Drive;
-using FATX.FileSystem;
-using FATXTools.Controls;
-using FATXTools.Database;
-using FATXTools.Utilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+
+using FATX.Drive;
+using FATX.FileSystem;
+
+using FATXTools.Controls;
+using FATXTools.Database;
 
 namespace FATXTools
 {

@@ -1,6 +1,7 @@
-﻿using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Windows.Forms;
+
+using FATX.FileSystem;
 
 namespace FATXTools.Dialogs
 {

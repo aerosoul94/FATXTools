@@ -1,9 +1,9 @@
-﻿using Microsoft.Win32.SafeHandles;
-
-using System.IO;
+﻿using System.IO;
 
 using FATX.Drive;
 using FATX.Streams;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace FATX.Devices
 {

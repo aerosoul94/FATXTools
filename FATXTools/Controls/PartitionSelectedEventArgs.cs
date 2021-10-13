@@ -1,5 +1,6 @@
-﻿using FATX.FileSystem;
-using System;
+﻿using System;
+
+using FATX.FileSystem;
 
 namespace FATXTools.Controls
 {

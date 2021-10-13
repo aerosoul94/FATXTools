@@ -7,7 +7,6 @@ using FATX.FileSystem;
 
 using FATXTools.Controls;
 using FATXTools.Database;
-using FATXTools.Utilities;
 
 namespace FATXTools
 {

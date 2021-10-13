@@ -1,6 +1,7 @@
-﻿using FATX.FileSystem;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+
+using FATX.FileSystem;
 
 namespace FATXTools.Database
 {

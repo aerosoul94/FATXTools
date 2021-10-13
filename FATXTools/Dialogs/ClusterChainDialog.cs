@@ -1,8 +1,10 @@
-﻿using FATX.FileSystem;
-using FATXTools.Database;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+
+using FATX.FileSystem;
+
+using FATXTools.Database;
 
 namespace FATXTools.Dialogs
 {

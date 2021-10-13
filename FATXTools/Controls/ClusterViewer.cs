@@ -1,10 +1,11 @@
-﻿using FATX.Analyzers;
-using FATX.FileSystem;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+
+using FATX.Analyzers;
+using FATX.FileSystem;
 //using Be.Windows.Forms;
 
 using ClusterColorMap = System.Collections.Generic.Dictionary<uint, System.Drawing.Color>;
