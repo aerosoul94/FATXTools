@@ -33,6 +33,43 @@ namespace FATXTools.Tasks
             this.progress = progress;
         }
 
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveTask(Volume volume, string path, DatabaseFile node)
+        {
+            return (cancellationToken, progress) =>
+            {
+                var task = new RecoveryTask(volume, cancellationToken, progress);
+
+                task.Save(path, node);
+            };
+        }
+
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveAllTask(Volume volume, string path, List<DatabaseFile> nodes)
+        {
+            return (cancellationToken, progress) =>
+            {
+                try
+                {
+                    var task = new RecoveryTask(volume, cancellationToken, progress);
+
+                    task.SaveAll(path, nodes);
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine("Save all cancelled");
+                }
+            };
+        }
+
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveClustersTask(Volume volume, string path, Dictionary<string, List<DatabaseFile>> clusters)
+        {
+            return (cancellationToken, progress) =>
+            {
+                var task = new RecoveryTask(volume, cancellationToken, progress);
+
+                task.SaveClusters(path, clusters);
+            };
+        }
+
         /// <summary>
         /// Save a single file node to the specified path.
         /// </summary>

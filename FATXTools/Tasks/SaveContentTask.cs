@@ -30,6 +30,26 @@ namespace FATXTools.Tasks
             this.progress = progress;
         }
 
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveTask(Volume volume, string path, DirectoryEntry node)
+        {
+            return (cancellationToken, progress) =>
+            {
+                var task = new SaveContentTask(volume, cancellationToken, progress);
+
+                task.Save(path, node);
+            };
+        }
+
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveAllTask(Volume volume, string path, List<DirectoryEntry> nodes)
+        {
+            return (cancellationToken, progress) =>
+            {
+                var task = new SaveContentTask(volume, cancellationToken, progress);
+
+                task.SaveAll(path, nodes);
+            };
+        }
+
         /// <summary>
         /// Save a single file node to the specified path.
         /// </summary>

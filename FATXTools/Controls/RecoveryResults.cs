@@ -20,47 +20,33 @@ namespace FATXTools
     {
         private Volume _volume;
 
-        /// <summary>
-        /// Mapping of cluster index to it's directory entries.
-        /// </summary>
-        private Dictionary<uint, List<DatabaseFile>> clusterNodes =
-            new Dictionary<uint, List<DatabaseFile>>();
-
-        /// <summary>
-        /// Leads to the node of the current cluster.
-        /// </summary>
-        private TreeNode currentClusterNode;
-
-        private ListViewItemComparer listViewItemComparer;
+        private FileDatabase _fileDatabase;
 
         private IntegrityAnalyzer _integrityAnalyzer;
 
-        private FileDatabase _fileDatabase;
+        /// <summary>
+        /// Tree node for the currently selected cluster.
+        /// </summary>
+        private TreeNode _currentClusterNode;
 
-        private Color[] statusColor = new Color[]
+        /// <summary>
+        /// Mapping of cluster index to it's directory entries.
+        /// </summary>
+        private Dictionary<uint, List<DatabaseFile>> _clusterNodes =
+            new Dictionary<uint, List<DatabaseFile>>();
+
+        private ListViewItemComparer _listViewItemComparer;
+
+        private static readonly Color[] StatusColors = new Color[]
         {
             Color.FromArgb(150, 250, 150), // Green
             Color.FromArgb(200, 250, 150), // Yellow-Green
-            Color.FromArgb(250, 250, 150),
-            Color.FromArgb(250, 200, 150),
-            Color.FromArgb(250, 150, 150),
+            Color.FromArgb(250, 250, 150), // Yellow
+            Color.FromArgb(250, 200, 150), // Orange
+            Color.FromArgb(250, 150, 150), // Red
         };
 
         public event EventHandler NotifyDatabaseChanged;
-
-        public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer)
-        {
-            InitializeComponent();
-
-            this._fileDatabase = database;
-            this._integrityAnalyzer = integrityAnalyzer;
-            this._volume = database.GetVolume();
-
-            listViewItemComparer = new ListViewItemComparer();
-            listView1.ListViewItemSorter = listViewItemComparer;
-
-            PopulateTreeView(database.GetRootFiles());
-        }
 
         private enum NodeType
         {
@@ -80,6 +66,20 @@ namespace FATXTools
             }
         }
 
+        public RecoveryResults(FileDatabase database, IntegrityAnalyzer integrityAnalyzer)
+        {
+            InitializeComponent();
+
+            _fileDatabase = database;
+            _integrityAnalyzer = integrityAnalyzer;
+            _volume = database.GetVolume();
+
+            _listViewItemComparer = new ListViewItemComparer();
+            listView1.ListViewItemSorter = _listViewItemComparer;
+
+            PopulateTreeView(database.GetRootFiles());
+        }
+
         private void PopulateFolder(List<DatabaseFile> children, TreeNode parent)
         {
             foreach (var child in children)
@@ -87,7 +87,9 @@ namespace FATXTools
                 if (child.IsDirectory())
                 {
                     var childNode = parent.Nodes.Add(child.FileName);
+
                     childNode.Tag = new NodeTag(child, NodeType.Dirent);
+
                     PopulateFolder(child.Children, childNode);
                 }
             }
@@ -98,28 +100,32 @@ namespace FATXTools
             PopulateTreeView(_fileDatabase.GetRootFiles());
         }
 
-        public void PopulateTreeView(List<DatabaseFile> results)
+        /// <summary>
+        /// Populates the TreeView with Cluster based tree nodes.
+        /// </summary>
+        /// <param name="root">The files at the root of the file system.</param>
+        public void PopulateTreeView(List<DatabaseFile> root)
         {
             // Remove all nodes
             treeView1.BeginUpdate();
             treeView1.Nodes.Clear();
-            clusterNodes.Clear();
+            _clusterNodes.Clear();
 
-            foreach (var result in results)
+            foreach (var result in root)
             {
                 var cluster = result.Cluster;
-                if (!clusterNodes.ContainsKey(cluster))
+                if (!_clusterNodes.ContainsKey(cluster))
                 {
                     List<DatabaseFile> list = new List<DatabaseFile>()
                     {
                         result
                     };
 
-                    clusterNodes.Add(cluster, list);
+                    _clusterNodes.Add(cluster, list);
                 }
                 else
                 {
-                    var list = clusterNodes[cluster];
+                    var list = _clusterNodes[cluster];
                     list.Add(result);
                 }
 
@@ -128,7 +134,7 @@ namespace FATXTools
                 if (!treeView1.Nodes.ContainsKey(clusterNodeText))
                 {
                     clusterNode = treeView1.Nodes.Add(clusterNodeText, clusterNodeText);
-                    clusterNode.Tag = new NodeTag(clusterNodes[cluster], NodeType.Cluster);
+                    clusterNode.Tag = new NodeTag(_clusterNodes[cluster], NodeType.Cluster);
                 }
                 else
                 {
@@ -138,7 +144,9 @@ namespace FATXTools
                 if (result.IsDirectory())
                 {
                     var rootNode = clusterNode.Nodes.Add(result.FileName);
+
                     rootNode.Tag = new NodeTag(result, NodeType.Dirent);
+
                     PopulateFolder(result.Children, rootNode);
                 }
             }
@@ -160,7 +168,7 @@ namespace FATXTools
             }
             else
             {
-                NodeTag nodeTag = (NodeTag)currentClusterNode.Tag;
+                NodeTag nodeTag = (NodeTag)_currentClusterNode.Tag;
                 upDir.Tag = new NodeTag(nodeTag.Tag as List<DatabaseFile>, NodeType.Cluster);
             }
 
@@ -195,7 +203,7 @@ namespace FATXTools
                 item.SubItems.Add("0x" + databaseFile.Offset.ToString("x"));
                 item.SubItems.Add(databaseFile.Cluster.ToString());
 
-                item.BackColor = statusColor[databaseFile.GetRanking()];
+                item.BackColor = StatusColors[databaseFile.GetRanking()];
 
                 index++;
 
@@ -206,119 +214,30 @@ namespace FATXTools
             listView1.EndUpdate();
         }
 
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            currentClusterNode = e.Node;
-            while (currentClusterNode.Parent != null)
-            {
-                currentClusterNode = currentClusterNode.Parent;
-            }
 
-            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
-
-            NodeTag nodeTag = (NodeTag)e.Node.Tag;
-            switch (nodeTag.Type)
-            {
-                case NodeType.Cluster:
-                    List<DatabaseFile> dirents = (List<DatabaseFile>)nodeTag.Tag;
-
-                    PopulateListView(dirents, null);
-
-                    break;
-                case NodeType.Dirent:
-                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
-
-                    PopulateListView(databaseFile.Children, databaseFile.GetParent());
-
-                    break;
-            }
-        }
-
-        private void listView1_DoubleClick(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count > 1)
-                return;
-
-            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
-
-            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
-
-                    if (databaseFile.IsDirectory())
-                    {
-                        PopulateListView(databaseFile.Children, databaseFile.GetParent());
-                    }
-
-                    break;
-                case NodeType.Cluster:
-                    List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
-
-                    PopulateListView(dirents, null);
-
-                    break;
-            }
-        }
-
-        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverAllTask(string path, Dictionary<string, List<DatabaseFile>> clusters)
-        {
-            return (cancellationToken, progress) =>
-            {
-                new RecoveryTask(_volume, cancellationToken, progress)
-                    .SaveClusters(path, clusters);
-            };
-        }
-
-        private async void RunRecoverAllTaskAsync(string path, Dictionary<string, List<DatabaseFile>> clusters)
+        private async void RunRecoverDirectoryEntryTaskAsync(string path, DatabaseFile file)
         {
             var options = new TaskDialogOptions() { Title = "Save File" };
 
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunRecoverAllTask(path, clusters));
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RecoveryTask.RunSaveTask(_volume, path, file));
         }
 
-        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverDirectoryEntryTask(string path, DatabaseFile file)
-        {
-            return (cancellationToken, progress) =>
-            {
-                new RecoveryTask(_volume, cancellationToken, progress)
-                    .Save(path, file);
-            };
-        }
-
-        private async void RunRecoverDirectoryEntryTaskAsync(string path, DatabaseFile databaseFile)
-        {
-            var options = new TaskDialogOptions() { Title = "Save File" };
-
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
-                RunRecoverDirectoryEntryTask(path, databaseFile));
-        }
-
-        private Action<CancellationToken, IProgress<(int, string)>> RunRecoverCluster(string path, List<DatabaseFile> files)
-        {
-            return (cancellationToken, progress) =>
-            {
-                try
-                {
-                    new RecoveryTask(_volume, cancellationToken, progress)
-                        .SaveAll(path, files);
-                }
-                catch (OperationCanceledException)
-                {
-                    Console.WriteLine("Save all cancelled.");
-                }
-            };
-        }
-
-        private async void RunRecoverClusterTaskAsync(string path, List<DatabaseFile> files)
+        private async void RunRecoverAllTaskAsync(string path, List<DatabaseFile> files)
         {
             var options = new TaskDialogOptions() { Title = "Save All" };
 
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunRecoverCluster(path, files));
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RecoveryTask.RunSaveAllTask(_volume, path, files));
         }
 
+        private async void RunRecoverClustersTaskAsync(string path, Dictionary<string, List<DatabaseFile>> clusters)
+        {
+            var options = new TaskDialogOptions() { Title = "Save File" };
+
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RecoveryTask.RunSaveClustersTask(_volume, path, clusters));
+        }
+
+        #region ListView ContextMenu Actions
+        // ListView ContextMenu Action
         private void listRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
@@ -346,11 +265,12 @@ namespace FATXTools
                         }
                     }
 
-                    RunRecoverClusterTaskAsync(dialog.SelectedPath, selectedFiles);
+                    RunRecoverAllTaskAsync(dialog.SelectedPath, selectedFiles);
                 }
             }
         }
 
+        // ListView ContextMenu Action
         private void listRecoverCurrentDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
@@ -382,31 +302,33 @@ namespace FATXTools
                         }
                     }
 
-                    RunRecoverClusterTaskAsync(dialog.SelectedPath, selectedFiles);
+                    RunRecoverAllTaskAsync(dialog.SelectedPath, selectedFiles);
                 }
             }
         }
 
+        // ListView ContextMenu Action
         private void listRecoverAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    RunRecoverClusterTaskAsync(dialog.SelectedPath, _fileDatabase.GetRootFiles());
+                    RunRecoverAllTaskAsync(dialog.SelectedPath, _fileDatabase.GetRootFiles());
 
                     Console.WriteLine("Finished recovering files.");
                 }
             }
         }
 
+        // ListView ContextMenu Action
         private void listRecoverCurrentClusterToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    var clusterNode = currentClusterNode;
+                    var clusterNode = _currentClusterNode;
 
                     NodeTag nodeTag = (NodeTag)clusterNode.Tag;
 
@@ -419,7 +341,7 @@ namespace FATXTools
                         case NodeType.Cluster:
                             List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
 
-                            RunRecoverClusterTaskAsync(clusterDir, dirents);
+                            RunRecoverAllTaskAsync(clusterDir, dirents);
 
                             break;
                     }
@@ -429,6 +351,108 @@ namespace FATXTools
             }
         }
 
+        // ListView ContextMenu Action
+        private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
+
+                    FileInfoDialog dialog = new FileInfoDialog(this._volume, databaseFile.GetDirent());
+                    dialog.ShowDialog();
+
+                    break;
+            }
+        }
+
+        // ListView ContextMenu Action
+        private void viewCollisionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            // TODO: Create a new view or dialog for this.
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
+
+                    foreach (var collision in databaseFile.GetCollisions())
+                    {
+                        Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterReader.ClusterToPhysicalOffset(collision)})");
+                        var occupants = _integrityAnalyzer.GetClusterOccupants(collision);
+                        foreach (var occupant in occupants)
+                        {
+                            var o = occupant.GetDirent();
+                            Console.WriteLine($"{o.GetRootDirectoryEntry().Cluster}/{o.GetFullPath()}");
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        // ListView ContextMenu Action
+        private void editClusterChainToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile file = (DatabaseFile)nodeTag.Tag;
+
+                    ClusterChainDialog dialog = new ClusterChainDialog(this._volume, file);
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        file.ClusterChain = dialog.NewClusterChain;
+
+                        NotifyDatabaseChanged?.Invoke(null, null);
+
+                        RefreshTreeView();
+                    }
+
+                    break;
+
+            }
+        }
+
+        // ListView ContextMenu Action
+        private void testToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Target: 291581
+            ListViewItem selectedItem = listView1.SelectedItems[0];
+
+            NodeTag nodeTag = (NodeTag)selectedItem.Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
+
+                    if (!databaseFile.ClusterChain.Contains(291581))
+                        databaseFile.ClusterChain.Add(291581);
+
+                    break;
+            }
+
+            _fileDatabase.Update();
+            PopulateTreeView(_fileDatabase.GetRootFiles());
+        }
+        #endregion
+
+        #region TreeView ContextMenu Actions
         private void treeRecoverSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var dialog = new FolderBrowserDialog())
@@ -445,14 +469,14 @@ namespace FATXTools
 
                             string clusterDir = dialog.SelectedPath + "/" + selectedNode.Text;
                             Directory.CreateDirectory(clusterDir);
-                            RunRecoverClusterTaskAsync(clusterDir, dirents);
+                            RunRecoverAllTaskAsync(clusterDir, dirents);
 
                             break;
 
                         case NodeType.Dirent:
                             DatabaseFile dirent = nodeTag.Tag as DatabaseFile;
 
-                            RunRecoverClusterTaskAsync(dialog.SelectedPath, new List<DatabaseFile> { dirent });
+                            RunRecoverAllTaskAsync(dialog.SelectedPath, new List<DatabaseFile> { dirent });
 
                             break;
                     }
@@ -484,27 +508,90 @@ namespace FATXTools
                         }
                     }
 
-                    RunRecoverAllTaskAsync(dialog.SelectedPath, clusterList);
+                    RunRecoverClustersTaskAsync(dialog.SelectedPath, clusterList);
                 }
+            }
+        }
+        #endregion
+
+        #region TreeView Events
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            _currentClusterNode = e.Node;
+            while (_currentClusterNode.Parent != null)
+            {
+                _currentClusterNode = _currentClusterNode.Parent;
+            }
+
+            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
+
+            NodeTag nodeTag = (NodeTag)e.Node.Tag;
+            switch (nodeTag.Type)
+            {
+                case NodeType.Cluster:
+                    List<DatabaseFile> dirents = (List<DatabaseFile>)nodeTag.Tag;
+
+                    PopulateListView(dirents, null);
+
+                    break;
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
+
+                    PopulateListView(databaseFile.Children, databaseFile.GetParent());
+
+                    break;
+            }
+        }
+        #endregion
+
+        #region ListView Events
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 1)
+                return;
+
+            //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
+
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
+
+                    if (databaseFile.IsDirectory())
+                    {
+                        PopulateListView(databaseFile.Children, databaseFile.GetParent());
+                    }
+
+                    break;
+                case NodeType.Cluster:
+                    List<DatabaseFile> dirents = nodeTag.Tag as List<DatabaseFile>;
+
+                    PopulateListView(dirents, null);
+
+                    break;
             }
         }
 
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            listViewItemComparer.Column = (ColumnIndex)e.Column;
+            _listViewItemComparer.Column = (ColumnIndex)e.Column;
 
-            if (listViewItemComparer.Order == SortOrder.Ascending)
+            if (_listViewItemComparer.Order == SortOrder.Ascending)
             {
-                listViewItemComparer.Order = SortOrder.Descending;
+                _listViewItemComparer.Order = SortOrder.Descending;
             }
             else
             {
-                listViewItemComparer.Order = SortOrder.Ascending;
+                _listViewItemComparer.Order = SortOrder.Ascending;
             }
 
             listView1.Sort();
         }
+        #endregion
 
+        #region ListView Comparer
         public enum ColumnIndex
         {
             Index,
@@ -606,102 +693,6 @@ namespace FATXTools
                 }
             }
         }
-
-        private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
-                return;
-
-            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
-
-                    FileInfoDialog dialog = new FileInfoDialog(this._volume, databaseFile.GetDirent());
-                    dialog.ShowDialog();
-
-                    break;
-            }
-        }
-
-        private void viewCollisionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
-                return;
-
-            // TODO: Create a new view or dialog for this.
-            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
-
-                    foreach (var collision in databaseFile.GetCollisions())
-                    {
-                        Console.WriteLine($"Cluster: {collision} (Offset: {_volume.ClusterReader.ClusterToPhysicalOffset(collision)})");
-                        var occupants = _integrityAnalyzer.GetClusterOccupants(collision);
-                        foreach (var occupant in occupants)
-                        {
-                            var o = occupant.GetDirent();
-                            Console.WriteLine($"{o.GetRootDirectoryEntry().Cluster}/{o.GetFullPath()}");
-                        }
-                    }
-
-                    break;
-            }
-        }
-
-        private void editClusterChainToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
-                return;
-
-            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DatabaseFile file = (DatabaseFile)nodeTag.Tag;
-
-                    ClusterChainDialog dialog = new ClusterChainDialog(this._volume, file);
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        file.ClusterChain = dialog.NewClusterChain;
-
-                        NotifyDatabaseChanged?.Invoke(null, null);
-
-                        RefreshTreeView();
-                    }
-
-                    break;
-
-            }
-        }
-
-        private void testToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // Target: 291581
-            ListViewItem selectedItem = listView1.SelectedItems[0];
-
-            NodeTag nodeTag = (NodeTag)selectedItem.Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
-
-                    if (!databaseFile.ClusterChain.Contains(291581))
-                        databaseFile.ClusterChain.Add(291581);
-
-                    break;
-            }
-
-            _fileDatabase.Update();
-            PopulateTreeView(_fileDatabase.GetRootFiles());
-        }
-
+        #endregion
     }
 }

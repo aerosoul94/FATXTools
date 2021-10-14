@@ -16,14 +16,14 @@ namespace FATXTools.Controls
 {
     public partial class FileExplorer : UserControl
     {
-        private Color deletedColor = Color.FromArgb(255, 200, 200);
-
         private Volume volume;
+
+        private ListViewItemComparer _listViewItemComparer;
 
         public event EventHandler OnMetadataAnalyzerCompleted;
         public event EventHandler OnFileCarverCompleted;
 
-        private ListViewItemComparer listViewItemComparer;
+        private static readonly Color DeletedColor = Color.FromArgb(255, 200, 200);
 
         private enum NodeType
         {
@@ -49,8 +49,8 @@ namespace FATXTools.Controls
 
             this.volume = volume;
 
-            this.listViewItemComparer = new ListViewItemComparer();
-            this.listView1.ListViewItemSorter = this.listViewItemComparer;
+            this._listViewItemComparer = new ListViewItemComparer();
+            this.listView1.ListViewItemSorter = this._listViewItemComparer;
 
             var rootNode = treeView1.Nodes.Add("Root");
             rootNode.Tag = new NodeTag(null, NodeType.Root);
@@ -131,7 +131,7 @@ namespace FATXTools.Controls
 
                 if (dirent.IsDeleted())
                 {
-                    item.BackColor = deletedColor;
+                    item.BackColor = DeletedColor;
                 }
 
                 index++;
@@ -143,70 +143,48 @@ namespace FATXTools.Controls
             listView1.EndUpdate();
         }
 
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        private void OpenDirectory(DirectoryEntry dirent)
         {
-            NodeTag nodeTag = (NodeTag)e.Node.Tag;
+            if (!dirent.IsDirectory())
+                return;
 
+            if (dirent.IsDeleted())
+                Console.WriteLine($"Cannot loads contents of a deleted directory: {dirent.FileName}");
+            else
+                PopulateListView(dirent.Children, dirent);
+        }
+
+        private void SaveNodeTag(string path, NodeTag nodeTag)
+        {
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
                     DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-                    if (dirent.IsDeleted())
-                    {
-                        Console.WriteLine($"Cannot loads contents of a deleted directory: {dirent.FileName}");
-                    }
-                    else
-                    {
-                        PopulateListView(dirent.Children, dirent);
-                    }
+                    RunSaveDirectoryEntryTaskAsync(path, dirent);
 
                     break;
                 case NodeType.Root:
-
-                    PopulateListView(this.volume.Root, null);
-
+                    RunSaveAllTaskAsync(path, volume.Root);
                     break;
             }
         }
 
-        private void listView1_DoubleClick(object sender, EventArgs e)
+        private async void RunSaveDirectoryEntryTaskAsync(string path, DirectoryEntry dirent)
         {
-            if (listView1.SelectedItems.Count > 1)
-            {
-                return;
-            }
+            var options = new TaskDialogOptions() { Title = "Save File" };
 
-            ListViewItem item = listView1.SelectedItems[0];
-            NodeTag nodeTag = (NodeTag)item.Tag;
-
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
-
-                    if (!dirent.IsDirectory())
-                    {
-                        return;
-                    }
-
-                    if (dirent.IsDeleted())
-                    {
-                        Console.WriteLine($"Cannot display contents of a deleted directory: {dirent.FileName}");
-                    }
-                    else
-                    {
-                        PopulateListView(dirent.Children, dirent);
-                    }
-
-                    break;
-
-                case NodeType.Root:
-                    PopulateListView(this.volume.Root, null);
-                    break;
-            }
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveTask(volume, path, dirent));
         }
 
+        private async void RunSaveAllTaskAsync(string path, List<DirectoryEntry> dirents)
+        {
+            var options = new TaskDialogOptions() { Title = "Save All" };
+
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveAllTask(volume, path, dirents));
+        }
+
+        #region Common ContextMenu Actions
         private async void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: Make into a user controlled setting
@@ -246,23 +224,9 @@ namespace FATXTools.Controls
                 Results = results
             });
         }
+        #endregion
 
-        private void SaveNodeTag(string path, NodeTag nodeTag)
-        {
-            switch (nodeTag.Type)
-            {
-                case NodeType.Dirent:
-                    DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
-
-                    RunSaveDirectoryEntryTaskAsync(path, dirent);
-
-                    break;
-                case NodeType.Root:
-                    RunSaveAllTaskAsync(path, volume.Root);
-                    break;
-            }
-        }
-
+        #region TreeView ContextMenu Actions
         private void treeSaveSelectedToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog();
@@ -271,7 +235,50 @@ namespace FATXTools.Controls
                 SaveNodeTag(dialog.SelectedPath, (NodeTag)treeView1.SelectedNode.Tag);
             }
         }
+        #endregion
 
+        #region ListView ContextMenu Actions
+        // ListView ContextMenu Actions
+        private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog dialog = new FolderBrowserDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
+            }
+        }
+
+        // ListView ContextMenu Actions
+        private void saveAllToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog dialog = new FolderBrowserDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
+            }
+        }
+
+        // ListView ContextMenu Actions
+        private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+                return;
+
+            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+
+            switch (nodeTag.Type)
+            {
+                case NodeType.Dirent:
+                    DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
+
+                    FileInfoDialog dialog = new FileInfoDialog(this.volume, dirent);
+                    dialog.ShowDialog();
+
+                    break;
+            }
+        }
+
+        // ListView ContextMenu Actions
         private void listSaveSelectedToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
@@ -299,92 +306,74 @@ namespace FATXTools.Controls
                 RunSaveAllTaskAsync(dialog.SelectedPath, selectedFiles);
             }
         }
+        #endregion
 
-        private Action<CancellationToken, IProgress<(int, string)>> RunSaveDirectoryEntryTask(string path, DirectoryEntry dirents)
+        #region TreeView Events
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            return (cancellationToken, progress) =>
+            NodeTag nodeTag = (NodeTag)e.Node.Tag;
+
+            switch (nodeTag.Type)
             {
-                new SaveContentTask(volume, cancellationToken, progress)
-                    .Save(path, dirents);
-            };
-        }
+                case NodeType.Dirent:
+                    DirectoryEntry dirent = nodeTag.Tag as DirectoryEntry;
 
-        private async void RunSaveDirectoryEntryTaskAsync(string path, DirectoryEntry dirent)
-        {
-            var options = new TaskDialogOptions() { Title = "Save File" };
+                    OpenDirectory(dirent);
 
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunSaveDirectoryEntryTask(path, dirent));
-        }
+                    break;
+                case NodeType.Root:
 
-        private Action<CancellationToken, IProgress<(int, string)>> RunSaveAllTask(string path, List<DirectoryEntry> dirents)
-        {
-            return (cancellationToken, progress) =>
-            {
-                new SaveContentTask(volume, cancellationToken, progress)
-                    .SaveAll(path, dirents);
-            };
-        }
+                    PopulateListView(this.volume.Root, null);
 
-        private async void RunSaveAllTaskAsync(string path, List<DirectoryEntry> dirents)
-        {
-            var options = new TaskDialogOptions() { Title = "Save All" };
-
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, RunSaveAllTask(path, dirents));
-        }
-
-        private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            FolderBrowserDialog dialog = new FolderBrowserDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
+                    break;
             }
         }
+        #endregion
 
-        private void saveAllToolStripMenuItem2_Click(object sender, EventArgs e)
+        #region ListView Events
+        private void listView1_DoubleClick(object sender, EventArgs e)
         {
-            FolderBrowserDialog dialog = new FolderBrowserDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
+            if (listView1.SelectedItems.Count > 1)
             {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
-            }
-        }
-
-        private void viewInformationToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
                 return;
+            }
 
-            NodeTag nodeTag = (NodeTag)listView1.SelectedItems[0].Tag;
+            ListViewItem item = listView1.SelectedItems[0];
+            NodeTag nodeTag = (NodeTag)item.Tag;
 
             switch (nodeTag.Type)
             {
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    FileInfoDialog dialog = new FileInfoDialog(this.volume, dirent);
-                    dialog.ShowDialog();
+                    OpenDirectory(dirent);
 
+                    break;
+
+                case NodeType.Root:
+                    PopulateListView(this.volume.Root, null);
                     break;
             }
         }
 
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            listViewItemComparer.Column = (ColumnIndex)e.Column;
+            _listViewItemComparer.Column = (ColumnIndex)e.Column;
 
-            if (listViewItemComparer.Order == SortOrder.Ascending)
+            if (_listViewItemComparer.Order == SortOrder.Ascending)
             {
-                listViewItemComparer.Order = SortOrder.Descending;
+                _listViewItemComparer.Order = SortOrder.Descending;
             }
             else
             {
-                listViewItemComparer.Order = SortOrder.Ascending;
+                _listViewItemComparer.Order = SortOrder.Ascending;
             }
 
             listView1.Sort();
         }
+        #endregion
 
+        #region ListView Comparer
         public enum ColumnIndex
         {
             Index,
@@ -486,5 +475,6 @@ namespace FATXTools.Controls
                 }
             }
         }
+        #endregion
     }
 }
