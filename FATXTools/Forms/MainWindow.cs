@@ -17,7 +17,7 @@ namespace FATXTools.Forms
 {
     public partial class MainWindow : Form
     {
-        private DriveView driveView;
+        private DriveView _driveView;
 
         private const string ApplicationTitle = "FATX-Recover";
 
@@ -25,11 +25,11 @@ namespace FATXTools.Forms
         {
             InitializeComponent();
 
-            this.Text = ApplicationTitle;
+            Text = ApplicationTitle;
 
             SetDatabaseOptionsEnabled(false);
 
-            Console.SetOut(new LogWriter(this.textBox1));
+            Console.SetOut(new LogWriter(textBox1));
             Console.WriteLine("--------------------------------");
             Console.WriteLine("FATX-Tools v0.3");
             Console.WriteLine("--------------------------------");
@@ -42,7 +42,7 @@ namespace FATXTools.Forms
             string fileName = Path.GetFileName(path);
 
             RawImage disk = new RawImage(path);
-            driveView.SetDrive(fileName, disk.Drive);
+            _driveView.SetDrive(fileName, disk.Drive);
 
             SetDatabaseOptionsEnabled(true);
         }
@@ -58,7 +58,7 @@ namespace FATXTools.Forms
             long sectorLength = WinApi.GetSectorSize(handle);
 
             PhysicalDisk disk = new PhysicalDisk(handle, length, sectorLength);
-            driveView.SetDrive(device, disk.Drive);
+            _driveView.SetDrive(device, disk.Drive);
 
             SetDatabaseOptionsEnabled(true);
         }
@@ -66,21 +66,23 @@ namespace FATXTools.Forms
         private void CreateNewDriveView(string path)
         {
             // Update the title to the newly loaded drive's file name.
-            this.Text = $"{ApplicationTitle} - {Path.GetFileName(path)}";
+            Text = $"{ApplicationTitle} - {Path.GetFileName(path)}";
 
             // Destroy the current drive view
-            splitContainer1.Panel1.Controls.Remove(driveView);
+            splitContainer1.Panel1.Controls.Remove(_driveView);
 
             // Create a new view for this drive
-            driveView = new DriveView();
-            driveView.Dock = DockStyle.Fill;
-            driveView.TabSelectionChanged += DriveView_TabSelectionChanged;
+            _driveView = new DriveView
+            {
+                Dock = DockStyle.Fill
+            };
+            _driveView.TabSelectionChanged += DriveView_TabSelectionChanged;
 
             TaskRunner.Instance.OnTaskStarted += MainWindow_OnTaskEnded;
             TaskRunner.Instance.OnTaskEnded += MainWindow_OnTaskStarted;
 
             // Add the view to the panel
-            splitContainer1.Panel1.Controls.Add(driveView);
+            splitContainer1.Panel1.Controls.Add(_driveView);
         }
 
         private void SetDatabaseOptionsEnabled(bool enabled)
@@ -174,7 +176,7 @@ namespace FATXTools.Forms
         {
             // TODO: For any partition, if any analysis was made, then we should ask.
             // TODO: Add setting for auto-saving (maybe at run-time or while closing)
-            if (driveView != null)
+            if (_driveView != null)
             {
                 var dialogResult = MessageBox.Show("Would you like to save progress before closing?", "Save Progress", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
                 if (dialogResult == DialogResult.Yes)
@@ -186,7 +188,7 @@ namespace FATXTools.Forms
 
                     if (saveFileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        driveView.Save(saveFileDialog.FileName);
+                        _driveView.Save(saveFileDialog.FileName);
 
                         Console.WriteLine($"Finished saving database: {saveFileDialog.FileName}");
                     }
@@ -274,7 +276,7 @@ namespace FATXTools.Forms
 
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
-                driveView.Save(saveFileDialog.FileName);
+                _driveView.Save(saveFileDialog.FileName);
 
                 Console.WriteLine($"Finished saving database: {saveFileDialog.FileName}");
             }
@@ -294,7 +296,7 @@ namespace FATXTools.Forms
                     "Load File", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dialogResult == DialogResult.Yes)
                 {
-                    driveView.LoadFromJson(openFileDialog.FileName);
+                    _driveView.LoadFromJson(openFileDialog.FileName);
 
                     Console.WriteLine($"Finished loading database: {openFileDialog.FileName}");
                 }
@@ -310,7 +312,7 @@ namespace FATXTools.Forms
         #region Drive Menu Commands
         private void managePartitionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (driveView != null)
+            if (_driveView != null)
             {
                 //PartitionManagerForm partitionManagerForm = new PartitionManagerForm(driveView.GetDrive(), driveView.GetDrive().GetPartitions());
                 //partitionManagerForm.ShowDialog();
@@ -323,17 +325,17 @@ namespace FATXTools.Forms
             var dialogResult = partitionDialog.ShowDialog();
             if (dialogResult == DialogResult.OK)
             {
-                var drive = driveView.Drive;
+                var drive = _driveView.Drive;
 
                 var partition = drive.AddPartition(
-                    partitionDialog.PartitionName, 
-                    partitionDialog.PartitionOffset, 
+                    partitionDialog.PartitionName,
+                    partitionDialog.PartitionOffset,
                     partitionDialog.PartitionLength
                 );
 
                 partition.Volume = new Volume(partition, drive is XboxDrive ? Platform.Xbox : Platform.X360);
 
-                driveView.AddPartition(partition);
+                _driveView.AddPartition(partition);
             }
         }
         #endregion

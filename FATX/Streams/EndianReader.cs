@@ -8,13 +8,13 @@ namespace FATX.Streams
         public EndianReader(Stream stream, ByteOrder byteOrder)
             : base(stream, new System.Text.UTF8Encoding(), false)
         {
-            this.ByteOrder = byteOrder;
+            ByteOrder = byteOrder;
         }
 
         public EndianReader(Stream stream)
             : base(stream)
         {
-            this.ByteOrder = ByteOrder.Little;
+            ByteOrder = ByteOrder.Little;
         }
 
         public ByteOrder ByteOrder { get; set; }

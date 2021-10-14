@@ -10,7 +10,7 @@ namespace FATX.Analyzers
     public class MetadataAnalyzer : IAnalyzer<List<DirectoryEntry>>
     {
         readonly long _interval;
-        
+
         public string Name => "Metadata Analyzer";
         public Volume Volume { get; private set; }
         public List<DirectoryEntry> Results { get; } = new List<DirectoryEntry>();
@@ -41,7 +41,7 @@ namespace FATX.Analyzers
         {
             var validator = new DirectoryEntryValidator((int)Volume.MaxClusters, DateTime.Now.Year);
             var clusterReader = Volume.ClusterReader;
-            
+
             for (uint cluster = 1; cluster < Volume.MaxClusters; cluster++)
             {
                 var data = clusterReader.ReadCluster(cluster);

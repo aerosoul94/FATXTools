@@ -25,7 +25,7 @@ namespace FATX.Streams.Tests
                 Assert.IsTrue(Enumerable.SequenceEqual(array, expected));
             }
         }
-        
+
         [TestMethod]
         public void TestSeek()
         {

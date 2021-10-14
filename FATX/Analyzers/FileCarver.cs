@@ -34,9 +34,8 @@ namespace FATX.Analyzers
 
             for (long offset = 0; offset < Volume.FileAreaLength; offset += interval)
             {
-                CarvedFile carvedFile;
 
-                scanner.Match(out carvedFile);
+                scanner.Match(out var carvedFile);
 
                 if (carvedFile != null)
                 {

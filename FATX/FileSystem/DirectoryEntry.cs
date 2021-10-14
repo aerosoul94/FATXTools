@@ -22,7 +22,7 @@ namespace FATX.FileSystem
 
         public DirectoryEntry(Platform platform, byte[] data, int offset)
         {
-            this.Parent = null;
+            Parent = null;
 
             ReadDirectoryEntry(platform, data, offset);
         }
@@ -39,7 +39,7 @@ namespace FATX.FileSystem
             {
                 FirstCluster = BitConverter.ToUInt32(data, offset + 0x2C);
                 FileSize = BitConverter.ToUInt32(data, offset + 0x30);
-                
+
                 CreationTime = new XTimeStamp(BitConverter.ToUInt32(data, offset + 0x34));
                 LastWriteTime = new XTimeStamp(BitConverter.ToUInt32(data, offset + 0x38));
                 LastAccessTime = new XTimeStamp(BitConverter.ToUInt32(data, offset + 0x3C));

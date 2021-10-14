@@ -17,17 +17,17 @@ namespace FATXTools
         /// <summary>
         /// Currently loaded drive.
         /// </summary>
-        private XDrive drive;
+        private XDrive _drive;
 
         /// <summary>
         /// List of partitions in this drive.
         /// </summary>
-        private List<PartitionView> partitionViews = new List<PartitionView>();
+        private List<PartitionView> _partitionViews = new List<PartitionView>();
 
         /// <summary>
         /// The database model for this drive.
         /// </summary>
-        private DriveDatabase driveDatabase;
+        private DriveDatabase _driveDatabase;
 
         /// <summary>
         /// This event fires when a new tab has been selected.
@@ -37,12 +37,12 @@ namespace FATXTools
         /// <summary>
         /// Get the drive for this view.
         /// </summary>
-        public XDrive Drive => drive;
+        public XDrive Drive => _drive;
 
         /// <summary>
         /// Get all file systems for this drive.
         /// </summary>
-        public List<Volume> Volumes => partitionViews.Select(partitionView => partitionView.Volume).ToList();
+        public List<Volume> Volumes => _partitionViews.Select(partitionView => partitionView.Volume).ToList();
 
         public DriveView()
         {
@@ -51,11 +51,11 @@ namespace FATXTools
 
         public void SetDrive(string name, XDrive drive)
         {
-            this.drive = drive;
+            _drive = drive;
 
-            this.driveDatabase = new DriveDatabase(name, drive);
-            this.driveDatabase.OnPartitionAdded += DriveDatabase_OnPartitionAdded;
-            this.driveDatabase.OnPartitionRemoved += DriveDatabase_OnPartitionRemoved;
+            _driveDatabase = new DriveDatabase(name, drive);
+            _driveDatabase.OnPartitionAdded += DriveDatabase_OnPartitionAdded;
+            _driveDatabase.OnPartitionRemoved += DriveDatabase_OnPartitionRemoved;
 
             foreach (var partition in drive.Partitions)
             {
@@ -83,13 +83,14 @@ namespace FATXTools
             }
 
             var page = new TabPage(volume.Name);
-            var partitionDatabase = driveDatabase.AddPartition(volume);
-            var partitionView = new PartitionView(volume, partitionDatabase);
-
-            partitionView.Dock = DockStyle.Fill;
+            var partitionDatabase = _driveDatabase.AddPartition(volume);
+            var partitionView = new PartitionView(volume, partitionDatabase)
+            {
+                Dock = DockStyle.Fill
+            };
             page.Controls.Add(partitionView);
             partitionTabControl.TabPages.Add(page);
-            partitionViews.Add(partitionView);
+            _partitionViews.Add(partitionView);
         }
 
         /// <summary>
@@ -98,7 +99,7 @@ namespace FATXTools
         /// <param name="path">The path to save the database to.</param>
         public void Save(string path)
         {
-            driveDatabase.Save(path);
+            _driveDatabase.Save(path);
         }
 
         /// <summary>
@@ -107,14 +108,14 @@ namespace FATXTools
         /// <param name="path">The path to load the database from.</param>
         public void LoadFromJson(string path)
         {
-            driveDatabase.LoadFromJson(path);
+            _driveDatabase.LoadFromJson(path);
         }
 
         private void SelectedPartitionChanged()
         {
             TabSelectionChanged?.Invoke(this, partitionTabControl.TabCount == 0 ? null : new PartitionSelectedEventArgs()
             {
-                volume = partitionViews[partitionTabControl.SelectedIndex].Volume
+                volume = _partitionViews[partitionTabControl.SelectedIndex].Volume
             });
         }
 
@@ -123,7 +124,7 @@ namespace FATXTools
         {
             var index = e.Index;
             partitionTabControl.TabPages.RemoveAt(index);
-            partitionViews.RemoveAt(index);
+            _partitionViews.RemoveAt(index);
         }
 
         private void DriveDatabase_OnPartitionAdded(object sender, AddPartitionEventArgs e)
@@ -143,7 +144,7 @@ namespace FATXTools
                     if (r.Contains(e.Location))
                     {
                         partitionTabControl.SelectedIndex = i;
-                        this.contextMenuStrip.Show(this.partitionTabControl, e.Location);
+                        contextMenuStrip.Show(partitionTabControl, e.Location);
                         break;
                     }
                 }
@@ -160,7 +161,7 @@ namespace FATXTools
             var dialogResult = MessageBox.Show("Are you sure you want to remove this partition?", "Are you sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dialogResult == DialogResult.Yes)
             {
-                driveDatabase.RemovePartition(partitionTabControl.SelectedIndex);
+                _driveDatabase.RemovePartition(partitionTabControl.SelectedIndex);
             }
         }
         #endregion

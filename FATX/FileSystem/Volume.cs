@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -18,7 +17,7 @@ namespace FATX.FileSystem
         public long Length => _partition.Length;
 
         public Platform Platform { get; }
-        public Boolean Mounted { get; private set; }
+        public bool Mounted { get; private set; }
         public List<DirectoryEntry> Root => _indexer.Root;
 
         public VolumeMetadata Metadata { get; private set; }
@@ -48,7 +47,7 @@ namespace FATX.FileSystem
 
             FatByteOffset = Constants.ReservedBytes;
             BytesPerCluster = Metadata.SectorsPerCluster * Constants.SectorSize;
-            MaxClusters = (uint)((_stream.Length / (long)BytesPerCluster)  + Constants.ReservedClusters);
+            MaxClusters = (uint)((_stream.Length / (long)BytesPerCluster) + Constants.ReservedClusters);
 
             FatType fatType = (MaxClusters < Constants.Cluster16Reserved) ?
                 FatType.Fat16 : FatType.Fat32;
@@ -58,7 +57,7 @@ namespace FATX.FileSystem
 
             _stream.Seek(FatByteOffset, SeekOrigin.Begin);
             FileAllocationTable = new FileAllocationTable(_stream, Platform, fatType, MaxClusters);
-            
+
             FileAreaByteOffset = FatByteOffset + BytesPerFat;
             FileAreaLength = _stream.Length - FileAreaByteOffset;
 

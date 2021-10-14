@@ -13,7 +13,7 @@ namespace FATXTools.Utilities
         Task _task;
 
         private static TaskRunner _instance;
-        
+
         /// <summary>
         /// This event fires before a task is about to start.
         /// </summary>
@@ -40,10 +40,10 @@ namespace FATXTools.Utilities
             }
         }
 
-        public async Task RunTaskAsync(Form owner, TaskDialogOptions options, 
+        public async Task RunTaskAsync(Form owner, TaskDialogOptions options,
             Action<CancellationToken, IProgress<ValueTuple<int, string>>> action)
         {
-            if (_task != null) 
+            if (_task != null)
                 throw new Exception("A task is already running.");
 
             using (var cancellationTokenSource = new CancellationTokenSource())

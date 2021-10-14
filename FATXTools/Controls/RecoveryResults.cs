@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Threading;
 using System.Windows.Forms;
 
 using FATX.Analyzers;
@@ -61,8 +60,8 @@ namespace FATXTools
 
             public NodeTag(object tag, NodeType type)
             {
-                this.Tag = tag;
-                this.Type = type;
+                Tag = tag;
+                Type = type;
             }
         }
 
@@ -176,8 +175,10 @@ namespace FATXTools
             int index = 1;
             foreach (DatabaseFile databaseFile in dirents)
             {
-                ListViewItem item = new ListViewItem(index.ToString());
-                item.Tag = new NodeTag(databaseFile, NodeType.Dirent);
+                ListViewItem item = new ListViewItem(index.ToString())
+                {
+                    Tag = new NodeTag(databaseFile, NodeType.Dirent)
+                };
 
                 item.SubItems.Add(databaseFile.FileName);
 
@@ -364,7 +365,7 @@ namespace FATXTools
                 case NodeType.Dirent:
                     DatabaseFile databaseFile = (DatabaseFile)nodeTag.Tag;
 
-                    FileInfoDialog dialog = new FileInfoDialog(this._volume, databaseFile.GetDirent());
+                    FileInfoDialog dialog = new FileInfoDialog(_volume, databaseFile.GetDirent());
                     dialog.ShowDialog();
 
                     break;
@@ -413,7 +414,7 @@ namespace FATXTools
                 case NodeType.Dirent:
                     DatabaseFile file = (DatabaseFile)nodeTag.Tag;
 
-                    ClusterChainDialog dialog = new ClusterChainDialog(this._volume, file);
+                    ClusterChainDialog dialog = new ClusterChainDialog(_volume, file);
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
                         file.ClusterChain = dialog.NewClusterChain;
@@ -606,30 +607,30 @@ namespace FATXTools
 
         class ListViewItemComparer : IComparer
         {
-            private ColumnIndex column;
-            private SortOrder order;
+            private ColumnIndex _column;
+            private SortOrder _order;
 
             public ColumnIndex Column
             {
-                get => column;
-                set => column = value;
+                get => _column;
+                set => _column = value;
             }
 
             public SortOrder Order
             {
-                get => order;
-                set => order = value;
+                get => _order;
+                set => _order = value;
             }
 
             public ListViewItemComparer()
             {
-                this.order = SortOrder.Ascending;
-                this.column = 0;
+                _order = SortOrder.Ascending;
+                _column = 0;
             }
 
             public ListViewItemComparer(ColumnIndex column)
             {
-                this.column = column;
+                _column = column;
             }
 
             public int Compare(object x, object y)
@@ -655,13 +656,13 @@ namespace FATXTools
                 DatabaseFile direntX = (DatabaseFile)((NodeTag)itemX.Tag).Tag;
                 DatabaseFile direntY = (DatabaseFile)((NodeTag)itemY.Tag).Tag;
 
-                switch (column)
+                switch (_column)
                 {
                     case ColumnIndex.Index:
-                        result = UInt32.Parse(itemX.Text).CompareTo(UInt32.Parse(itemY.Text));
+                        result = uint.Parse(itemX.Text).CompareTo(uint.Parse(itemY.Text));
                         break;
                     case ColumnIndex.Name:
-                        result = String.Compare(direntX.FileName, direntY.FileName);
+                        result = string.Compare(direntX.FileName, direntY.FileName);
                         break;
                     case ColumnIndex.Size:
                         result = direntX.FileSize.CompareTo(direntY.FileSize);
@@ -683,7 +684,7 @@ namespace FATXTools
                         break;
                 }
 
-                if (order == SortOrder.Ascending)
+                if (_order == SortOrder.Ascending)
                 {
                     return result;
                 }

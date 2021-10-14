@@ -10,23 +10,23 @@ namespace FATXTools.Database
         /// <summary>
         /// Map of files according to its offset
         /// </summary>
-        Dictionary<long, DatabaseFile> files;
+        Dictionary<long, DatabaseFile> _files;
 
         /// <summary>
         /// List of files at the root of the file system.
         /// </summary>
-        List<DatabaseFile> root;
+        List<DatabaseFile> _root;
 
         /// <summary>
         /// Volume associated with this database.
         /// </summary>
-        Volume volume;
+        Volume _volume;
 
         public FileDatabase(Volume volume)
         {
-            this.files = new Dictionary<long, DatabaseFile>();
-            this.root = new List<DatabaseFile>();
-            this.volume = volume;
+            _files = new Dictionary<long, DatabaseFile>();
+            _root = new List<DatabaseFile>();
+            _volume = volume;
 
             MergeActiveFileSystem(volume);
         }
@@ -37,7 +37,7 @@ namespace FATXTools.Database
         /// <returns>Number of files in this database.</returns>
         public int Count()
         {
-            return files.Count;
+            return _files.Count;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace FATXTools.Database
             // TODO: Only update affected files
 
             // Construct a new file system.
-            root = new List<DatabaseFile>();
+            _root = new List<DatabaseFile>();
 
             // Link the file system together.
             LinkFileSystem();
@@ -57,15 +57,15 @@ namespace FATXTools.Database
 
         public void Reset()
         {
-            this.files = new Dictionary<long, DatabaseFile>();
+            _files = new Dictionary<long, DatabaseFile>();
 
-            MergeActiveFileSystem(this.volume);
+            MergeActiveFileSystem(_volume);
         }
 
         private void FindChildren(DatabaseFile parent)
         {
             var chainMap = parent.ClusterChain;
-            foreach (var child in files)
+            foreach (var child in _files)
             {
                 if (chainMap.Contains(child.Value.Cluster))
                 {
@@ -92,14 +92,14 @@ namespace FATXTools.Database
         private void LinkFileSystem()
         {
             // Clear all previous links
-            foreach (var file in files.Values)
+            foreach (var file in _files.Values)
             {
                 file.Children = new List<DatabaseFile>();
                 file.SetParent(null);
             }
 
             // Link all of the files together
-            foreach (var file in files.Values)
+            foreach (var file in _files.Values)
             {
                 if (file.IsDirectory())
                 {
@@ -108,11 +108,11 @@ namespace FATXTools.Database
             }
 
             // Gather files at the root
-            foreach (var file in files.Values)
+            foreach (var file in _files.Values)
             {
                 if (!file.HasParent())
                 {
-                    root.Add(file);
+                    _root.Add(file);
                 }
             }
         }
@@ -166,8 +166,8 @@ namespace FATXTools.Database
             }
             else
             {
-                var clusterCount = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                         ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
+                var clusterCount = (int)(((dirent.FileSize + (_volume.BytesPerCluster - 1)) &
+                         ~(_volume.BytesPerCluster - 1)) / _volume.BytesPerCluster);
 
                 return Enumerable.Range((int)dirent.FirstCluster, clusterCount).Select(i => (uint)i).ToList();
             }
@@ -180,9 +180,9 @@ namespace FATXTools.Database
         /// <returns>DatabaseFile from this database</returns>
         public DatabaseFile GetFile(long offset)
         {
-            if (files.ContainsKey(offset))
+            if (_files.ContainsKey(offset))
             {
-                return files[offset];
+                return _files[offset];
             }
 
             return null;
@@ -195,9 +195,9 @@ namespace FATXTools.Database
         /// <returns>DatabaseFile from this database</returns>
         public DatabaseFile GetFile(DirectoryEntry dirent)
         {
-            if (files.ContainsKey(dirent.Offset))
+            if (_files.ContainsKey(dirent.Offset))
             {
-                return files[dirent.Offset];
+                return _files[dirent.Offset];
             }
 
             return null;
@@ -211,17 +211,17 @@ namespace FATXTools.Database
         /// <param name="deleted"></param>
         private DatabaseFile CreateDatabaseFile(DirectoryEntry dirent, bool deleted)
         {
-            files[dirent.Offset] = new DatabaseFile(dirent, deleted);
+            _files[dirent.Offset] = new DatabaseFile(dirent, deleted);
             if (deleted)
             {
-                files[dirent.Offset].ClusterChain = GenerateArtificialClusterChain(dirent);
+                _files[dirent.Offset].ClusterChain = GenerateArtificialClusterChain(dirent);
             }
             else
             {
-                files[dirent.Offset].ClusterChain = this.volume.FileAllocationTable.GetClusterChain(dirent);
+                _files[dirent.Offset].ClusterChain = _volume.FileAllocationTable.GetClusterChain(dirent);
             }
 
-            return files[dirent.Offset];
+            return _files[dirent.Offset];
         }
 
         /// <summary>
@@ -232,12 +232,12 @@ namespace FATXTools.Database
         public DatabaseFile AddFile(DirectoryEntry dirent, bool deleted)
         {
             // Create the file if it was not already added
-            if (!files.ContainsKey(dirent.Offset))
+            if (!_files.ContainsKey(dirent.Offset))
             {
                 return CreateDatabaseFile(dirent, deleted);
             }
 
-            return files[dirent.Offset];
+            return _files[dirent.Offset];
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace FATXTools.Database
         /// <returns></returns>
         public Dictionary<long, DatabaseFile> GetFiles()
         {
-            return files;
+            return _files;
         }
 
         /// <summary>
@@ -255,7 +255,7 @@ namespace FATXTools.Database
         /// <returns></returns>
         public List<DatabaseFile> GetRootFiles()
         {
-            return root;
+            return _root;
         }
 
         /// <summary>
@@ -264,7 +264,7 @@ namespace FATXTools.Database
         /// <returns></returns>
         public Volume GetVolume()
         {
-            return volume;
+            return _volume;
         }
     }
 }

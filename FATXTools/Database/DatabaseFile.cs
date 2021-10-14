@@ -9,40 +9,41 @@ namespace FATXTools.Database
         /// <summary>
         /// Whether or not this file has been deleted.
         /// </summary>
-        private bool deleted;
+        private bool _deleted;
 
         /// <summary>
         /// The status ranking given to this file.
         /// </summary>
-        private int ranking;
+        private int _ranking;
 
         /// <summary>
         /// The DirectoryEntry this DatabaseFile represents.
         /// </summary>
-        private DirectoryEntry dirent;
+        private DirectoryEntry _dirent;
 
         /// <summary>
         /// List of files that this file collides with.
         /// </summary>
-        private List<uint> collisions;
+        private List<uint> _collisions;
 
         /// <summary>
         /// This file's cluster chain.
         /// </summary>
-        private List<uint> clusterChain;
+        private List<uint> _clusterChain;
 
         /// <summary>
         /// This file's parent.
         /// </summary>
-        private DatabaseFile parent;
+        private DatabaseFile _parent;
 
         public DatabaseFile(DirectoryEntry dirent, bool deleted)
         {
-            this.deleted = deleted;
-            this.dirent = dirent;
-            this.clusterChain = null;
-            this.parent = null;
-            this.Children = new List<DatabaseFile>();
+            _deleted = deleted;
+            _dirent = dirent;
+            _clusterChain = null;
+            _parent = null;
+
+            Children = new List<DatabaseFile>();
         }
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace FATXTools.Database
         /// <returns>Number of files in this file</returns>
         public long CountFiles()
         {
-            if (this.dirent.IsDeleted())
+            if (_dirent.IsDeleted())
             {
                 return 0;
             }
@@ -75,51 +76,51 @@ namespace FATXTools.Database
 
         public int GetRanking()
         {
-            return ranking;
+            return _ranking;
         }
 
         public void SetRanking(int value)
         {
-            ranking = value;
+            _ranking = value;
         }
 
         public List<uint> GetCollisions()
         {
-            return collisions;
+            return _collisions;
         }
 
         public void SetCollisions(List<uint> value)
         {
-            collisions = value;
+            _collisions = value;
         }
 
         public DirectoryEntry GetDirent()
         {
-            return dirent;
+            return _dirent;
         }
 
         public void SetParent(DatabaseFile parent)
         {
-            this.parent = parent;
+            _parent = parent;
         }
 
         public DatabaseFile GetParent()
         {
-            return this.parent;
+            return _parent;
         }
 
         public bool HasParent()
         {
-            return this.parent != null;
+            return _parent != null;
         }
 
         public bool IsDirectory()
         {
-            return dirent.IsDirectory();
+            return _dirent.IsDirectory();
         }
 
         // TODO: Rename to IsRecovered? This conflicts with DirectoryEntry::IsDeleted()
-        public bool IsDeleted => deleted;
+        public bool IsDeleted => _deleted;
 
         public List<DatabaseFile> Children
         {
@@ -129,20 +130,20 @@ namespace FATXTools.Database
 
         public List<uint> ClusterChain
         {
-            get => clusterChain;
-            set => clusterChain = value;
+            get => _clusterChain;
+            set => _clusterChain = value;
         }
 
-        public uint Cluster => dirent.Cluster;
-        public long Offset => dirent.Offset;
-        public uint FileNameLength => dirent.FileNameLength;
-        public FileAttribute FileAttributes => dirent.FileAttributes;
-        public string FileName => dirent.FileName;
-        public byte[] FileNameBytes => dirent.FileNameBytes;
-        public uint FirstCluster => dirent.FirstCluster;
-        public uint FileSize => dirent.FileSize;
-        public TimeStamp CreationTime => dirent.CreationTime;
-        public TimeStamp LastWriteTime => dirent.LastWriteTime;
-        public TimeStamp LastAccessTime => dirent.LastAccessTime;
+        public uint Cluster => _dirent.Cluster;
+        public long Offset => _dirent.Offset;
+        public uint FileNameLength => _dirent.FileNameLength;
+        public FileAttribute FileAttributes => _dirent.FileAttributes;
+        public string FileName => _dirent.FileName;
+        public byte[] FileNameBytes => _dirent.FileNameBytes;
+        public uint FirstCluster => _dirent.FirstCluster;
+        public uint FileSize => _dirent.FileSize;
+        public TimeStamp CreationTime => _dirent.CreationTime;
+        public TimeStamp LastWriteTime => _dirent.LastWriteTime;
+        public TimeStamp LastAccessTime => _dirent.LastAccessTime;
     }
 }

@@ -34,8 +34,8 @@ namespace FATX.FileSystem.Tests
             var dirent = new DirectoryEntry(Platform.Xbox, data, 0);
             Assert.AreEqual(0x4, dirent.FileNameLength);
             Assert.AreEqual("test", dirent.FileName);
-            Assert.AreEqual((UInt32)0x123, dirent.FirstCluster);
-            Assert.AreEqual((UInt32)0x456, dirent.FileSize);
+            Assert.AreEqual((uint)0x123, dirent.FirstCluster);
+            Assert.AreEqual((uint)0x456, dirent.FileSize);
         }
 
         [TestMethod]
@@ -52,11 +52,11 @@ namespace FATX.FileSystem.Tests
             stream.Write(Encoding.ASCII.GetBytes("test"));  // FileName
             for (var i = 0; i < 42 - 4; i++)
                 stream.WriteByte(0xff);
-            stream.Write(BitConverter.GetBytes((Int32)0x123));  // FirstCluster
-            stream.Write(BitConverter.GetBytes((Int32)0x456));  // FileSize
-            stream.Write(BitConverter.GetBytes((Int32)0));      // CreationTime
-            stream.Write(BitConverter.GetBytes((Int32)0));      // LastWriteTime
-            stream.Write(BitConverter.GetBytes((Int32)0));      // LastAccessTime
+            stream.Write(BitConverter.GetBytes((int)0x123));  // FirstCluster
+            stream.Write(BitConverter.GetBytes((int)0x456));  // FileSize
+            stream.Write(BitConverter.GetBytes((int)0));      // CreationTime
+            stream.Write(BitConverter.GetBytes((int)0));      // LastWriteTime
+            stream.Write(BitConverter.GetBytes((int)0));      // LastAccessTime
             return stream;
         }
     }

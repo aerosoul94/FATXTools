@@ -30,7 +30,7 @@ namespace FATX.Streams
             _stream.Position = position;
 
             // Round up the count to alignment
-            var end = ((_position + count) + (_alignment - 1)) / _alignment * _alignment; 
+            var end = ((_position + count) + (_alignment - 1)) / _alignment * _alignment;
             var alignedCount = end - position;
 
             var tempBuf = new byte[alignedCount];
@@ -53,10 +53,10 @@ namespace FATX.Streams
 
         public override bool CanSeek => _stream.CanSeek;
 
-        public override long Position 
-        { 
+        public override long Position
+        {
             get => _position;
-            set => _position = value; 
+            set => _position = value;
         }
 
         public override long Length => _length;

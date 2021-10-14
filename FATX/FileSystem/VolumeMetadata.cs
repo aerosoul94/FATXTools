@@ -15,8 +15,8 @@ namespace FATX.FileSystem
 
         public VolumeMetadata(Stream stream, Platform platform)
         {
-            this._stream = stream;
-            this._platform = platform;
+            _stream = stream;
+            _platform = platform;
 
             Read();
         }

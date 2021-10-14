@@ -9,8 +9,8 @@ namespace FATX.FileSystem
 
         public ClusterReader(Stream stream, uint bytesPerCluster)
         {
-            this._stream = stream;
-            this._bytesPerCluster = bytesPerCluster;
+            _stream = stream;
+            _bytesPerCluster = bytesPerCluster;
         }
 
         public byte[] ReadCluster(uint cluster)

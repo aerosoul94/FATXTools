@@ -12,9 +12,9 @@ namespace FATX.FileSystem
 
         public Indexer(ClusterReader reader, FileAllocationTable fileAllocationTable, Platform platform, uint rootDirFirstCluster)
         {
-            this._reader = reader;
-            this._platform = platform;
-            this._fileAllocationTable = fileAllocationTable;
+            _reader = reader;
+            _platform = platform;
+            _fileAllocationTable = fileAllocationTable;
 
             Root = ReadDirectoryStream(rootDirFirstCluster);
             PopulateDirectoryStream(Root, rootDirFirstCluster);

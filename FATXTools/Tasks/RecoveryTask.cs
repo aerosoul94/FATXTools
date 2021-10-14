@@ -18,19 +18,19 @@ namespace FATXTools.Tasks
     /// </summary>
     public class RecoveryTask
     {
-        private CancellationToken cancellationToken;
-        private IProgress<(int, string)> progress;
-        private Volume volume;
+        private Volume _volume;
+        private IProgress<(int, string)> _progress;
+        private CancellationToken _cancellationToken;
 
-        private string currentFile = String.Empty;
-        private int numSaved = 0;
-        private long numFiles;
+        private long _numFiles;
+        private int _numSaved = 0;
+        private string _currentFile = string.Empty;
 
         public RecoveryTask(Volume volume, CancellationToken cancellationToken, IProgress<(int, string)> progress)
         {
-            this.volume = volume;
-            this.cancellationToken = cancellationToken;
-            this.progress = progress;
+            _volume = volume;
+            _cancellationToken = cancellationToken;
+            _progress = progress;
         }
 
         public static Action<CancellationToken, IProgress<(int, string)>> RunSaveTask(Volume volume, string path, DatabaseFile node)
@@ -77,9 +77,9 @@ namespace FATXTools.Tasks
         /// <param name="node">The file node to save.</param>
         public void Save(string path, DatabaseFile node)
         {
-            numFiles = node.CountFiles();
+            _numFiles = node.CountFiles();
 
-            Console.WriteLine($"Saving {numFiles} files.");
+            Console.WriteLine($"Saving {_numFiles} files.");
 
             SaveNode(path, node);
         }
@@ -91,9 +91,9 @@ namespace FATXTools.Tasks
         /// <param name="nodes">The list of files to save.</param>
         public void SaveAll(string path, List<DatabaseFile> nodes)
         {
-            numFiles = CountFiles(nodes);
+            _numFiles = CountFiles(nodes);
 
-            Console.WriteLine($"Saving {numFiles} files.");
+            Console.WriteLine($"Saving {_numFiles} files.");
 
             foreach (var node in nodes)
             {
@@ -103,10 +103,10 @@ namespace FATXTools.Tasks
 
         public void SaveClusters(string path, Dictionary<string, List<DatabaseFile>> clusters)
         {
-            numFiles = 0;
+            _numFiles = 0;
             foreach (var cluster in clusters)
             {
-                numFiles += CountFiles(cluster.Value);
+                _numFiles += CountFiles(cluster.Value);
             }
 
             foreach (var cluster in clusters)
@@ -173,9 +173,9 @@ namespace FATXTools.Tasks
 
                 foreach (uint cluster in node.ClusterChain)
                 {
-                    byte[] clusterData = this.volume.ClusterReader.ReadCluster(cluster);
+                    byte[] clusterData = _volume.ClusterReader.ReadCluster(cluster);
 
-                    var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
+                    var writeSize = Math.Min(bytesLeft, _volume.BytesPerCluster);
                     outFile.Write(clusterData, 0, (int)writeSize);
 
                     bytesLeft -= writeSize;
@@ -234,8 +234,8 @@ namespace FATXTools.Tasks
 
         private void ReportProgress()
         {
-            var percent = (int)(((float)numSaved / (float)numFiles) * 100);
-            progress.Report((percent, $"{numSaved}/{numFiles}: {currentFile}"));
+            var percent = (int)(((float)_numSaved / (float)_numFiles) * 100);
+            _progress.Report((percent, $"{_numSaved}/{_numFiles}: {_currentFile}"));
         }
 
         /// <summary>
@@ -248,11 +248,11 @@ namespace FATXTools.Tasks
             path = path + "\\" + node.FileName;
             //Console.WriteLine(path);
 
-            currentFile = node.FileName;
-            numSaved++;
+            _currentFile = node.FileName;
+            _numSaved++;
             ReportProgress();
 
-            volume.ClusterReader.ReadCluster(node.FirstCluster);
+            _volume.ClusterReader.ReadCluster(node.FirstCluster);
 
             TryIOOperation(() =>
             {
@@ -261,9 +261,9 @@ namespace FATXTools.Tasks
                 FileSetTimeStamps(path, node);
             });
 
-            if (cancellationToken.IsCancellationRequested)
+            if (_cancellationToken.IsCancellationRequested)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                _cancellationToken.ThrowIfCancellationRequested();
             }
         }
 
@@ -277,8 +277,8 @@ namespace FATXTools.Tasks
             path = path + "\\" + node.FileName;
             //Console.WriteLine($"{path}");
 
-            currentFile = node.FileName;
-            numSaved++;
+            _currentFile = node.FileName;
+            _numSaved++;
             ReportProgress();
 
             if (!Directory.Exists(path))
@@ -296,9 +296,9 @@ namespace FATXTools.Tasks
                 DirectorySetTimestamps(path, node);
             });
 
-            if (cancellationToken.IsCancellationRequested)
+            if (_cancellationToken.IsCancellationRequested)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                _cancellationToken.ThrowIfCancellationRequested();
             }
         }
 

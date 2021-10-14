@@ -8,38 +8,39 @@ namespace FATXTools.Forms
     {
         public class LogWriter : TextWriter
         {
-            private TextBox textBox;
+            private TextBox _textBox;
             private delegate void SafeCallDelegate(string text);
+
             public LogWriter(TextBox textBox)
             {
-                this.textBox = textBox;
+                _textBox = textBox;
             }
 
             public override void Write(char value)
             {
-                textBox.Text += value;
+                _textBox.Text += value;
             }
 
             public override void Write(string value)
             {
-                textBox.AppendText(value);
+                _textBox.AppendText(value);
             }
 
             public override void WriteLine()
             {
-                textBox.AppendText(NewLine);
+                _textBox.AppendText(NewLine);
             }
 
             public override void WriteLine(string value)
             {
-                if (textBox.InvokeRequired)
+                if (_textBox.InvokeRequired)
                 {
                     var d = new SafeCallDelegate(WriteLine);
-                    textBox.BeginInvoke(d, new object[] { value });
+                    _textBox.BeginInvoke(d, new object[] { value });
                 }
                 else
                 {
-                    textBox.AppendText(value + NewLine);
+                    _textBox.AppendText(value + NewLine);
                 }
             }
 

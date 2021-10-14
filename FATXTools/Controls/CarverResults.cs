@@ -21,8 +21,8 @@ namespace FATXTools
         {
             InitializeComponent();
 
-            this._carvedFiles = files;
-            this._volume = volume;
+            _carvedFiles = files;
+            _volume = volume;
 
             PopulateResultsList(_carvedFiles);
         }
@@ -37,8 +37,8 @@ namespace FATXTools
             {
                 var item = listView1.Items.Add(i.ToString());
                 item.SubItems.Add(result.FileName);
-                item.SubItems.Add(String.Format("0x{0:X}", result.Offset + baseOffset));
-                item.SubItems.Add(String.Format("0x{0:X}", result.FileSize));
+                item.SubItems.Add(string.Format("0x{0:X}", result.Offset + baseOffset));
+                item.SubItems.Add(string.Format("0x{0:X}", result.FileSize));
                 item.Tag = result;
                 i++;
             }

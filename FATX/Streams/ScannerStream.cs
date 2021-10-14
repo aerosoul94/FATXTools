@@ -44,8 +44,8 @@ namespace FATX.Streams
 
         public override long Length => _length;
 
-        public override long Position 
-        { 
+        public override long Position
+        {
             get => _position;
             set => _position = value;
         }

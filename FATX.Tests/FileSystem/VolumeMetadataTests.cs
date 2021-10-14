@@ -40,7 +40,7 @@ namespace FATX.FileSystem.Tests
                 Array.Reverse(sectorsPerCluster);
                 Array.Reverse(rootDirFirstCluster);
             }
-            
+
             stream.Write(signature);
             stream.Write(serialNumber);
             stream.Write(sectorsPerCluster);

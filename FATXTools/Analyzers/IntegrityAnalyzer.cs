@@ -11,19 +11,19 @@ namespace FATX.Analyzers
         /// <summary>
         /// Active volume to analyze against.
         /// </summary>
-        private Volume volume;
+        private Volume _volume;
 
-        private FileDatabase database;
+        private FileDatabase _database;
 
         /// <summary>
         /// Mapping of cluster indexes to a list of entities that occupy it.
         /// </summary>
-        private Dictionary<uint, List<DatabaseFile>> clusterMap;
+        private Dictionary<uint, List<DatabaseFile>> _clusterMap;
 
         public IntegrityAnalyzer(Volume volume, FileDatabase database)
         {
-            this.volume = volume;
-            this.database = database;
+            _volume = volume;
+            _database = database;
 
             // Now that we have registered them, let's update the cluster map
             UpdateClusterMap();
@@ -33,7 +33,7 @@ namespace FATX.Analyzers
         {
             foreach (var cluster in databaseFile.ClusterChain)
             {
-                var occupants = clusterMap[(uint)cluster];
+                var occupants = _clusterMap[(uint)cluster];
                 if (!occupants.Contains(databaseFile))
                     occupants.Add(databaseFile);
             }
@@ -41,13 +41,13 @@ namespace FATX.Analyzers
 
         private void UpdateClusterMap()
         {
-            clusterMap = new Dictionary<uint, List<DatabaseFile>>((int)volume.MaxClusters);
-            for (uint i = 0; i < volume.MaxClusters; i++)
+            _clusterMap = new Dictionary<uint, List<DatabaseFile>>((int)_volume.MaxClusters);
+            for (uint i = 0; i < _volume.MaxClusters; i++)
             {
-                clusterMap[i] = new List<DatabaseFile>();
+                _clusterMap[i] = new List<DatabaseFile>();
             }
 
-            foreach (var pair in database.GetFiles())
+            foreach (var pair in _database.GetFiles())
             {
                 var databaseFile = pair.Value;
 
@@ -83,7 +83,7 @@ namespace FATX.Analyzers
 
         private void UpdateCollisions()
         {
-            foreach (var databaseFile in database.GetFiles().Values)
+            foreach (var databaseFile in _database.GetFiles().Values)
             {
                 databaseFile.SetCollisions(FindCollidingClusters(databaseFile));
             }
@@ -98,7 +98,7 @@ namespace FATX.Analyzers
             // also claiming it.
             foreach (var cluster in databaseFile.ClusterChain)
             {
-                if (clusterMap[(uint)cluster].Count > 1)
+                if (_clusterMap[(uint)cluster].Count > 1)
                 {
                     collidingClusters.Add((uint)cluster);
                 }
@@ -112,7 +112,7 @@ namespace FATX.Analyzers
             var dirent = databaseFile.GetDirent();
             foreach (var cluster in collisions)
             {
-                var clusterEnts = clusterMap[(uint)cluster];
+                var clusterEnts = _clusterMap[(uint)cluster];
                 foreach (var ent in clusterEnts)
                 {
                     var entDirent = ent.GetDirent();
@@ -181,8 +181,8 @@ namespace FATX.Analyzers
                     else
                     {
                         // File was predicted to be overwritten
-                        var numClusters = (int)(((dirent.FileSize + (this.volume.BytesPerCluster - 1)) &
-                            ~(this.volume.BytesPerCluster - 1)) / this.volume.BytesPerCluster);
+                        var numClusters = (int)(((dirent.FileSize + (_volume.BytesPerCluster - 1)) &
+                            ~(_volume.BytesPerCluster - 1)) / _volume.BytesPerCluster);
                         if (collisions.Count != numClusters)
                         {
                             // Not every cluster was overwritten
@@ -200,7 +200,7 @@ namespace FATX.Analyzers
 
         private void PerformRanking()
         {
-            foreach (var pair in database.GetFiles())
+            foreach (var pair in _database.GetFiles())
             {
                 DoRanking(pair.Value);
             }
@@ -210,9 +210,9 @@ namespace FATX.Analyzers
         {
             List<DatabaseFile> occupants;
 
-            if (clusterMap.ContainsKey(cluster))
+            if (_clusterMap.ContainsKey(cluster))
             {
-                occupants = clusterMap[cluster];
+                occupants = _clusterMap[cluster];
             }
             else
             {

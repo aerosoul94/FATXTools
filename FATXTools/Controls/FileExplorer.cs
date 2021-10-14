@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Threading;
 using System.Windows.Forms;
 
 using FATX.Analyzers;
@@ -16,7 +15,7 @@ namespace FATXTools.Controls
 {
     public partial class FileExplorer : UserControl
     {
-        private Volume volume;
+        private Volume _volume;
 
         private ListViewItemComparer _listViewItemComparer;
 
@@ -38,8 +37,8 @@ namespace FATXTools.Controls
 
             public NodeTag(object tag, NodeType type)
             {
-                this.Tag = tag;
-                this.Type = type;
+                Tag = tag;
+                Type = type;
             }
         }
 
@@ -47,10 +46,10 @@ namespace FATXTools.Controls
         {
             InitializeComponent();
 
-            this.volume = volume;
+            _volume = volume;
 
-            this._listViewItemComparer = new ListViewItemComparer();
-            this.listView1.ListViewItemSorter = this._listViewItemComparer;
+            _listViewItemComparer = new ListViewItemComparer();
+            listView1.ListViewItemSorter = _listViewItemComparer;
 
             var rootNode = treeView1.Nodes.Add("Root");
             rootNode.Tag = new NodeTag(null, NodeType.Root);
@@ -107,8 +106,10 @@ namespace FATXTools.Controls
             int index = 1;
             foreach (DirectoryEntry dirent in dirents)
             {
-                ListViewItem item = new ListViewItem(index.ToString());
-                item.Tag = new NodeTag(dirent, NodeType.Dirent);
+                ListViewItem item = new ListViewItem(index.ToString())
+                {
+                    Tag = new NodeTag(dirent, NodeType.Dirent)
+                };
 
                 item.SubItems.Add(dirent.FileName);
 
@@ -165,7 +166,7 @@ namespace FATXTools.Controls
 
                     break;
                 case NodeType.Root:
-                    RunSaveAllTaskAsync(path, volume.Root);
+                    RunSaveAllTaskAsync(path, _volume.Root);
                     break;
             }
         }
@@ -174,27 +175,27 @@ namespace FATXTools.Controls
         {
             var options = new TaskDialogOptions() { Title = "Save File" };
 
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveTask(volume, path, dirent));
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveTask(_volume, path, dirent));
         }
 
         private async void RunSaveAllTaskAsync(string path, List<DirectoryEntry> dirents)
         {
             var options = new TaskDialogOptions() { Title = "Save All" };
 
-            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveAllTask(volume, path, dirents));
+            await TaskRunner.Instance.RunTaskAsync(ParentForm, options, SaveContentTask.RunSaveAllTask(_volume, path, dirents));
         }
 
         #region Common ContextMenu Actions
         private async void runMetadataAnalyzerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: Make into a user controlled setting
-            var searchLength = this.volume.FileAreaLength;
-            var searchInterval = this.volume.BytesPerCluster;
+            var searchLength = _volume.FileAreaLength;
+            var searchInterval = _volume.BytesPerCluster;
 
             var options = new TaskDialogOptions() { Title = "Metadata Analyzer" };
             List<DirectoryEntry> results = null;
 
-            MetadataAnalyzer analyzer = new MetadataAnalyzer(this.volume, searchInterval);
+            MetadataAnalyzer analyzer = new MetadataAnalyzer(_volume, searchInterval);
             await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
                 (cancellationToken, progress) => results = analyzer.Analyze(cancellationToken, progress)
             );
@@ -208,13 +209,13 @@ namespace FATXTools.Controls
         private async void runFileCarverToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // TODO: Make into a user controlled setting
-            var searchLength = this.volume.FileAreaLength;
+            var searchLength = _volume.FileAreaLength;
             var searchInterval = Properties.Settings.Default.FileCarverInterval;
 
             var options = new TaskDialogOptions() { Title = "File Carver" };
             List<CarvedFile> results = null;
 
-            FileCarver carver = new FileCarver(this.volume, searchInterval);
+            FileCarver carver = new FileCarver(_volume, searchInterval);
             await TaskRunner.Instance.RunTaskAsync(ParentForm, options,
                 (cancellationToken, progress) => results = carver.Analyze(cancellationToken, progress)
             );
@@ -244,7 +245,7 @@ namespace FATXTools.Controls
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
+                RunSaveAllTaskAsync(dialog.SelectedPath, _volume.Root);
             }
         }
 
@@ -254,7 +255,7 @@ namespace FATXTools.Controls
             FolderBrowserDialog dialog = new FolderBrowserDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                RunSaveAllTaskAsync(dialog.SelectedPath, volume.Root);
+                RunSaveAllTaskAsync(dialog.SelectedPath, _volume.Root);
             }
         }
 
@@ -271,7 +272,7 @@ namespace FATXTools.Controls
                 case NodeType.Dirent:
                     DirectoryEntry dirent = (DirectoryEntry)nodeTag.Tag;
 
-                    FileInfoDialog dialog = new FileInfoDialog(this.volume, dirent);
+                    FileInfoDialog dialog = new FileInfoDialog(_volume, dirent);
                     dialog.ShowDialog();
 
                     break;
@@ -323,7 +324,7 @@ namespace FATXTools.Controls
                     break;
                 case NodeType.Root:
 
-                    PopulateListView(this.volume.Root, null);
+                    PopulateListView(_volume.Root, null);
 
                     break;
             }
@@ -351,7 +352,7 @@ namespace FATXTools.Controls
                     break;
 
                 case NodeType.Root:
-                    PopulateListView(this.volume.Root, null);
+                    PopulateListView(_volume.Root, null);
                     break;
             }
         }
@@ -388,30 +389,30 @@ namespace FATXTools.Controls
 
         class ListViewItemComparer : IComparer
         {
-            private ColumnIndex column;
-            private SortOrder order;
+            private ColumnIndex _column;
+            private SortOrder _order;
 
             public ColumnIndex Column
             {
-                get => column;
-                set => column = value;
+                get => _column;
+                set => _column = value;
             }
 
             public SortOrder Order
             {
-                get => order;
-                set => order = value;
+                get => _order;
+                set => _order = value;
             }
 
             public ListViewItemComparer()
             {
-                this.order = SortOrder.Ascending;
-                this.column = 0;
+                _order = SortOrder.Ascending;
+                _column = 0;
             }
 
             public ListViewItemComparer(ColumnIndex column)
             {
-                this.column = column;
+                _column = column;
             }
 
             public int Compare(object x, object y)
@@ -437,13 +438,13 @@ namespace FATXTools.Controls
                 DirectoryEntry direntX = (DirectoryEntry)((NodeTag)itemX.Tag).Tag;
                 DirectoryEntry direntY = (DirectoryEntry)((NodeTag)itemY.Tag).Tag;
 
-                switch (column)
+                switch (_column)
                 {
                     case ColumnIndex.Index:
-                        result = UInt32.Parse(itemX.Text).CompareTo(UInt32.Parse(itemY.Text));
+                        result = uint.Parse(itemX.Text).CompareTo(uint.Parse(itemY.Text));
                         break;
                     case ColumnIndex.Name:
-                        result = String.Compare(direntX.FileName, direntY.FileName);
+                        result = string.Compare(direntX.FileName, direntY.FileName);
                         break;
                     case ColumnIndex.Size:
                         result = direntX.FileSize.CompareTo(direntY.FileSize);
@@ -465,7 +466,7 @@ namespace FATXTools.Controls
                         break;
                 }
 
-                if (order == SortOrder.Ascending)
+                if (_order == SortOrder.Ascending)
                 {
                     return result;
                 }

@@ -12,9 +12,9 @@ namespace FATX.Streams
 
         public SubStream(Stream parent, long start, long length)
         {
-            this._parent = parent;
-            this._start = start;
-            this._length = length;
+            _parent = parent;
+            _start = start;
+            _length = length;
 
             if (start > parent.Length || start + length > parent.Length)
             {
@@ -42,10 +42,10 @@ namespace FATX.Streams
 
         public override bool CanSeek => _parent.CanSeek;
 
-        public override long Position 
-        { 
-            get => _position; 
-            set => _position = value; 
+        public override long Position
+        {
+            get => _position;
+            set => _position = value;
         }
 
         public override long Length => _length;

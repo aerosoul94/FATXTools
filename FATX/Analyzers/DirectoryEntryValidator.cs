@@ -98,7 +98,7 @@ namespace FATX.Analyzers
             return true;
         }
 
-        private int[] MaxDays =
+        private static readonly int[] MaxDays =
         {
               31, // Jan
               29, // Feb

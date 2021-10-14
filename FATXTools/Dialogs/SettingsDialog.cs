@@ -23,10 +23,10 @@ namespace FATXTools.Dialogs
         {
             InitializeComponent();
 
-            this.FileCarverInterval = Properties.Settings.Default.FileCarverInterval;
-            this.LogFile = Properties.Settings.Default.LogFile;
+            FileCarverInterval = Properties.Settings.Default.FileCarverInterval;
+            LogFile = Properties.Settings.Default.LogFile;
 
-            switch (this.FileCarverInterval)
+            switch (FileCarverInterval)
             {
                 case FileCarverInterval.Byte:
                     comboBox1.SelectedIndex = 0;
@@ -45,7 +45,7 @@ namespace FATXTools.Dialogs
                     break;
             }
 
-            textBox1.Text = this.LogFile;
+            textBox1.Text = LogFile;
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)

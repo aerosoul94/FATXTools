@@ -58,7 +58,7 @@ namespace FATXTools.Utilities
 
             return BitConverter.ToInt32(buf, 0x14);
         }
-        
+
         public class DeviceInfo
         {
             public string DeviceName { get; set; }

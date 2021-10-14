@@ -22,7 +22,7 @@ namespace FATX.Streams
             int tempChar = -1;
             bool eof;
 
-            while (!(eof = (BaseStream.Position == BaseStream.Length)) 
+            while (!(eof = (BaseStream.Position == BaseStream.Length))
                     && (tempChar = ReadByte()) != terminant)
             {
                 tempString += Convert.ToChar(tempChar);

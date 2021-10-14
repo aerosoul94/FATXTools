@@ -37,55 +37,62 @@ namespace FATX.FileSystem.Tests
         [TestMethod]
         public void TestX360TimeStampYear()
         {
-            var timestamp = new X360TimeStamp();
-
-            timestamp.Year = 2001;
+            var timestamp = new X360TimeStamp
+            {
+                Year = 2001
+            };
             Assert.AreEqual(2001, timestamp.Year);
         }
 
         [TestMethod]
         public void TestX360TimeStampMonth()
         {
-            var timestamp = new X360TimeStamp();
-
-            timestamp.Month = 1;
+            var timestamp = new X360TimeStamp
+            {
+                Month = 1
+            };
             Assert.AreEqual(1, timestamp.Month);
         }
 
         [TestMethod]
         public void TestX360TimeStampDay()
         {
-            var timestamp = new X360TimeStamp();
-
-            timestamp.Day = 1;
+            var timestamp = new X360TimeStamp
+            {
+                Day = 1
+            };
             Assert.AreEqual(1, timestamp.Day);
         }
 
         [TestMethod]
         public void TestX360TimeStampHour()
         {
-            var timestamp = new X360TimeStamp();
-
-            timestamp.Hour = 1;
+            var timestamp = new X360TimeStamp
+            {
+                Hour = 1
+            };
             Assert.AreEqual(1, timestamp.Hour);
         }
 
         [TestMethod]
         public void TestX360TimeStampMinute()
         {
-            var timestamp = new X360TimeStamp();
-
-            timestamp.Minute = 1;
+            var timestamp = new X360TimeStamp
+            {
+                Minute = 1
+            };
             Assert.AreEqual(1, timestamp.Minute);
         }
 
         [TestMethod]
         public void TestX360TimeStampSeconds()
         {
-            var timestamp = new X360TimeStamp();
+            var timestamp = new X360TimeStamp
+            {
 
-            // It loses precision as it only stores half seconds internally.
-            timestamp.Second = 1;
+                // It loses precision as it only stores half seconds internally.
+                Second = 1
+            };
             Assert.AreEqual(0, timestamp.Second);
 
             timestamp.Second = 2;
@@ -98,55 +105,62 @@ namespace FATX.FileSystem.Tests
         [TestMethod]
         public void TestXTimeStampYear()
         {
-            var timestamp = new XTimeStamp();
-
-            timestamp.Year = 2001;
+            var timestamp = new XTimeStamp
+            {
+                Year = 2001
+            };
             Assert.AreEqual(2001, timestamp.Year);
         }
 
         [TestMethod]
         public void TestXTimeStampMonth()
         {
-            var timestamp = new XTimeStamp();
-            
-            timestamp.Month = 1;
+            var timestamp = new XTimeStamp
+            {
+                Month = 1
+            };
             Assert.AreEqual(1, timestamp.Month);
         }
 
         [TestMethod]
         public void TestXTimeStampDay()
         {
-            var timestamp = new XTimeStamp();
-
-            timestamp.Day = 1;
+            var timestamp = new XTimeStamp
+            {
+                Day = 1
+            };
             Assert.AreEqual(1, timestamp.Day);
         }
 
         [TestMethod]
         public void TestXTimeStampHour()
         {
-            var timestamp = new XTimeStamp();
-
-            timestamp.Hour = 1;
+            var timestamp = new XTimeStamp
+            {
+                Hour = 1
+            };
             Assert.AreEqual(1, timestamp.Hour);
         }
 
         [TestMethod]
         public void TestXTimeStampMinute()
         {
-            var timestamp = new XTimeStamp();
-
-            timestamp.Minute = 1;
+            var timestamp = new XTimeStamp
+            {
+                Minute = 1
+            };
             Assert.AreEqual(1, timestamp.Minute);
         }
 
         [TestMethod]
         public void TestXTimeStampSecond()
         {
-            var timestamp = new XTimeStamp();
+            var timestamp = new XTimeStamp
+            {
 
-            // It loses precision as it only stores half seconds internally.
-            timestamp.Second = 1;
+                // It loses precision as it only stores half seconds internally.
+                Second = 1
+            };
             Assert.AreEqual(0, timestamp.Second);
 
             timestamp.Second = 2;

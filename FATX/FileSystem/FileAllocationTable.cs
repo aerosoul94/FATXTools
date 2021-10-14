@@ -13,30 +13,30 @@ namespace FATX.FileSystem
 
         public FatType FatType { get; private set; }
 
-        private uint[] FileAllocationTableBuffer;
+        private uint[] _fileAllocationTableBuffer;
 
-        public uint this[int index] => FileAllocationTableBuffer[index];
+        public uint this[int index] => _fileAllocationTableBuffer[index];
 
         public FileAllocationTable(Stream stream, Platform platform, FatType fatType, uint maxClusters)
         {
-            this._stream = stream;
-            this._platform = platform;
-            this._maxClusters = maxClusters;
+            _stream = stream;
+            _platform = platform;
+            _maxClusters = maxClusters;
 
-            this.FatType = fatType;
+            FatType = fatType;
 
-            this.Read();
+            Read();
         }
 
         private void Read()
         {
-            FileAllocationTableBuffer = new uint[_maxClusters];
+            _fileAllocationTableBuffer = new uint[_maxClusters];
 
             var entrySize = FatType == FatType.Fat16 ? 2 : 4;
 
             byte[] tempFat = new byte[_maxClusters * entrySize];
             _stream.Read(tempFat, 0, (int)(_maxClusters * entrySize));
-            
+
             if (_platform == Platform.X360)
             {
                 for (var i = 0; i < _maxClusters; i++)
@@ -46,12 +46,12 @@ namespace FATX.FileSystem
             if (FatType == FatType.Fat16)
             {
                 for (var i = 0; i < _maxClusters; i++)
-                    FileAllocationTableBuffer[i] = BitConverter.ToUInt16(tempFat, i * 2);
+                    _fileAllocationTableBuffer[i] = BitConverter.ToUInt16(tempFat, i * 2);
             }
             else
             {
                 for (var i = 0; i < _maxClusters; i++)
-                    FileAllocationTableBuffer[i] = BitConverter.ToUInt32(tempFat, i * 4);
+                    _fileAllocationTableBuffer[i] = BitConverter.ToUInt32(tempFat, i * 4);
             }
         }
 
@@ -70,12 +70,12 @@ namespace FATX.FileSystem
 
             while (true)
             {
-                fatEntry = FileAllocationTableBuffer[fatEntry];
+                fatEntry = _fileAllocationTableBuffer[fatEntry];
 
                 if (fatEntry >= reservedIndexes)
                     break;
 
-                if (fatEntry == 0 || fatEntry > FileAllocationTableBuffer.Length)
+                if (fatEntry == 0 || fatEntry > _fileAllocationTableBuffer.Length)
                     return new List<uint>() { firstCluster };
 
                 clusterChain.Add(fatEntry);
@@ -100,12 +100,12 @@ namespace FATX.FileSystem
 
         public IEnumerator<uint> GetEnumerator()
         {
-            return ((IEnumerable<uint>)FileAllocationTableBuffer).GetEnumerator();
+            return ((IEnumerable<uint>)_fileAllocationTableBuffer).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return FileAllocationTableBuffer.GetEnumerator();
+            return _fileAllocationTableBuffer.GetEnumerator();
         }
     }
 }

@@ -14,51 +14,54 @@ namespace FATXTools.Controls
 {
     public partial class ClusterViewer : UserControl
     {
-        private DataMap dataMap;
-        private Volume volume;
-        private IntegrityAnalyzer integrityAnalyzer;
+        private DataMap _dataMap;
+        private Volume _volume;
+        private IntegrityAnalyzer _integrityAnalyzer;
 
-        private ClusterColorMap clusterColorMap;
+        private ClusterColorMap _clusterColorMap;
 
-        private Color emptyColor = Color.White;
-        private Color activeColor = Color.Green;
-        private Color recoveredColor = Color.Yellow;
-        private Color collisionColor = Color.Red;
-        private Color rootColor = Color.Purple;
+        private static readonly Color EmptyColor = Color.White;
+        private static readonly Color ActiveColor = Color.Green;
+        private static readonly Color RecoveredColor = Color.Yellow;
+        private static readonly Color CollisionColor = Color.Red;
+        private static readonly Color RootColor = Color.Purple;
 
-        private int previousSelectedIndex;
-        private int currentSelectedIndex;
+        private int _previousSelectedIndex;
+        private int _currentSelectedIndex;
 
-        private int currentClusterChainIndex;
+        private int _currentClusterChainIndex;
 
         public ClusterViewer(Volume volume, IntegrityAnalyzer integrityAnalyzer)
         {
             InitializeComponent();
 
-            this.volume = volume;
-            this.integrityAnalyzer = integrityAnalyzer;
+            _volume = volume;
+            _integrityAnalyzer = integrityAnalyzer;
 
-            dataMap = new DataMap((int)volume.MaxClusters);
-            dataMap.Location = new Point(0, 0);
-            dataMap.Dock = DockStyle.Fill;
-            dataMap.CellSelected += DataMap_CellSelected;
-            dataMap.CellHovered += DataMap_CellHovered;
-            dataMap.Increment = (int)volume.BytesPerCluster;
+            _dataMap = new DataMap((int)volume.MaxClusters)
+            {
+                Location = new Point(0, 0),
+                Dock = DockStyle.Fill,
+                Increment = (int)volume.BytesPerCluster
+            };
 
-            clusterColorMap = new ClusterColorMap();
+            _dataMap.CellSelected += DataMap_CellSelected;
+            _dataMap.CellHovered += DataMap_CellHovered;
 
-            this.Controls.Add(dataMap);
+            _clusterColorMap = new ClusterColorMap();
+
+            Controls.Add(_dataMap);
             InitializeActiveFileSystem();
             UpdateDataMap();
         }
 
         public void UpdateClusters()
         {
-            for (uint i = 1; i < volume.MaxClusters; i++)
+            for (uint i = 1; i < _volume.MaxClusters; i++)
             {
-                var occupants = integrityAnalyzer.GetClusterOccupants(i);
+                var occupants = _integrityAnalyzer.GetClusterOccupants(i);
 
-                clusterColorMap[i] = emptyColor;
+                _clusterColorMap[i] = EmptyColor;
 
                 if (occupants == null || occupants.Count == 0)
                 {
@@ -70,11 +73,11 @@ namespace FATXTools.Controls
                 {
                     if (occupants.Any(file => !file.IsDeleted))
                     {
-                        clusterColorMap[i] = activeColor;
+                        _clusterColorMap[i] = ActiveColor;
                     }
                     else
                     {
-                        clusterColorMap[i] = collisionColor;
+                        _clusterColorMap[i] = CollisionColor;
                     }
                 }
                 else
@@ -83,17 +86,17 @@ namespace FATXTools.Controls
                     if (!occupant.IsDeleted)
                     {
                         // Sole occupant
-                        clusterColorMap[i] = activeColor;
+                        _clusterColorMap[i] = ActiveColor;
                     }
                     else
                     {
                         // Only recovered occupant
-                        clusterColorMap[i] = recoveredColor;
+                        _clusterColorMap[i] = RecoveredColor;
                     }
                 }
             }
 
-            clusterColorMap[this.volume.Metadata.RootDirFirstCluster] = rootColor;
+            _clusterColorMap[_volume.Metadata.RootDirFirstCluster] = RootColor;
 
             UpdateDataMap();
         }
@@ -101,7 +104,7 @@ namespace FATXTools.Controls
         private void InitializeActiveFileSystem()
         {
             // TODO: See if we can merge this with UpdateClusters
-            clusterColorMap[volume.Metadata.RootDirFirstCluster] = rootColor;
+            _clusterColorMap[_volume.Metadata.RootDirFirstCluster] = RootColor;
 
             UpdateClusters();
         }
@@ -118,15 +121,15 @@ namespace FATXTools.Controls
 
         private void SetCellColor(int cellIndex, Color color)
         {
-            if (cellIndex < 0 || cellIndex > dataMap.CellCount)
+            if (cellIndex < 0 || cellIndex > _dataMap.CellCount)
                 return;
 
-            dataMap.Cells[cellIndex].Color = color;
+            _dataMap.Cells[cellIndex].Color = color;
         }
 
         private void UpdateDataMap()
         {
-            foreach (var pair in clusterColorMap)
+            foreach (var pair in _clusterColorMap)
             {
                 SetCellColor(ClusterToCellIndex(pair.Key), pair.Value);
             }
@@ -168,12 +171,12 @@ namespace FATXTools.Controls
 
                 Debug.WriteLine($"Cluster Index: {clusterIndex}");
 
-                var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
+                var occupants = _integrityAnalyzer.GetClusterOccupants(clusterIndex);
 
                 string toolTipMessage = "Cluster Index: " + clusterIndex.ToString() + Environment.NewLine;
-                toolTipMessage += "Cluster Address: 0x" + volume.ClusterReader.ClusterToPhysicalOffset(clusterIndex).ToString("X");
+                toolTipMessage += "Cluster Address: 0x" + _volume.ClusterReader.ClusterToPhysicalOffset(clusterIndex).ToString("X");
 
-                if (clusterIndex == volume.Metadata.RootDirFirstCluster)
+                if (clusterIndex == _volume.Metadata.RootDirFirstCluster)
                 {
                     toolTipMessage += Environment.NewLine + Environment.NewLine;
                     toolTipMessage += " Type: Root Directory";
@@ -195,23 +198,23 @@ namespace FATXTools.Controls
                     }
                 }
 
-                toolTip1.SetToolTip(this.dataMap, toolTipMessage);
+                toolTip1.SetToolTip(_dataMap, toolTipMessage);
             }
             else
             {
-                toolTip1.SetToolTip(this.dataMap, "");
+                toolTip1.SetToolTip(_dataMap, "");
             }
         }
 
         private void DataMap_CellSelected(object sender, EventArgs e)
         {
-            currentSelectedIndex = dataMap.SelectedIndex;
+            _currentSelectedIndex = _dataMap.SelectedIndex;
 
-            var clusterIndex = CellToClusterIndex(currentSelectedIndex);
+            var clusterIndex = CellToClusterIndex(_currentSelectedIndex);
 
             Debug.WriteLine($"Cluster Index: {clusterIndex}");
 
-            var occupants = integrityAnalyzer.GetClusterOccupants(clusterIndex);
+            var occupants = _integrityAnalyzer.GetClusterOccupants(clusterIndex);
 
             if (occupants == null)
             {
@@ -219,27 +222,27 @@ namespace FATXTools.Controls
             }
             else if (occupants.Count > 0)
             {
-                if (currentSelectedIndex != previousSelectedIndex)
+                if (_currentSelectedIndex != _previousSelectedIndex)
                 {
-                    previousSelectedIndex = currentSelectedIndex;
-                    currentClusterChainIndex = 0;
+                    _previousSelectedIndex = _currentSelectedIndex;
+                    _currentClusterChainIndex = 0;
                 }
 
-                if (currentClusterChainIndex >= occupants.Count)
+                if (_currentClusterChainIndex >= occupants.Count)
                 {
-                    currentClusterChainIndex = 0;
+                    _currentClusterChainIndex = 0;
                 }
 
-                var clusterChain = occupants[currentClusterChainIndex].ClusterChain;
+                var clusterChain = occupants[_currentClusterChainIndex].ClusterChain;
 
                 // TODO: Change highlight color for colliding clusters
                 foreach (var cluster in clusterChain)
                 {
-                    dataMap.Cells[ClusterToCellIndex(cluster)].Selected = true;
+                    _dataMap.Cells[ClusterToCellIndex(cluster)].Selected = true;
                 }
 
                 // Toggle between each occupant after each click
-                currentClusterChainIndex++;
+                _currentClusterChainIndex++;
             }
         }
     }

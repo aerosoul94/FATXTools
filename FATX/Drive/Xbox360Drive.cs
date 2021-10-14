@@ -150,7 +150,7 @@ namespace FATX.Drive
 
             // Cache0
             // AddPartition("Cache0", ReadSectorCount(reader), ReadSectorCount(reader));
-            
+
             // Cache1
             // AddPartition("Cache1", ReadSectorCount(reader), ReadSectorCount(reader));
         }

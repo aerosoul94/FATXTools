@@ -23,10 +23,10 @@ namespace FATX.Drive
         /// <param name="length">The length of this partition.</param>
         public Partition(Stream diskStream, string name, long offset, long length)
         {
-            this.Name = name;
-            this.Offset = offset;
-            this.Length = length;
-            this.Stream = new SubStream(diskStream, offset, length);
+            Name = name;
+            Offset = offset;
+            Length = length;
+            Stream = new SubStream(diskStream, offset, length);
         }
     }
 }

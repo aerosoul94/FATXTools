@@ -10,16 +10,16 @@ namespace FATXTools.Database
 {
     public class DriveDatabase
     {
-        string driveName;
-        XDrive drive;
-        List<PartitionDatabase> partitionDatabases;
+        XDrive _drive;
+        string _driveName;
+        List<PartitionDatabase> _partitionDatabases;
 
         public DriveDatabase(string driveName, XDrive drive)
         {
-            this.driveName = driveName;
-            this.drive = drive;
+            _drive = drive;
+            _driveName = driveName;
 
-            partitionDatabases = new List<PartitionDatabase>();
+            _partitionDatabases = new List<PartitionDatabase>();
         }
 
         public event EventHandler<AddPartitionEventArgs> OnPartitionAdded;
@@ -28,31 +28,32 @@ namespace FATXTools.Database
         public PartitionDatabase AddPartition(Volume volume)
         {
             var partitionDatabase = new PartitionDatabase(volume);
-            partitionDatabases.Add(partitionDatabase);
+            _partitionDatabases.Add(partitionDatabase);
             return partitionDatabase;
         }
 
         public void RemovePartition(int index)
         {
-            partitionDatabases.RemoveAt(index);
+            _partitionDatabases.RemoveAt(index);
 
             OnPartitionRemoved?.Invoke(this, new RemovePartitionEventArgs(index));
         }
 
         public void Save(string path)
         {
-            Dictionary<string, object> databaseObject = new Dictionary<string, object>();
-
-            databaseObject["Version"] = 1;
-            databaseObject["Drive"] = new Dictionary<string, object>();
+            Dictionary<string, object> databaseObject = new Dictionary<string, object>
+            {
+                ["Version"] = 1,
+                ["Drive"] = new Dictionary<string, object>()
+            };
 
             var driveObject = databaseObject["Drive"] as Dictionary<string, object>;
-            driveObject["FileName"] = driveName;
+            driveObject["FileName"] = _driveName;
 
             driveObject["Partitions"] = new List<Dictionary<string, object>>();
             var partitionList = driveObject["Partitions"] as List<Dictionary<string, object>>;
 
-            foreach (var partitionDatabase in partitionDatabases)
+            foreach (var partitionDatabase in _partitionDatabases)
             {
                 var partitionObject = new Dictionary<string, object>();
                 partitionList.Add(partitionObject);
@@ -71,7 +72,7 @@ namespace FATXTools.Database
 
         private bool LoadIfNotExists(JsonElement partitionElement)
         {
-            foreach (var partitionDatabase in partitionDatabases)
+            foreach (var partitionDatabase in _partitionDatabases)
             {
                 if (partitionDatabase.Volume.Offset == partitionElement.GetProperty("Offset").GetInt64())
                 {
@@ -106,14 +107,14 @@ namespace FATXTools.Database
                             var length = partitionElement.GetProperty("Length").GetInt64();
                             var name = partitionElement.GetProperty("Name").GetString();
 
-                            var partition = drive.AddPartition(name, offset, length);
+                            var partition = _drive.AddPartition(name, offset, length);
 
-                            partition.Volume = new Volume(partition, drive is XboxDrive ? Platform.Xbox : Platform.X360);
+                            partition.Volume = new Volume(partition, _drive is XboxDrive ? Platform.Xbox : Platform.X360);
 
                             OnPartitionAdded?.Invoke(this, new AddPartitionEventArgs(partition));
 
                             // Might need some clean up here. Should not rely on the event to add the partition to the database.
-                            partitionDatabases[partitionDatabases.Count - 1].LoadFromJson(partitionElement);
+                            _partitionDatabases[_partitionDatabases.Count - 1].LoadFromJson(partitionElement);
                         }
                     }
 

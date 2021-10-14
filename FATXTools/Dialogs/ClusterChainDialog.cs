@@ -10,8 +10,8 @@ namespace FATXTools.Dialogs
 {
     public partial class ClusterChainDialog : Form
     {
-        Volume volume;
-        DatabaseFile file;
+        Volume _volume;
+        DatabaseFile _file;
 
         public List<uint> NewClusterChain { get; set; }
 
@@ -19,8 +19,8 @@ namespace FATXTools.Dialogs
         {
             InitializeComponent();
 
-            this.volume = volume;
-            this.file = file;
+            _volume = volume;
+            _file = file;
 
             numericUpDown1.Minimum = 1;
             numericUpDown1.Maximum = volume.MaxClusters;
@@ -42,11 +42,12 @@ namespace FATXTools.Dialogs
 
         private void AddCluster(uint cluster)
         {
-            var address = volume.ClusterReader.ClusterToPhysicalOffset(cluster);
+            var address = _volume.ClusterReader.ClusterToPhysicalOffset(cluster);
 
-            ListViewItem item = new ListViewItem(new string[] { $"0x{address.ToString("X")}", cluster.ToString() });
-
-            item.Tag = cluster;
+            ListViewItem item = new ListViewItem(new string[] { $"0x{address.ToString("X")}", cluster.ToString() })
+            {
+                Tag = cluster
+            };
 
             listView1.Items.Add(item);
         }

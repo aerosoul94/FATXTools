@@ -34,7 +34,7 @@ namespace FATXTools.Tasks
             };
         }
 
-        public static Action<CancellationToken, IProgress<(int,string)>> RunSaveTask(
+        public static Action<CancellationToken, IProgress<(int, string)>> RunSaveTask(
             Volume volume, string path, CarvedFile file)
         {
             return (cancellationToken, progress) =>

@@ -11,7 +11,7 @@ namespace FATX.Drive
             {
                 return new XboxDrive(stream);
             }
-            
+
             stream.Seek(0, SeekOrigin.Begin);
             if (Xbox360Drive.Detect(stream))
             {

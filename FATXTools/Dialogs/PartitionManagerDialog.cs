@@ -21,8 +21,8 @@ namespace FATXTools.Dialogs
         {
             InitializeComponent();
 
-            this._drive = reader;
-            this._volumes = volumes;
+            _drive = reader;
+            _volumes = volumes;
 
             PopulateList(volumes);
         }

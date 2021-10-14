@@ -8,7 +8,7 @@ namespace FATXTools.Controls
 
         public CellHoveredEventArgs(int index)
         {
-            this.Index = index;
+            Index = index;
         }
     }
 }

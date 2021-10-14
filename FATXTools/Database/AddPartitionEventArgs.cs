@@ -8,7 +8,7 @@ namespace FATXTools.Database
 
         public AddPartitionEventArgs(Partition partition)
         {
-            this.Partition = partition;
+            Partition = partition;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace FATX.FileSystem
         /// <summary>
         /// The year is relative to 1980 on the xbox 360.
         /// </summary>
-        public override int Year 
+        public override int Year
         {
             get => base.Year + 1980;
             set => base.Year = value - 1980;
@@ -66,7 +66,7 @@ namespace FATX.FileSystem
         public TimeStamp() : this(0) { }
         public TimeStamp(uint time)
         {
-            this._time = time;
+            _time = time;
         }
 
         /// <summary>
@@ -74,8 +74,8 @@ namespace FATX.FileSystem
         /// </summary>
         public virtual int Year
         {
-            get => (int)((this._time & 0xFE000000) >> 25);
-            set => this._time = ( (uint)(this._time & ~(0xFE000000)) | (((uint)value & 0x7F) << 25) );
+            get => (int)((_time & 0xFE000000) >> 25);
+            set => _time = ((uint)(_time & ~(0xFE000000)) | (((uint)value & 0x7F) << 25));
         }
 
         /// <summary>
@@ -83,8 +83,8 @@ namespace FATX.FileSystem
         /// </summary>
         public virtual int Month
         {
-            get => (int)((this._time & 0x1E00000) >> 21);
-            set => this._time = ( (uint)(this._time & ~(0x1E00000)) | (((uint)value & 0xF) << 21) );
+            get => (int)((_time & 0x1E00000) >> 21);
+            set => _time = ((uint)(_time & ~(0x1E00000)) | (((uint)value & 0xF) << 21));
         }
 
         /// <summary>
@@ -92,26 +92,26 @@ namespace FATX.FileSystem
         /// </summary>
         public virtual int Day
         {
-            get => (int)((this._time & 0x1F0000) >> 16);
-            set => this._time = ( (uint)(this._time & ~(0x1F0000)) | (((uint)value & 0x1F) << 16) );
+            get => (int)((_time & 0x1F0000) >> 16);
+            set => _time = ((uint)(_time & ~(0x1F0000)) | (((uint)value & 0x1F) << 16));
         }
 
         /// <summary>
         /// The hour represented by 5 bits.
         /// </summary>
-        public virtual int Hour 
+        public virtual int Hour
         {
-            get => (int)((this._time & 0xF800) >> 11);
-            set => this._time = ( (uint)(this._time & ~(0xF800)) | (((uint)value & 0x1F) << 11) );
+            get => (int)((_time & 0xF800) >> 11);
+            set => _time = ((uint)(_time & ~(0xF800)) | (((uint)value & 0x1F) << 11));
         }
 
         /// <summary>
         /// The minute represented by 6 bits.
         /// </summary>
-        public virtual int Minute 
+        public virtual int Minute
         {
-            get => (int)((this._time & 0x7E0) >> 5);
-            set => this._time = ( (uint)(this._time & ~(0x7E0)) | (((uint)value & 0x3F) << 5) );
+            get => (int)((_time & 0x7E0) >> 5);
+            set => _time = ((uint)(_time & ~(0x7E0)) | (((uint)value & 0x3F) << 5));
         }
 
         /// <summary>
@@ -119,8 +119,8 @@ namespace FATX.FileSystem
         /// </summary>
         public virtual int Second
         {
-            get => (int)((this._time & 0x1F) * 2);
-            set => this._time = ((uint)(this._time & ~(0x1F)) | ((uint)(value / 2) & 0x1F) );
+            get => (int)((_time & 0x1F) * 2);
+            set => _time = ((uint)(_time & ~(0x1F)) | ((uint)(value / 2) & 0x1F));
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace FATX.FileSystem
         /// <returns>The timestamp as a DateTime object.</returns>
         public DateTime AsDateTime()
         {
-            return this._dateTime.HasValue ? _dateTime.Value : TryConvertToDateTime();
+            return _dateTime.HasValue ? _dateTime.Value : TryConvertToDateTime();
         }
 
         /// <summary>
@@ -152,8 +152,8 @@ namespace FATX.FileSystem
             {
                 // Try and create a DateTime from what we have.
                 _dateTime = new DateTime(
-                    this.Year, this.Month, this.Day,
-                    this.Hour, this.Minute, this.Second
+                    Year, Month, Day,
+                    Hour, Minute, Second
                 );
             }
             catch (Exception)

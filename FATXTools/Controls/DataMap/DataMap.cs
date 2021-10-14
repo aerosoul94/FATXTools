@@ -52,9 +52,9 @@ namespace FATXTools.Controls
         private long _endCell;
         private long _visibleCells;
 
-        private VScrollBar vScrollBar;
-        private bool vScrollVisible;
-        private long vScrollPos;    // TODO: might rename to _startRow
+        private VScrollBar _vScrollBar;
+        private bool _vScrollVisible;
+        private long _vScrollPos;    // TODO: might rename to _startRow
 
         private Font _font = new Font("Consolas", 10);
         private Brush _fontBrush = new SolidBrush(Color.Black);
@@ -98,16 +98,16 @@ namespace FATXTools.Controls
             _totalColumns = 32;
             _totalRows = cellCount / _totalColumns;
 
-            vScrollBar = new VScrollBar();
-            vScrollBar.Scroll += VScrollBar_Scroll;
-            vScrollBar.ValueChanged += VScrollBar_ValueChanged;
-            vScrollBar.Visible = true;      // TODO: detect when to make it visible
-            vScrollBar.Minimum = 0;
-            vScrollBar.Maximum = (int)_totalRows;
+            _vScrollBar = new VScrollBar();
+            _vScrollBar.Scroll += VScrollBar_Scroll;
+            _vScrollBar.ValueChanged += VScrollBar_ValueChanged;
+            _vScrollBar.Visible = true;      // TODO: detect when to make it visible
+            _vScrollBar.Minimum = 0;
+            _vScrollBar.Maximum = (int)_totalRows;
 
-            vScrollVisible = true;
+            _vScrollVisible = true;
 
-            Controls.Add(vScrollBar);
+            Controls.Add(_vScrollBar);
 
             // This will call InitializeCells
             CellCount = cellCount;
@@ -119,8 +119,10 @@ namespace FATXTools.Controls
 
             for (int i = 0; i < cellCount; i++)
             {
-                Cells[i] = new DataMapCell();
-                Cells[i].Index = i;
+                Cells[i] = new DataMapCell
+                {
+                    Index = i
+                };
             }
         }
 
@@ -156,11 +158,11 @@ namespace FATXTools.Controls
                 (CellSize + 5) * 32,
                 _content.Height - columnInfoHeight);
 
-            if (vScrollVisible)
+            if (_vScrollVisible)
             {
-                vScrollBar.Left = _content.X + _content.Width - vScrollBar.Width;
-                vScrollBar.Top = _content.Y;
-                vScrollBar.Height = _content.Height;
+                _vScrollBar.Left = _content.X + _content.Width - _vScrollBar.Width;
+                _vScrollBar.Top = _content.Y;
+                _vScrollBar.Height = _content.Height;
             }
         }
 
@@ -174,7 +176,7 @@ namespace FATXTools.Controls
             _visibleRows = (_rowInfo.Height / CellSize + cellPad) + 1;
             _visibleColumns = _totalColumns;
 
-            _startCell = vScrollPos * _totalColumns;
+            _startCell = _vScrollPos * _totalColumns;
             _endCell = _startCell + Math.Min(
                 _visibleRows * _totalColumns,
                 CellCount - _startCell);
@@ -200,8 +202,8 @@ namespace FATXTools.Controls
             // Draw row info
             for (int r = 0; r < _visibleRows; r++)
             {
-                var offset = (vScrollPos + r) * (Increment * _visibleColumns);
-                var row = (vScrollPos + r) + 1;
+                var offset = (_vScrollPos + r) * (Increment * _visibleColumns);
+                var row = (_vScrollPos + r) + 1;
 
                 // Draw row number
                 G.DrawString(row.ToString().PadLeft(6),
@@ -329,15 +331,15 @@ namespace FATXTools.Controls
 
             Debug.WriteLine($"Number of rows to move: {numberOfRowsToMove}");
 
-            vScrollPos -= numberOfRowsToMove;
+            _vScrollPos -= numberOfRowsToMove;
 
-            if (vScrollPos > vScrollBar.Maximum)
-                vScrollPos = vScrollBar.Maximum;
+            if (_vScrollPos > _vScrollBar.Maximum)
+                _vScrollPos = _vScrollBar.Maximum;
 
-            if (vScrollPos < vScrollBar.Minimum)
-                vScrollPos = vScrollBar.Minimum;
+            if (_vScrollPos < _vScrollBar.Minimum)
+                _vScrollPos = _vScrollBar.Minimum;
 
-            vScrollBar.Value = (int)vScrollPos;
+            _vScrollBar.Value = (int)_vScrollPos;
 
             Invalidate();
 
@@ -353,47 +355,47 @@ namespace FATXTools.Controls
             switch (e.Type)
             {
                 case ScrollEventType.SmallDecrement:
-                    if (vScrollPos != vScrollBar.Minimum)
+                    if (_vScrollPos != _vScrollBar.Minimum)
                     {
-                        vScrollPos--;
-                        e.NewValue = (int)vScrollPos;
+                        _vScrollPos--;
+                        e.NewValue = (int)_vScrollPos;
                         Invalidate();
                     }
                     break;
                 case ScrollEventType.SmallIncrement:
-                    if (vScrollPos != vScrollBar.Maximum)
+                    if (_vScrollPos != _vScrollBar.Maximum)
                     {
-                        vScrollPos++;
-                        e.NewValue = (int)vScrollPos;
+                        _vScrollPos++;
+                        e.NewValue = (int)_vScrollPos;
                         Invalidate();
                     }
                     break;
                 case ScrollEventType.LargeDecrement:
-                    vScrollPos -= Math.Min(vScrollPos, this._visibleRows - 2);
-                    vScrollBar.Minimum = 0;
-                    vScrollBar.Maximum = (int)_totalRows;
-                    vScrollBar.Value = (int)vScrollPos;
-                    e.NewValue = (int)vScrollPos;
+                    _vScrollPos -= Math.Min(_vScrollPos, _visibleRows - 2);
+                    _vScrollBar.Minimum = 0;
+                    _vScrollBar.Maximum = (int)_totalRows;
+                    _vScrollBar.Value = (int)_vScrollPos;
+                    e.NewValue = (int)_vScrollPos;
                     Invalidate();
                     break;
                 case ScrollEventType.LargeIncrement:
-                    vScrollPos += this._visibleRows - 2;
-                    vScrollBar.Minimum = 0;
-                    vScrollBar.Maximum = (int)_totalRows;
-                    vScrollBar.Value = (int)vScrollPos;
-                    e.NewValue = (int)vScrollPos;
+                    _vScrollPos += _visibleRows - 2;
+                    _vScrollBar.Minimum = 0;
+                    _vScrollBar.Maximum = (int)_totalRows;
+                    _vScrollBar.Value = (int)_vScrollPos;
+                    e.NewValue = (int)_vScrollPos;
                     Invalidate();
                     break;
                 case ScrollEventType.ThumbPosition:
-                    vScrollPos = e.NewValue;
-                    vScrollBar.Minimum = 0;
-                    vScrollBar.Maximum = (int)_totalRows;
+                    _vScrollPos = e.NewValue;
+                    _vScrollBar.Minimum = 0;
+                    _vScrollBar.Maximum = (int)_totalRows;
                     Invalidate();
                     break;
                 case ScrollEventType.ThumbTrack:
-                    vScrollPos = e.NewValue;
-                    vScrollBar.Minimum = 0;
-                    vScrollBar.Maximum = (int)_totalRows;
+                    _vScrollPos = e.NewValue;
+                    _vScrollBar.Minimum = 0;
+                    _vScrollBar.Maximum = (int)_totalRows;
                     Invalidate();
                     break;
                 case ScrollEventType.EndScroll:
@@ -409,7 +411,7 @@ namespace FATXTools.Controls
 
         private void VScrollBar_ValueChanged(object sender, EventArgs e)
         {
-            Debug.WriteLine(vScrollBar.Value);
+            Debug.WriteLine(_vScrollBar.Value);
         }
 
         #endregion

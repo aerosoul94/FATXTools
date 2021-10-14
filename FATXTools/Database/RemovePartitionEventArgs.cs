@@ -2,13 +2,13 @@
 {
     public class RemovePartitionEventArgs
     {
-        private int index;
+        private int _index;
 
         public RemovePartitionEventArgs(int index)
         {
-            this.index = index;
+            _index = index;
         }
 
-        public int Index => index;
+        public int Index => _index;
     }
 }
