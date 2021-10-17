@@ -142,14 +142,8 @@ namespace FATXTools.Forms
             {
                 // Only 1 file is allowed.
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files.Length > 1)
-                {
-                    e.Effect = DragDropEffects.None;
-                }
-                else
-                {
-                    e.Effect = DragDropEffects.Link;
-                }
+
+                e.Effect = files.Length > 1 ? DragDropEffects.None : DragDropEffects.Link;
             }
             else
             {

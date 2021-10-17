@@ -519,10 +519,10 @@ namespace FATXTools
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             _currentClusterNode = e.Node;
+
+            // Get the root node for the currently selected node.
             while (_currentClusterNode.Parent != null)
-            {
                 _currentClusterNode = _currentClusterNode.Parent;
-            }
 
             //Console.WriteLine($"Current Cluster Node: {currentClusterNode.Text}");
 
@@ -561,9 +561,7 @@ namespace FATXTools
                     DatabaseFile databaseFile = nodeTag.Tag as DatabaseFile;
 
                     if (databaseFile.IsDirectory())
-                    {
                         PopulateListView(databaseFile.Children, databaseFile.GetParent());
-                    }
 
                     break;
                 case NodeType.Cluster:
@@ -578,15 +576,8 @@ namespace FATXTools
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             _listViewItemComparer.Column = (ColumnIndex)e.Column;
-
-            if (_listViewItemComparer.Order == SortOrder.Ascending)
-            {
-                _listViewItemComparer.Order = SortOrder.Descending;
-            }
-            else
-            {
-                _listViewItemComparer.Order = SortOrder.Ascending;
-            }
+            _listViewItemComparer.Order = _listViewItemComparer.Order == SortOrder.Ascending 
+                ? SortOrder.Descending : SortOrder.Ascending;
 
             listView1.Sort();
         }
@@ -643,15 +634,11 @@ namespace FATXTools
 
                 if (itemX.Tag == null ||
                     itemY.Tag == null)
-                {
                     return result;
-                }
 
                 if (itemX.Index == 0)
-                {
                     // Skip "up" item
                     return result;
-                }
 
                 DatabaseFile direntX = (DatabaseFile)((NodeTag)itemX.Tag).Tag;
                 DatabaseFile direntY = (DatabaseFile)((NodeTag)itemY.Tag).Tag;
@@ -684,14 +671,7 @@ namespace FATXTools
                         break;
                 }
 
-                if (_order == SortOrder.Ascending)
-                {
-                    return result;
-                }
-                else
-                {
-                    return -result;
-                }
+                return _order == SortOrder.Ascending ? result : -result;
             }
         }
         #endregion

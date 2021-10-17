@@ -100,21 +100,13 @@ namespace FATXTools.Database
 
             // Link all of the files together
             foreach (var file in _files.Values)
-            {
                 if (file.IsDirectory())
-                {
                     FindChildren(file);
-                }
-            }
 
             // Gather files at the root
             foreach (var file in _files.Values)
-            {
                 if (!file.HasParent())
-                {
                     _root.Add(file);
-                }
-            }
         }
 
         /// <summary>
@@ -135,17 +127,13 @@ namespace FATXTools.Database
             foreach (var dirent in dirents)
             {
                 if (dirent.IsDeleted())
-                {
                     AddFile(dirent, true);
-                }
                 else
                 {
                     AddFile(dirent, false);
 
                     if (dirent.IsDirectory())
-                    {
                         RegisterDirectoryEntries(dirent.Children);
-                    }
                 }
             }
         }
@@ -180,12 +168,7 @@ namespace FATXTools.Database
         /// <returns>DatabaseFile from this database</returns>
         public DatabaseFile GetFile(long offset)
         {
-            if (_files.ContainsKey(offset))
-            {
-                return _files[offset];
-            }
-
-            return null;
+            return _files.ContainsKey(offset) ? _files[offset] : null;
         }
 
         /// <summary>
@@ -195,12 +178,7 @@ namespace FATXTools.Database
         /// <returns>DatabaseFile from this database</returns>
         public DatabaseFile GetFile(DirectoryEntry dirent)
         {
-            if (_files.ContainsKey(dirent.Offset))
-            {
-                return _files[dirent.Offset];
-            }
-
-            return null;
+            return _files.ContainsKey(dirent.Offset) ? _files[dirent.Offset] : null;
         }
 
         /// <summary>
@@ -211,15 +189,10 @@ namespace FATXTools.Database
         /// <param name="deleted"></param>
         private DatabaseFile CreateDatabaseFile(DirectoryEntry dirent, bool deleted)
         {
-            _files[dirent.Offset] = new DatabaseFile(dirent, deleted);
-            if (deleted)
+            _files[dirent.Offset] = new DatabaseFile(dirent, deleted)
             {
-                _files[dirent.Offset].ClusterChain = GenerateArtificialClusterChain(dirent);
-            }
-            else
-            {
-                _files[dirent.Offset].ClusterChain = _volume.FileAllocationTable.GetClusterChain(dirent);
-            }
+                ClusterChain = deleted ? GenerateArtificialClusterChain(dirent) : _volume.FileAllocationTable.GetClusterChain(dirent)
+            };
 
             return _files[dirent.Offset];
         }
@@ -232,12 +205,7 @@ namespace FATXTools.Database
         public DatabaseFile AddFile(DirectoryEntry dirent, bool deleted)
         {
             // Create the file if it was not already added
-            if (!_files.ContainsKey(dirent.Offset))
-            {
-                return CreateDatabaseFile(dirent, deleted);
-            }
-
-            return _files[dirent.Offset];
+            return _files.ContainsKey(dirent.Offset) ? _files[dirent.Offset] : CreateDatabaseFile(dirent, deleted);
         }
 
         /// <summary>

@@ -425,15 +425,11 @@ namespace FATXTools.Controls
 
                 if (itemX.Tag == null ||
                     itemY.Tag == null)
-                {
                     return result;
-                }
 
                 if (itemX.Index == 0)
-                {
                     // Skip "up" item
                     return result;
-                }
 
                 DirectoryEntry direntX = (DirectoryEntry)((NodeTag)itemX.Tag).Tag;
                 DirectoryEntry direntY = (DirectoryEntry)((NodeTag)itemY.Tag).Tag;
@@ -466,14 +462,7 @@ namespace FATXTools.Controls
                         break;
                 }
 
-                if (_order == SortOrder.Ascending)
-                {
-                    return result;
-                }
-                else
-                {
-                    return -result;
-                }
+                return _order == SortOrder.Ascending ? result : -result;
             }
         }
         #endregion

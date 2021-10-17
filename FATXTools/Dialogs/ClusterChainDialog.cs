@@ -33,9 +33,7 @@ namespace FATXTools.Dialogs
             listView1.BeginUpdate();
 
             foreach (var cluster in clusterChain)
-            {
                 AddCluster(cluster);
-            }
 
             listView1.EndUpdate();
         }
@@ -64,9 +62,7 @@ namespace FATXTools.Dialogs
             listView1.BeginUpdate();
 
             foreach (ListViewItem item in listView1.SelectedItems)
-            {
                 listView1.Items.Remove(item);
-            }
 
             listView1.EndUpdate();
         }
@@ -76,9 +72,7 @@ namespace FATXTools.Dialogs
             NewClusterChain = new List<uint>();
 
             foreach (ListViewItem item in listView1.Items)
-            {
                 NewClusterChain.Add((uint)item.Tag);
-            }
         }
     }
 }

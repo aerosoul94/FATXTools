@@ -76,9 +76,7 @@ namespace FATXTools.Tasks
             Console.WriteLine($"Saving {_numFiles} files.");
 
             foreach (var node in nodes)
-            {
                 SaveNode(path, node);
-            }
         }
 
         /// <summary>
@@ -195,9 +193,7 @@ namespace FATXTools.Tasks
             });
 
             if (_cancellationToken.IsCancellationRequested)
-            {
                 _cancellationToken.ThrowIfCancellationRequested();
-            }
         }
 
         /// <summary>
@@ -216,14 +212,10 @@ namespace FATXTools.Tasks
             ReportProgress();
 
             if (!Directory.Exists(path))
-            {
                 Directory.CreateDirectory(path);
-            }
 
             foreach (DirectoryEntry child in node.Children)
-            {
                 SaveFile(path, child);
-            }
 
             TryIOOperation(() =>
             {
@@ -231,9 +223,7 @@ namespace FATXTools.Tasks
             });
 
             if (_cancellationToken.IsCancellationRequested)
-            {
                 _cancellationToken.ThrowIfCancellationRequested();
-            }
         }
 
         /// <summary>
@@ -265,13 +255,9 @@ namespace FATXTools.Tasks
             }
 
             if (node.IsDirectory())
-            {
                 SaveDirectory(path, node);
-            }
             else
-            {
                 SaveFile(path, node);
-            }
         }
     }
 }

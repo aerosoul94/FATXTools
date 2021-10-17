@@ -39,9 +39,7 @@ namespace FATXTools.Utilities
             int bytesRet = sizeBytes.Length;
 
             if (!DeviceIoControl(diskHandle, 0x00000007405C, null, 0, sizeBytes, bytesRet, ref bytesRet, IntPtr.Zero))
-            {
                 throw new Exception("Failed to get disk size!");
-            }
 
             return BitConverter.ToInt64(sizeBytes, 0);
         }
@@ -52,9 +50,7 @@ namespace FATXTools.Utilities
             int bytesRet = buf.Length;
 
             if (!DeviceIoControl(diskHandle, 0x000000070000, null, 0, buf, bytesRet, ref bytesRet, IntPtr.Zero))
-            {
                 throw new Exception("Failed to get disk geometry!");
-            }
 
             return BitConverter.ToInt32(buf, 0x14);
         }

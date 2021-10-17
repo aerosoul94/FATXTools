@@ -75,9 +75,7 @@ namespace FATXTools
         public void CreateCarverView(List<CarvedFile> files)
         {
             if (_carverResultsPage != null)
-            {
                 tabControl1.TabPages.Remove(_carverResultsPage);
-            }
 
             //partitionDatabase.SetFileCarver(carver);
             _carverResultsPage = new TabPage("Carver View");
@@ -93,9 +91,7 @@ namespace FATXTools
         public void CreateRecoveryView()
         {
             if (_recoveryResultsPage != null)
-            {
                 tabControl1.TabPages.Remove(_recoveryResultsPage);
-            }
 
             _recoveryResultsPage = new TabPage("Recovery View");
             RecoveryResults recoveryResults = new RecoveryResults(_partitionDatabase.GetFileDatabase(), _integrityAnalyzer)
@@ -140,9 +136,7 @@ namespace FATXTools
 
             // Add in the new results
             foreach (var dirent in results.Results)
-            {
                 fileDatabase.AddFile(dirent, true);
-            }
 
             fileDatabase.Update();          // Update the file system
             _integrityAnalyzer.Update();     // Update the integrity analyzer

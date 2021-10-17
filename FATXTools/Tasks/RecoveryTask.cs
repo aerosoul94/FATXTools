@@ -96,18 +96,14 @@ namespace FATXTools.Tasks
             Console.WriteLine($"Saving {_numFiles} files.");
 
             foreach (var node in nodes)
-            {
                 SaveNode(path, node);
-            }
         }
 
         public void SaveClusters(string path, Dictionary<string, List<DatabaseFile>> clusters)
         {
             _numFiles = 0;
             foreach (var cluster in clusters)
-            {
                 _numFiles += CountFiles(cluster.Value);
-            }
 
             foreach (var cluster in clusters)
             {
@@ -118,13 +114,9 @@ namespace FATXTools.Tasks
                 foreach (var node in cluster.Value)
                 {
                     if (node.IsDirectory())
-                    {
                         SaveDirectory(path, node);
-                    }
                     else
-                    {
                         SaveNode(path, node);
-                    }
                 }
             }
         }
@@ -135,16 +127,7 @@ namespace FATXTools.Tasks
             long n = 0;
 
             foreach (var node in dirents)
-            {
-                if (node.IsDirectory())
-                {
-                    n += CountFiles(node.Children) + 1;
-                }
-                else
-                {
-                    n++;
-                }
-            }
+                n += node.IsDirectory() ? CountFiles(node.Children) : 1;
 
             return n;
         }
@@ -262,9 +245,7 @@ namespace FATXTools.Tasks
             });
 
             if (_cancellationToken.IsCancellationRequested)
-            {
                 _cancellationToken.ThrowIfCancellationRequested();
-            }
         }
 
         /// <summary>
@@ -282,14 +263,10 @@ namespace FATXTools.Tasks
             ReportProgress();
 
             if (!Directory.Exists(path))
-            {
                 Directory.CreateDirectory(path);
-            }
 
             foreach (DatabaseFile child in node.Children)
-            {
                 SaveFile(path, child);
-            }
 
             TryIOOperation(() =>
             {
@@ -297,9 +274,7 @@ namespace FATXTools.Tasks
             });
 
             if (_cancellationToken.IsCancellationRequested)
-            {
                 _cancellationToken.ThrowIfCancellationRequested();
-            }
         }
 
         /// <summary>
@@ -310,13 +285,9 @@ namespace FATXTools.Tasks
         public void SaveNode(string path, DatabaseFile node)
         {
             if (node.IsDirectory())
-            {
                 SaveDirectory(path, node);
-            }
             else
-            {
                 SaveFile(path, node);
-            }
         }
     }
 }

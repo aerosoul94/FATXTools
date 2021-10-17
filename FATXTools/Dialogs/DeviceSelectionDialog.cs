@@ -8,7 +8,7 @@ namespace FATXTools.Dialogs
 {
     public partial class DeviceSelectionDialog : Form
     {
-        private string _selectedDevice;
+        private string selectedDevice;
 
         public DeviceSelectionDialog()
         {
@@ -27,11 +27,11 @@ namespace FATXTools.Dialogs
             }
         }
 
-        public string SelectedDevice => _selectedDevice;
+        public string SelectedDevice => selectedDevice;
 
         private void button2_Click(object sender, EventArgs e)
         {
-            _selectedDevice = listView1.SelectedItems[0].Text;
+            selectedDevice = listView1.SelectedItems[0].Text;
         }
     }
 }

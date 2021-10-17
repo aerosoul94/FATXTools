@@ -217,9 +217,7 @@ namespace FATXTools.Database
             if (directoryEntryObject.TryGetProperty("Children", out var childrenElement))
             {
                 foreach (var childElement in childrenElement.EnumerateArray())
-                {
                     LoadDirectoryEntryFromDatabase(childElement);
-                }
             }
 
             if (directoryEntryObject.TryGetProperty("Clusters", out var clustersElement))
@@ -230,9 +228,7 @@ namespace FATXTools.Database
                 //    System.Diagnostics.Debugger.Break();
 
                 foreach (var clusterIndex in clustersElement.EnumerateArray())
-                {
                     clusterChain.Add(clusterIndex.GetUInt32());
-                }
 
                 databaseFile.ClusterChain = clusterChain;
             }
@@ -247,9 +243,7 @@ namespace FATXTools.Database
 
             // Load each root file and its children from the json database
             foreach (var directoryEntryObject in metadataAnalysisObject.EnumerateArray())
-            {
                 LoadDirectoryEntryFromDatabase(directoryEntryObject);
-            }
 
             return true;
         }
@@ -269,14 +263,10 @@ namespace FATXTools.Database
                 var carvedFile = new CarvedFile(offsetElement.GetInt64(), "");
 
                 if (file.TryGetProperty("Name", out var nameElement))
-                {
                     carvedFile.FileName = nameElement.GetString();
-                }
 
                 if (file.TryGetProperty("Size", out var sizeElement))
-                {
                     carvedFile.FileSize = sizeElement.GetInt64();
-                }
 
                 _carvedFiles.Add(carvedFile);
             }
@@ -320,9 +310,7 @@ namespace FATXTools.Database
                 LoadFileCarverResults(fileCarverList);
 
                 if (_carvedFiles.Count > 0)
-                {
                     _view.CreateCarverView(_carvedFiles);
-                }
             }
         }
     }

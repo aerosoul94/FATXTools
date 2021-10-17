@@ -70,30 +70,9 @@ namespace FATXTools.Controls
                 }
 
                 if (occupants.Count > 1)
-                {
-                    if (occupants.Any(file => !file.IsDeleted))
-                    {
-                        _clusterColorMap[i] = ActiveColor;
-                    }
-                    else
-                    {
-                        _clusterColorMap[i] = CollisionColor;
-                    }
-                }
+                    _clusterColorMap[i] = occupants.Any(file => !file.IsDeleted) ? ActiveColor : CollisionColor;
                 else
-                {
-                    var occupant = occupants[0];
-                    if (!occupant.IsDeleted)
-                    {
-                        // Sole occupant
-                        _clusterColorMap[i] = ActiveColor;
-                    }
-                    else
-                    {
-                        // Only recovered occupant
-                        _clusterColorMap[i] = RecoveredColor;
-                    }
-                }
+                    _clusterColorMap[i] = occupants[0].IsDeleted ? RecoveredColor : ActiveColor;
             }
 
             _clusterColorMap[_volume.Metadata.RootDirFirstCluster] = RootColor;
@@ -109,15 +88,9 @@ namespace FATXTools.Controls
             UpdateClusters();
         }
 
-        private int ClusterToCellIndex(uint clusterIndex)
-        {
-            return (int)clusterIndex - 1;
-        }
+        private int ClusterToCellIndex(uint clusterIndex) => (int)clusterIndex - 1;
 
-        private uint CellToClusterIndex(int cellIndex)
-        {
-            return (uint)cellIndex + 1;
-        }
+        private uint CellToClusterIndex(int cellIndex) => (uint)cellIndex + 1;
 
         private void SetCellColor(int cellIndex, Color color)
         {
@@ -130,23 +103,13 @@ namespace FATXTools.Controls
         private void UpdateDataMap()
         {
             foreach (var pair in _clusterColorMap)
-            {
                 SetCellColor(ClusterToCellIndex(pair.Key), pair.Value);
-            }
         }
 
         private string BuildToolTipMessage(int index, DirectoryEntry dirent, bool deleted)
         {
             // What kind of data is stored in this cluster?
-            string dataType;
-            if (dirent.IsDirectory())
-            {
-                dataType = "Dirent Stream";
-            }
-            else
-            {
-                dataType = "File Data";
-            }
+            string dataType = dirent.IsDirectory() ? "Dirent Stream" : "File Data";
 
             string message = Environment.NewLine +
                 index.ToString() + "." +
@@ -229,17 +192,13 @@ namespace FATXTools.Controls
                 }
 
                 if (_currentClusterChainIndex >= occupants.Count)
-                {
                     _currentClusterChainIndex = 0;
-                }
 
                 var clusterChain = occupants[_currentClusterChainIndex].ClusterChain;
 
                 // TODO: Change highlight color for colliding clusters
                 foreach (var cluster in clusterChain)
-                {
                     _dataMap.Cells[ClusterToCellIndex(cluster)].Selected = true;
-                }
 
                 // Toggle between each occupant after each click
                 _currentClusterChainIndex++;

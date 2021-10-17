@@ -53,25 +53,19 @@ namespace FATXTools.Database
         public long CountFiles()
         {
             if (_dirent.IsDeleted())
-            {
                 return 0;
-            }
 
             if (IsDirectory())
             {
                 long numFiles = 1;
 
                 foreach (var dirent in Children)
-                {
                     numFiles += dirent.CountFiles();
-                }
 
                 return numFiles;
             }
-            else
-            {
-                return 1;
-            }
+
+            return 1;
         }
 
         public int GetRanking()

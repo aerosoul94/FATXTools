@@ -42,10 +42,9 @@ namespace FATX.Analyzers
         private void UpdateClusterMap()
         {
             _clusterMap = new Dictionary<uint, List<DatabaseFile>>((int)_volume.MaxClusters);
+
             for (uint i = 0; i < _volume.MaxClusters; i++)
-            {
                 _clusterMap[i] = new List<DatabaseFile>();
-            }
 
             foreach (var pair in _database.GetFiles())
             {
@@ -53,9 +52,7 @@ namespace FATX.Analyzers
 
                 // We handle active cluster chains conventionally
                 if (!databaseFile.IsDeleted)
-                {
                     UpdateClusters(databaseFile);
-                }
                 // Otherwise, we generate an artificial cluster chain
                 else
                 {
@@ -63,11 +60,9 @@ namespace FATX.Analyzers
                     if (databaseFile.FileName.StartsWith("xdk_data") ||
                         databaseFile.FileName.StartsWith("xdk_file") ||
                         databaseFile.FileName.StartsWith("tempcda"))
-                    {
                         // These are usually always large and/or corrupted
                         // TODO: still don't really know what these files are
                         continue;
-                    }
 
                     UpdateClusters(databaseFile);
                 }
@@ -84,27 +79,21 @@ namespace FATX.Analyzers
         private void UpdateCollisions()
         {
             foreach (var databaseFile in _database.GetFiles().Values)
-            {
                 databaseFile.SetCollisions(FindCollidingClusters(databaseFile));
-            }
         }
 
         private List<uint> FindCollidingClusters(DatabaseFile databaseFile)
         {
             // Get a list of cluster who are possibly corrupted
-            List<uint> collidingClusters = new List<uint>();
+            //List<uint> collidingClusters = new List<uint>();
 
-            // for each cluster used by this dirent, check if other dirents are
-            // also claiming it.
-            foreach (var cluster in databaseFile.ClusterChain)
-            {
-                if (_clusterMap[(uint)cluster].Count > 1)
-                {
-                    collidingClusters.Add((uint)cluster);
-                }
-            }
+            //// for each cluster used by this dirent, check if other dirents are
+            //// also claiming it.
+            //foreach (var cluster in databaseFile.ClusterChain)
+            //    if (_clusterMap[(uint)cluster].Count > 1)
+            //        collidingClusters.Add((uint)cluster);
 
-            return collidingClusters;
+            return databaseFile.ClusterChain.FindAll(cluster => _clusterMap[(uint)cluster].Count > 1);
         }
 
         private bool WasModifiedLast(DatabaseFile databaseFile, List<uint> collisions)
@@ -119,107 +108,102 @@ namespace FATX.Analyzers
 
                     // Skip when we encounter the same dirent
                     if (dirent.Offset == entDirent.Offset)
-                    {
                         continue;
-                    }
 
+                    // Return false if the file's last access time is earlier than one of it's occupants.
                     if (dirent.LastAccessTime.AsDateTime() < entDirent.LastAccessTime.AsDateTime())
-                    {
                         return false;
-                    }
                 }
             }
 
             return true;
         }
 
-        private void DoRanking(DatabaseFile databaseFile)
+        enum FileStatus
+        {
+            /// <summary>
+            /// Rank 1
+            ///  - Part of active file system
+            ///  - Not deleted
+            /// </summary>
+            Green = 0,
+
+            /// <summary>
+            /// Rank 2
+            ///  - Recovered
+            ///  - No conflicting clusters detected
+            /// </summary>
+            YellowGreen = 1,
+
+            /// <summary>
+            /// Rank 3
+            ///  - Recovered
+            ///  - Some conflicting clusters
+            ///  - Most recent data written
+            /// </summary>
+            Yellow = 2,
+
+            /// <summary>
+            /// Rank 4
+            ///  - Recovered
+            ///  - Some conflicting clusters
+            ///  - Not most recent data written
+            /// </summary>
+            Orange = 3,
+
+            /// <summary>
+            /// Rank 5
+            ///  - Recovered
+            ///  - All clusters overwritten
+            /// </summary>
+            Red = 4
+        }
+
+        private FileStatus RankFile(DatabaseFile databaseFile)
         {
             var dirent = databaseFile.GetDirent();
 
-            // Rank 1
-            // - Part of active file system
-            // - Not deleted
-            // Rank 2
-            // - Recovered
-            // - No conflicting clusters detected
-            // Rank 3
-            // - Recovered
-            // - Some conflicting clusters
-            // - Most recent data written
-            // Rank 4
-            // - Recovered
-            // - Some conflicting clusters
-            // - Not most recent data written
-            // Rank 5
-            // - Recovered
-            // - All clusters overwritten
+            // If file was not deleted
+            if (!databaseFile.IsDeleted && !dirent.IsDeleted())
+                return FileStatus.Green;
 
-            if (!databaseFile.IsDeleted)
-            {
-                if (!dirent.IsDeleted())
-                {
-                    databaseFile.SetRanking((0));
-                }
-            }
-            else
-            {
-                // File was deleted
-                var collisions = databaseFile.GetCollisions();
-                if (collisions.Count == 0)
-                {
-                    databaseFile.SetRanking((1));
-                }
-                else
-                {
-                    // File has colliding clusters
-                    if (WasModifiedLast(databaseFile, collisions))
-                    {
-                        // This file appears to have been written most recently.
-                        databaseFile.SetRanking((2));
-                    }
-                    else
-                    {
-                        // File was predicted to be overwritten
-                        var numClusters = (int)(((dirent.FileSize + (_volume.BytesPerCluster - 1)) &
-                            ~(_volume.BytesPerCluster - 1)) / _volume.BytesPerCluster);
-                        if (collisions.Count != numClusters)
-                        {
-                            // Not every cluster was overwritten
-                            databaseFile.SetRanking((3));
-                        }
-                        else
-                        {
-                            // Every cluster appears to have been overwritten
-                            databaseFile.SetRanking((4));
-                        }
-                    }
-                }
-            }
+            var collisions = databaseFile.GetCollisions();
+
+            // If file has no colliding claimed clusters
+            if (collisions.Count == 0)
+                return FileStatus.YellowGreen;
+
+            // The file has collisions, but it was modified last
+            if (WasModifiedLast(databaseFile, collisions))
+                return FileStatus.Yellow;
+
+            // The file was determined to be overwritten, check if it was only partially overwritten
+            var numClusters = (int)(((dirent.FileSize + (_volume.BytesPerCluster - 1)) &
+                ~(_volume.BytesPerCluster - 1)) / _volume.BytesPerCluster);
+
+            if (collisions.Count != numClusters)
+                return FileStatus.Orange;
+
+            // The file appears to be entirely overwritten
+            return FileStatus.Red;
+        }
+
+        private void DoRanking(DatabaseFile databaseFile)
+        {
+            var ranking = (int)RankFile(databaseFile);
+
+            databaseFile.SetRanking(ranking);
         }
 
         private void PerformRanking()
         {
             foreach (var pair in _database.GetFiles())
-            {
                 DoRanking(pair.Value);
-            }
         }
 
         public List<DatabaseFile> GetClusterOccupants(uint cluster)
         {
-            List<DatabaseFile> occupants;
-
-            if (_clusterMap.ContainsKey(cluster))
-            {
-                occupants = _clusterMap[cluster];
-            }
-            else
-            {
-                occupants = null;
-            }
-
-            return occupants;
+            return _clusterMap.ContainsKey(cluster) ? _clusterMap[cluster] : null;
         }
     }
 }

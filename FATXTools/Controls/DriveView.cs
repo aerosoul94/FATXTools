@@ -58,9 +58,7 @@ namespace FATXTools
             _driveDatabase.OnPartitionRemoved += DriveDatabase_OnPartitionRemoved;
 
             foreach (var partition in drive.Partitions)
-            {
                 AddPartition(partition);
-            }
 
             // Fire SelectedPartitionChanged event.
             SelectedPartitionChanged();
@@ -160,9 +158,7 @@ namespace FATXTools
         {
             var dialogResult = MessageBox.Show("Are you sure you want to remove this partition?", "Are you sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (dialogResult == DialogResult.Yes)
-            {
                 _driveDatabase.RemovePartition(partitionTabControl.SelectedIndex);
-            }
         }
         #endregion
     }
