@@ -47,6 +47,20 @@ namespace FATX
                 return;
             }
 
+            // Check for Original XBOX DVT3 (Prototype Development Kit) partition.
+            Seek(0x80000);
+            if (ReadUInt32() == 0x58544146)
+            {
+                Console.WriteLine("Mounting Xbox DVT3 HDD (v2)..");
+
+                AddPartition("Partition1", 0x80000, 0x1312D6000);        // DATA
+                AddPartition("Partition2", 0x131356000, 0x1f400000);     // SHELL
+                AddPartition("Partition3", 0x150756000, 0x2ee00000);     // CACHE
+                AddPartition("Partition4", 0x17F556000, 0x2ee00000);     // CACHE
+                AddPartition("Partition5", 0x1AE356000, 0x2ee00000);     // CACHE
+                return;
+            }
+
             // Check for XBOX 360 partitions.
             Seek(0);
             ByteOrder = ByteOrder.Big;
