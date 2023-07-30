@@ -61,6 +61,19 @@ namespace FATX
                 return;
             }
 
+            Seek(0x80004);
+            if (ReadUInt32() == 0x58544146)
+            {
+                Console.WriteLine("Mounting Xbox DVT3 HDD (v1)..");
+
+                AddPartition("Partition1", 0x80000, 0x1312D6000, true);        // DATA
+                AddPartition("Partition2", 0x131356000, 0x1f400000, true);     // SHELL
+                AddPartition("Partition3", 0x150756000, 0x2ee00000, true);     // CACHE
+                AddPartition("Partition4", 0x17F556000, 0x2ee00000, true);     // CACHE
+                AddPartition("Partition5", 0x1AE356000, 0x2ee00000, true);     // CACHE
+                return;
+            }
+
             // Check for XBOX 360 partitions.
             Seek(0);
             ByteOrder = ByteOrder.Big;
@@ -148,9 +161,9 @@ namespace FATX
             }
         }
 
-        public void AddPartition(string name, long offset, long length)
+        public void AddPartition(string name, long offset, long length, bool legacy = false)
         {
-            Volume partition = new Volume(this, name, offset, length);
+            Volume partition = new Volume(this, name, offset, length, legacy);
             _partitions.Add(partition);
         }
 

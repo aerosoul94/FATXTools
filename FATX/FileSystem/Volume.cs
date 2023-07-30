@@ -26,17 +26,39 @@ namespace FATX.FileSystem
         private uint _fatByteOffset;
         private uint _fileAreaByteOffset;
 
+        private bool _usesLegacyFormat;
+        private uint _jump;
+        private ushort _bytesPerSector;
+        private ushort _reservedSectors;
+        private ushort _sectorsPerTrack;
+        private ushort _heads;
+        private uint _hiddenSectors;
+        private uint _largeSectors;
+        private uint _largeSectorsPerFat;
+
         private List<DirectoryEntry> _root = new List<DirectoryEntry>();
         private uint[] _fileAllocationTable;
         private long _fileAreaLength;
         private Platform _platform;
 
-        public Volume(DriveReader reader, string name, long offset, long length)
+        /// <summary>
+        /// Creates a new FATX volume.
+        /// </summary>
+        /// <param name="reader">The stream that contains the FATX file system.</param>
+        /// <param name="name">The name of this volume.</param>
+        /// <param name="offset">The offset within the <paramref name="reader"/> this partition exists at.</param>
+        /// <param name="length">The length in bytes of this partition.</param>
+        /// <param name="legacy">
+        /// Set this to true if this is the legacy FATX file system. 
+        /// It appears to only be used in older DVT3 xbox systems with kernel 3633 or earlier.
+        /// </param>
+        public Volume(DriveReader reader, string name, long offset, long length, bool legacy = false)
         {
             this._reader = reader;
             this._partitionName = name;
             this._partitionLength = length;
             this._partitionOffset = offset;
+            this._usesLegacyFormat = legacy;
 
             this._platform = (reader.ByteOrder == ByteOrder.Big) ?
                 Platform.X360 : Platform.Xbox;
@@ -112,7 +134,7 @@ namespace FATX.FileSystem
             Mounted = false;
 
             // Read and verify volume metadata.
-            ReadVolumeMetadata();
+            ReadBootSector();
             CalculateOffsets();
             ReadFileAllocationTable();
 
@@ -125,11 +147,23 @@ namespace FATX.FileSystem
         /// <summary>
         /// Read and verifies the FATX header.
         /// </summary>
-        private void ReadVolumeMetadata()
+        private void ReadBootSector()
         {
             _reader.Seek(_partitionOffset);
             Console.WriteLine("Attempting to load FATX volume at {0:X16}", _reader.Position);
 
+            if (!_usesLegacyFormat)
+            {
+                ReadVolumeMetadata();
+            }
+            else
+            {
+                ReadLegacyVolumeMetadata();
+            }
+        }
+
+        private void ReadVolumeMetadata()
+        {
             _signature = _reader.ReadUInt32();
             _serialNumber = _reader.ReadUInt32();
             _sectorsPerCluster = _reader.ReadUInt32();
@@ -137,9 +171,34 @@ namespace FATX.FileSystem
 
             if (_signature != VolumeSignature)
             {
-                throw new FormatException(
-                    String.Format("Invalid FATX Signature for {0}: {1:X8}", _partitionName, _signature.ToString("X8")));
+                throw new FormatException($"Invalid FATX Signature for {_partitionName}: {_signature:X8}");
             }
+        }
+
+        private void ReadLegacyVolumeMetadata()
+        {
+            // Read _BOOT_SECTOR
+            _jump = _reader.ReadUInt32();                   // EB FE
+            _signature = _reader.ReadUInt32();              // FATX
+            _serialNumber = _reader.ReadUInt32();           // 05C29C00
+
+            if (_signature != VolumeSignature)
+            {
+                throw new FormatException($"Invalid FATX Signature for {_partitionName}: {_signature:X8}");
+            }
+
+            // Read BIOS_PARAMETER_BLOCK
+            // These fields are currently not being used by this reader. With some testing, we'll see if these fields
+            // are truly necessary.
+            _bytesPerSector = _reader.ReadUInt16();         // 0200
+            _sectorsPerCluster = _reader.ReadByte();        // 20
+            _reservedSectors = _reader.ReadUInt16();        // 08
+            _sectorsPerTrack = _reader.ReadUInt16();        // 3F00
+            _heads = _reader.ReadUInt16();                  // FF00
+            _hiddenSectors = _reader.ReadUInt32();          // 00000400
+            _largeSectors = _reader.ReadUInt32();           // 009896B0
+            _largeSectorsPerFat = _reader.ReadUInt32();     // 00000990
+            _rootDirFirstCluster = _reader.ReadUInt32();    // 00000001
         }
 
         /// <summary>
