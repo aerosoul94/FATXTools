@@ -463,7 +463,20 @@ namespace FATXTools.Controls
 
                     foreach (uint cluster in chainMap)
                     {
-                        byte[] clusterData = this.volume.ReadCluster(cluster);
+                        byte[] clusterData;
+
+                        try
+                        {
+                            clusterData = this.volume.ReadCluster(cluster);
+                        }
+                        catch (IOException exception)
+                        {
+                            // Failed to read cluster, write null bytes instead.
+                            var position = outFile.Position;
+                            Console.WriteLine(exception.Message);
+                            Console.WriteLine($"Due to exception, writing null cluster at {position} to file: {path}");
+                            clusterData = new byte[volume.BytesPerCluster];
+                        }
 
                         var writeSize = Math.Min(bytesLeft, this.volume.BytesPerCluster);
                         outFile.Write(clusterData, 0, (int)writeSize);
