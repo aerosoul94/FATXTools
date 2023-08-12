@@ -286,7 +286,20 @@ namespace FATX.FileSystem
         {
             List<DirectoryEntry> stream = new List<DirectoryEntry>();
 
-            byte[] data = ReadCluster(cluster);
+            byte[] data;
+
+            try
+            {
+                data = ReadCluster(cluster);
+            }
+            catch (IOException exception)
+            {
+                // Failed to read data, return an empty list
+                Console.WriteLine(exception.Message);
+                Console.WriteLine($"Due to exception, returning empty directory stream for cluster {cluster}");
+                return stream;
+            }
+
             long clusterOffset = ClusterToPhysicalOffset(cluster);
 
             for (int i = 0; i < 256; i++)
@@ -364,6 +377,7 @@ namespace FATX.FileSystem
         /// Reads a cluster and returns the data.
         /// </summary>
         /// <param name="cluster"></param>
+        /// <exception cref="System.IO.IOException">May be thrown on read errors.</exception>
         /// <returns></returns>
         public byte[] ReadCluster(uint cluster)
         {
