@@ -103,7 +103,7 @@ namespace FATX.FileSystem
                     }
                     catch (Exception)
                     {
-                        _DateTime = DateTime.MinValue;
+                        _DateTime = _minWinFileTime;
                     }
 
                     return _DateTime.Value;
