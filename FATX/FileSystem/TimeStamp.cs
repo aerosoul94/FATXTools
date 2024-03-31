@@ -26,6 +26,7 @@ namespace FATX.FileSystem
     {
         private uint _Time;
         private DateTime? _DateTime;
+        private readonly DateTime _minWinFileTime = new DateTime(1601, 01, 01);
 
         public TimeStamp(uint time)
         {
@@ -70,6 +71,11 @@ namespace FATX.FileSystem
         {
             if (this._DateTime.HasValue)
             {
+                if (this._DateTime < _minWinFileTime)
+                {
+                    return _minWinFileTime;
+                }
+
                 return this._DateTime.Value;
             }
             else
@@ -97,7 +103,7 @@ namespace FATX.FileSystem
                     }
                     catch (Exception)
                     {
-                        _DateTime = DateTime.MinValue;
+                        _DateTime = _minWinFileTime;
                     }
 
                     return _DateTime.Value;
