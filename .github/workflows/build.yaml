@@ -40,7 +40,7 @@ jobs:
       
     # Upload the release build artifacts
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: FATXTools-Release
         path: FATXTools/bin/Release/
