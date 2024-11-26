@@ -256,7 +256,7 @@ namespace FATX.Analyzers
                 return false;
             }
 
-            if (dateTime.Day > MaxDays[dateTime.Month - 1])
+            if (dateTime.Day > MaxDays[dateTime.Month - 1] || dateTime.Day < 1)
             {
                 return false;
             }
