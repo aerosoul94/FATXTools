@@ -58,7 +58,20 @@ namespace FATX.Analyzers
             var maxClusters = _length / _interval;
             for (uint cluster = 1; cluster < maxClusters; cluster++)
             {
-                var data = _volume.ReadCluster(cluster);
+                byte[] data;
+
+                try
+                {
+                    data = _volume.ReadCluster(cluster);
+                }
+                catch (IOException exception)
+                {
+                    // Failed to read data
+                    Console.WriteLine(exception.Message);
+                    Console.WriteLine($"Failed to read cluster {cluster}, skipping...");
+                    continue;
+                }
+                
                 var clusterOffset = (cluster - 1) * _interval;
                 for (int i = 0; i < 256; i++)
                 {
